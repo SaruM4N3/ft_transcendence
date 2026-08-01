@@ -1,0 +1,25 @@
+*.cs text diff=csharp
+*.cginc text
+*.shader text
+
+*.mat text
+*.anim text
+*.unity text
+*.prefab text
+*.physicMaterial text
+*.physicsMaterial2D text
+*.asset text
+*.meta text
+*.controller text
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.tga binary
+*.psd binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.fbx binary
+*.ttf binary
+*.otf binary
