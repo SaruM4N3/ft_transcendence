@@ -1,0 +1,33 @@
+services:
+  certs:
+    image: alpine/openssl
+    entrypoint: sh
+    command: >
+      -c "test -f /certs/fullchain.pem ||
+      openssl req -x509 -nodes -days 365 -newkey rsa:2048
+      -keyout /certs/privkey.pem -out /certs/fullchain.pem
+      -subj /CN=localhost"
+    volumes:
+      - certs:/certs
+
+  app:
+    build: .
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certs:/etc/nginx/certs:ro
+    depends_on:
+      app:
+        condition: service_started
+      certs:
+        condition: service_completed_successfully
+
+volumes:
+  certs:

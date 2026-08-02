@@ -1,27 +1,29 @@
 WEB_DIR := web
-IMAGE := ft_transcendence-web
-NAME := ft_transcendence-web
+COMPOSE := docker compose -f $(WEB_DIR)/compose.yaml --project-directory $(WEB_DIR)
 
-.PHONY: all up down build logs re clean fclean
+.PHONY: all up down build logs ps re clean fclean
 
 all: up
 
-build:
-	docker build -t $(IMAGE) $(WEB_DIR)
-
-up: build
-	docker rm -f $(NAME) >/dev/null 2>&1 || true
-	docker run -d --name $(NAME) -p 80:80 $(IMAGE)
+up:
+	$(COMPOSE) up --build -d
 
 down:
-	docker rm -f $(NAME) >/dev/null 2>&1 || true
+	$(COMPOSE) down
+
+build:
+	$(COMPOSE) build
 
 logs:
-	docker logs -f $(NAME)
+	$(COMPOSE) logs -f
+
+ps:
+	$(COMPOSE) ps
 
 re: down up
 
-clean: down
+clean:
+	$(COMPOSE) down -v
 
 fclean: clean
-	docker rmi -f $(IMAGE) >/dev/null 2>&1 || true
+	$(COMPOSE) down --rmi all
