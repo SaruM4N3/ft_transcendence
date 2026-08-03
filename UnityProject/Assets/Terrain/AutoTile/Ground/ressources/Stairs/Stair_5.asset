@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b08ceb78e3b2495b8d808a5860e66794, type: 3}
+  m_Name: Stair_5
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AutoTile
+  m_DefaultSprite: {fileID: -266443383, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+  m_DefaultGameObject: {fileID: 0}
+  m_DefaultColliderType: 0
+  m_MaskType: 1
+  m_Random: 0
+  m_PhysicsShapeCheck: 0
+  m_AutoTileDictionary:
+    keyData: 27010000e4010000c90100004f000000
+    valueData:
+    - spriteList:
+      - {fileID: -1898766481, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+    - spriteList:
+      - {fileID: 947863012, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+    - spriteList:
+      - {fileID: -1733619105, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+    - spriteList:
+      - {fileID: -964874274, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+  m_TextureList:
+  - {fileID: 2800000, guid: 975d0180777d749ceacbb5aad1b8ebd9, type: 3}
+  m_TextureScaleList:
+  - 1
