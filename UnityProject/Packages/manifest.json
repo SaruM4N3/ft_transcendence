@@ -6,6 +6,7 @@
     "com.unity.2d.tilemap.extras": "8.0.3",
     "com.unity.inputsystem": "1.20.0",
     "com.unity.multiplayer.center": "1.0.1",
+    "com.unity.netcode.gameobjects": "2.13.1",
     "com.unity.render-pipelines.universal": "17.6.0",
     "com.unity.ugui": "2.5.0",
     "com.unity.modules.accessibility": "1.0.0",
