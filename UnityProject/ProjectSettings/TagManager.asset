@@ -11,11 +11,11 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Collision
+  - Decoration
+  - Player
+  - Ground-Floor-1
+  - Ground-Floor-0
   - 
   - 
   - 
@@ -41,6 +41,20 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Back
+    uniqueID: 2607699509
+    locked: 0
+  - name: Ground
+    uniqueID: 1047400265
+    locked: 0
+  - name: Front
+    uniqueID: 117347011
+    locked: 0
+  - name: Player
+    uniqueID: 271348707
+    locked: 0
   m_RenderingLayers:
   - Default
+  - Player
+  - World
   m_MigratedRenderPipelines: []
