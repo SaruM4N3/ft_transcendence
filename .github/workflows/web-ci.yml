@@ -21,12 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
       - name: Detect Node project
         id: node
         run: |
@@ -35,6 +29,13 @@ jobs:
           else
             echo "has_package_json=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # No package-lock.json exists yet on the bare scaffold, so npm caching can't be keyed on one
+      # until a framework is added — enable it (cache: npm, cache-dependency-path:
+      # web/package-lock.json) once web/package.json exists.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       # Once a frontend/backend framework is added (package.json with lint/build scripts), these
       # steps take over automatically — no workflow changes needed.
