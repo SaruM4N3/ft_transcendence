@@ -1,0 +1,51 @@
+# Headless build-check for the Unity project: fails the check if UnityProject/ doesn't compile.
+# No test suite is run (there isn't one yet) — this is a compile check only.
+#
+# Requires a Unity license stored as repo secrets to actually run; until then the job is skipped
+# (grey, not red) rather than failing every PR. To enable it:
+#   1. gh secret set UNITY_EMAIL --body "you@example.com"
+#      gh secret set UNITY_PASSWORD --body "your-password"
+#   2. Get an activation file/license (.ulf) for a Unity Personal license and add it too:
+#      gh secret set UNITY_LICENSE < path/to/Unity_v6000.x.ulf
+#   Full walkthrough: https://game.ci/docs/github/activation
+#
+# Uses GameCI (https://game.ci/), a third-party open-source project, not an official Unity product.
+name: Unity Build Check
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "UnityProject/**"
+      - ".github/workflows/unity-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "UnityProject/**"
+      - ".github/workflows/unity-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ vars.UNITY_LICENSE_CONFIGURED == 'true' || secrets.UNITY_LICENSE != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: UnityProject/Library
+          key: Library-UnityProject-${{ hashFiles('UnityProject/Assets/**', 'UnityProject/Packages/**', 'UnityProject/ProjectSettings/**') }}
+          restore-keys: |
+            Library-UnityProject-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: UnityProject
+          unityVersion: 6000.5.6f1
+          targetPlatform: StandaloneLinux64
