@@ -26,6 +26,7 @@ on:
 
 jobs:
   build:
+    name: Unity Build Check
     runs-on: ubuntu-latest
     steps:
       # Job-level `if:` can't reference `secrets` directly (GitHub rejects the whole workflow file
