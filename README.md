@@ -1,7 +1,4 @@
-_This project has been created as part of the 42 curriculum by <login1>[, <login2>[, <login3>[...]]]._
-
-<!-- TODO: replace the line above with the real 42 logins of everyone on the team — it must stay the
-     very first line of this file, italicized, exactly as required by the subject. -->
+_This project has been created as part of the 42 curriculum by zsonie, erbuffet, jureix-c._
 
 ## Description
 
@@ -110,13 +107,20 @@ far, it was used for:
 
 ## Team Information
 
-<!-- TODO: for each team member listed on the first line, add their assigned role(s) (PO, PM, Tech
-     Lead, Developer(s), etc. — see the subject's "Required Team Roles") and a brief description of
-     their responsibilities. Example:
+The team will grow to 4-5 people; for now, **zsonie** is working solo and covers the Product
+Owner, Technical Lead, and Developer roles, focusing mainly on the Unity game side. The other two
+members will pick up Developer work first, with their final role(s) decided once they're active on
+the project.
 
-- **<login1>** — Product Owner, Developer: defines product priorities, implements <area>.
-- **<login2>** — Tech Lead, Developer: owns architecture decisions, implements <area>.
--->
+- **zsonie** — Product Owner, Technical Lead, Developer: defines product priorities, owns
+  architecture/technical decisions, and implements features — currently focused mainly on the
+  Unity game (`UnityProject/`), while also covering the `web/` side solo for now.
+- **erbuffet** — Developer <!-- TODO: additional role(s) once active on the project -->
+- **jureix-c** — Developer <!-- TODO: additional role(s) once active on the project -->
+
+<!-- TODO: Project Manager / Scrum Master isn't assigned yet — pick this up once the team is
+     active (see the subject's "Required Team Roles"). Also flesh out erbuffet/jureix-c's
+     responsibilities once they start contributing. -->
 
 ## Project Management
 
@@ -192,5 +196,21 @@ GitHub Actions run automatically on every push/PR that touches the relevant part
 
 ## Individual Contributions
 
-<!-- TODO: for each team member, a detailed breakdown of what they specifically implemented (features,
-     modules, components), and any challenges they ran into and how they were overcome. -->
+### zsonie
+
+Solo on the project so far, covering both sides:
+
+- Unity game (`UnityProject/`): player movement/combat/stats scripts, procedural terrain
+  generation, main-menu/pause UI.
+- Web scaffold (`web/`): the static app, Docker/Compose setup, and nginx HTTPS reverse proxy.
+- Repo setup: branching model, GitHub Actions CI (`web-ci.yml`, `unity-ci.yml`), and this README.
+
+<!-- TODO: challenges run into and how they were overcome. -->
+
+### erbuffet
+
+<!-- TODO: what they implemented (features/modules/components), and any challenges + how they were overcome. -->
+
+### jureix-c
+
+<!-- TODO: what they implemented (features/modules/components), and any challenges + how they were overcome. -->
