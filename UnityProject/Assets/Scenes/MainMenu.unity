@@ -589,7 +589,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
   mainMenuPanel: {fileID: 1328055107}
   settingsPanel: {fileID: 2141489075}
-  playSceneName: SampleScene
+  playSceneName: Lobby
 --- !u!4 &542757106
 Transform:
   m_ObjectHideFlags: 0
