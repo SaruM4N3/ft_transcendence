@@ -108,6 +108,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SortingLayer_Auto
   spriteRenderer: {fileID: 893734664948817412}
   sortingOffset: 1
+  sortPivotOffset: {x: 0, y: -0.9, z: 0}
 --- !u!61 &6647943560988676800
 BoxCollider2D:
   m_ObjectHideFlags: 0

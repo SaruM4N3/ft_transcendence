@@ -1478,7 +1478,7 @@ MonoBehaviour:
   chunkSize: 2
   viewDistanceInChunks: 1
   maxChunkGenerationsPerFrame: 2
-  seed: 10
+  seed: 102
   spawnSafeRadius: 5
   biomeNoiseScale: 0.1
   biomeTiles:
