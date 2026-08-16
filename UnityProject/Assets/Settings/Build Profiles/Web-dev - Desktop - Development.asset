@@ -601,7 +601,7 @@ MonoBehaviour:
     - line: '|   webGLTemplate: APPLICATION:Default'
     - line: '|   webGLAnalyzeBuildSize: 0'
     - line: '|   webGLUseEmbeddedResources: 0'
-    - line: '|   webGLCompressionFormat: 2'
+    - line: '|   webGLCompressionFormat: 1'
     - line: '|   webGLWasmArithmeticExceptions: 0'
     - line: '|   webGLLinkerTarget: 1'
     - line: '|   webGLThreadsSupport: 0'
@@ -619,6 +619,7 @@ MonoBehaviour:
     - line: '|   webWasm2023: 1'
     - line: '|   webEnableSubmoduleStrippingCompatibility: 0'
     - line: '|   scriptingDefineSymbols:'
+    - line: '|     Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY'
     - line: '|     WebGL: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY'
     - line: '|   additionalCompilerArguments: {}'
     - line: '|   platformArchitecture: {}'
@@ -723,11 +724,11 @@ MonoBehaviour:
     - line: '|   activeInputHandler: 1'
     - line: '|   windowsGamepadBackendHint: 0'
     - line: '|   enableDirectStorage: 0'
-    - line: '|   cloudProjectId: 3b76176f-a024-44bd-9993-38279f0b8faa'
+    - line: '|   cloudProjectId: '
     - line: '|   framebufferDepthMemorylessMode: 0'
     - line: '|   qualitySettingsNames: []'
-    - line: '|   projectName: Transcendence'
-    - line: '|   organizationId: littlefishcrew'
+    - line: '|   projectName: '
+    - line: '|   organizationId: '
     - line: '|   cloudEnabled: 0'
     - line: '|   legacyClampBlendShapeWeights: 0'
     - line: '|   hmiLoadingImage: {instanceID: 0}'
@@ -765,4 +766,4 @@ MonoBehaviour:
         m_CodeOptimization: 0
         m_WebGLClientBrowserPath: 
         m_WebGLClientBrowserType: 0
-        m_WebGLTextureSubtarget: 1
+        m_WebGLTextureSubtarget: 0

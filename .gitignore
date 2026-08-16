@@ -19,6 +19,9 @@ UnityProject/Assets/_Recovery.meta
 UnityProject/Assets/Screenshots/
 UnityProject/Assets/Screenshots.meta
 
+# WebGL build debug output that must not ship
+web/public/game/*_BurstDebugInformation_DoNotShip/
+
 # Visual Studio / Rider / VS Code generated project files
 .vs/
 .vscode/

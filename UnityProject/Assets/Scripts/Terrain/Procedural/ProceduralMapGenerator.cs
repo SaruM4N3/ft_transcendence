@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 public partial class ProceduralMapGenerator : MonoBehaviour
@@ -13,10 +12,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private Tilemap waterTilemap;
     [SerializeField] private Tilemap waterBackgroundTilemap;
     [SerializeField] private Tilemap coastFoamTilemap;
-    [FormerlySerializedAs("floorTilemap")]
-    [SerializeField] private Tilemap platformTilemap;
-    [SerializeField] private Tilemap wallTilemap;
-    [SerializeField] private Tilemap shadowTilemap;
     [SerializeField] private Transform player;
 
     // ---------------------------------------------------------------------
@@ -44,49 +39,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private TileBase coastFoamTile;
 
     // ---------------------------------------------------------------------
-    // Structures (platforms)
-    // ---------------------------------------------------------------------
-    [Header("Structures")]
-    [Tooltip("Whether chunks can spawn elevated platform structures at all. Disabling this generates plain land/water terrain only.")]
-    [SerializeField] private bool generatePlatforms = true;
-    [SerializeField] [Range(0f, 1f)] private float structureChance = 0.15f;
-    [SerializeField] private Vector2Int roomSizeRange = new(5, 15);
-    [SerializeField] private float platformNoiseScale = 0.15f;
-    [SerializeField] [Range(0f, 1f)] private float platformFillThreshold = 0.45f;
-    [Tooltip("How strongly the noise is pushed toward empty as it nears the bounding box edge, keeping a margin so the blob never touches the chunk border.")]
-    [SerializeField] private float platformEdgeFalloff = 2f;
-    [Tooltip("Minimum connected floor tiles required after flood-fill, otherwise the structure is skipped for this chunk.")]
-    [SerializeField] private int minPlatformFloorTiles = 20;
-    [SerializeField] private TileBase interiorFloorTile;
-
-    // ---------------------------------------------------------------------
-    // Walls
-    // ---------------------------------------------------------------------
-    [Header("Walls")]
-    [Tooltip("Indexed by WallShape (Normal, Corner, CornerReversed, Pillar).")]
-    [SerializeField] private TileBase[] wallTilesByShape = new TileBase[4];
-    [Tooltip("Water-adjacent equivalents of wallTilesByShape, indexed the same way, used when the wall cell steps into water.")]
-    [SerializeField] private TileBase[] waterWallTilesByShape = new TileBase[4];
-    [SerializeField] private TileBase shadowTile;
-
-    // ---------------------------------------------------------------------
-    // Stairs
-    // ---------------------------------------------------------------------
-    [Header("Stairs")]
-    [Tooltip("Used when the stairs gap touches the west or east corner of the wall row.")]
-    [SerializeField] private GameObject cornerStairsPrefab;
-    [SerializeField] private int cornerStairsWidth = 2;
-    [Tooltip("Used when the stairs gap sits on the west or east side of the platform instead of the south wall. Drawn facing west; mirrored on X for east placements.")]
-    [SerializeField] private GameObject edgeStairsPrefab;
-    [Tooltip("How many floor rows tall the side gap (the walkable opening) is.")]
-    [SerializeField] private int edgeStairsWidth = 3;
-    [Tooltip("The edge stairs prefab's own physical height in tiles. The west/east contour run must be at least this tall before an edge gap is placed there, so the prefab always sits flush against a wall segment as tall as itself.")]
-    [SerializeField] private int edgeStairsPrefabHeight = 4;
-    [Tooltip("The stairs prefabs' own physical width in tiles (both share the same art width), used to compensate their position when mirrored - on the east side for edge gaps, and on either side for corner gaps.")]
-    [SerializeField] private int stairsPrefabWidth = 1;
-    [SerializeField] private int minStairsPerPlatform = 2;
-
-    // ---------------------------------------------------------------------
     // Decor
     // ---------------------------------------------------------------------
     [Header("Decor")]
@@ -95,10 +47,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     // ---------------------------------------------------------------------
     // Types
     // ---------------------------------------------------------------------
-    private enum GapSide { South, West, East }
-
-    private enum WallShape { Normal, Corner, CornerReversed, Pillar }
-
     private enum DecorSurface { Land, Water }
 
     /// <summary>One decor prefab's placement rules: where it can spawn, how dense, and how it clusters.</summary>
@@ -118,17 +66,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         public float noiseThreshold = 0.75f;
     }
 
-    /// <summary>A stairs gap.</summary>
-    private struct StairsGap
-    {
-        public int Start;
-        public int Width;
-        public bool IsCorner;
-        public bool Flip;
-        public GapSide Side;
-        public int EdgeLocal;
-    }
-
     // ---------------------------------------------------------------------
     // Runtime state
     // ---------------------------------------------------------------------
@@ -136,37 +73,18 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     private readonly HashSet<Vector2Int> pendingChunks = new();
     private readonly Queue<Vector2Int> pendingChunkQueue = new();
     private readonly HashSet<Vector2Int> desiredChunks = new();
-    private readonly Dictionary<Vector2Int, GameObject> structurePlatforms = new();
     private readonly Dictionary<Vector2Int, List<(GameObject instance, GameObject prefab)>> decorObjects = new();
     private readonly Dictionary<GameObject, Stack<GameObject>> decorPool = new();
     private Transform decorParent;
     private readonly Dictionary<string, Transform> decorCategoryParents = new();
     private Vector2Int lastPlayerChunk;
     private bool hasGeneratedOnce;
-    private bool playerOnPlatform;
-    private int playerLayer;
-    private int groundBoundaryLayer;
-    private int platformBoundaryLayer;
     private float biomeOffsetX;
     private float biomeOffsetY;
     private float waterOffsetX;
     private float waterOffsetY;
-    private float platformOffsetX;
-    private float platformOffsetY;
     private Vector2Int spawnCell;
     private int effectiveViewDistanceInChunks;
-
-    // Structure generation scratch buffers, sized to the max room footprint and reused across
-    // chunks to avoid a burst of small heap allocations every time a platform is generated.
-    private bool[,] structureMaskBuffer;
-    private bool[,] structureVisitedBuffer;
-    private bool[,] structureLargestBuffer;
-    private bool[,] structureReachedBuffer;
-    private readonly List<Vector2Int> floodFillScratch = new();
-    private readonly List<Vector2Int> floodFillLargest = new();
-    private readonly Queue<Vector2Int> floodFillQueue = new();
-    private static readonly Vector2Int[] CardinalDirections =
-        { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
     // ---------------------------------------------------------------------
     // Unity lifecycle
@@ -180,22 +98,9 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         biomeOffsetY = rng.Next(-100000, 100000);
         waterOffsetX = rng.Next(-100000, 100000);
         waterOffsetY = rng.Next(-100000, 100000);
-        platformOffsetX = rng.Next(-100000, 100000);
-        platformOffsetY = rng.Next(-100000, 100000);
 
         Vector3Int cell = landTilemap.WorldToCell(player.position);
         spawnCell = new Vector2Int(cell.x, cell.y);
-
-        playerLayer = player.gameObject.layer;
-        groundBoundaryLayer = LayerMask.NameToLayer("Ground-Floor-0");
-        platformBoundaryLayer = LayerMask.NameToLayer("Ground-Floor-1");
-        ApplyPlayerPlatformCollision();
-
-        int maxRoomSize = Mathf.Max(1, roomSizeRange.y);
-        structureMaskBuffer = new bool[maxRoomSize, maxRoomSize];
-        structureVisitedBuffer = new bool[maxRoomSize, maxRoomSize];
-        structureLargestBuffer = new bool[maxRoomSize, maxRoomSize];
-        structureReachedBuffer = new bool[maxRoomSize, maxRoomSize];
     }
 
     /// <summary>Computes the chunk load radius needed to cover the main camera's current view, plus
@@ -246,27 +151,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         // afterwards, newly-needed chunks are throttled so a burst (e.g. a diagonal step revealing a
         // whole new corner of chunks at once) streams in over a few frames instead of spiking one.
         ProcessPendingChunks(firstRun ? int.MaxValue : maxChunkGenerationsPerFrame);
-    }
-
-    // ---------------------------------------------------------------------
-    // Player/platform collision
-    // ---------------------------------------------------------------------
-
-    /// <summary>Player platform state changed.</summary>
-    public void SetPlayerOnPlatform(bool onPlatform)
-    {
-        if (onPlatform == playerOnPlatform)
-            return;
-
-        playerOnPlatform = onPlatform;
-        ApplyPlayerPlatformCollision();
-    }
-
-    /// <summary>Syncs player collision to platform state.</summary>
-    private void ApplyPlayerPlatformCollision()
-    {
-        Physics2D.IgnoreLayerCollision(playerLayer, groundBoundaryLayer, playerOnPlatform);
-        Physics2D.IgnoreLayerCollision(playerLayer, platformBoundaryLayer, !playerOnPlatform);
     }
 
     // ---------------------------------------------------------------------
@@ -384,7 +268,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         waterBackgroundTilemap.SetTilesBlock(bounds, waterBackgroundTiles);
         coastFoamTilemap.SetTilesBlock(bounds, coastFoamTiles);
 
-        TryGenerateStructure(chunk, originX, originY, waterMask, maskOriginX, maskOriginY);
         GenerateDecor(chunk, originX, originY, waterMask, maskOriginX, maskOriginY);
     }
 
@@ -400,15 +283,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         waterTilemap.SetTilesBlock(bounds, clearTiles);
         waterBackgroundTilemap.SetTilesBlock(bounds, clearTiles);
         coastFoamTilemap.SetTilesBlock(bounds, clearTiles);
-        platformTilemap.SetTilesBlock(bounds, clearTiles);
-        wallTilemap.SetTilesBlock(bounds, clearTiles);
-        shadowTilemap.SetTilesBlock(bounds, clearTiles);
-
-        if (structurePlatforms.TryGetValue(chunk, out GameObject platform))
-        {
-            Destroy(platform);
-            structurePlatforms.Remove(chunk);
-        }
 
         if (decorObjects.TryGetValue(chunk, out List<(GameObject instance, GameObject prefab)> decorList))
         {
