@@ -20,6 +20,12 @@ public class PauseManager : MonoBehaviour
         if (!ctx.performed)
             return;
 
+        if (MenuPanel.CurrentOpen != null)
+        {
+            MenuPanel.CurrentOpen.Close();
+            return;
+        }
+
         if (IsPaused)
             Resume();
         else

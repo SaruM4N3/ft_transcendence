@@ -28,25 +28,28 @@ public class InteractionManager : MonoBehaviour
         if (interactAction != null)
             interactAction.performed -= OnInteractPerformed;
 
-        if (currentZone != null)
-            InteractPromptUI.Instance?.Hide();
+        currentZone?.HidePrompt();
         currentZone = null;
     }
 
     private void Update()
     {
+        if (PauseManager.IsPaused)
+        {
+            if (currentZone != null)
+            {
+                currentZone.HidePrompt();
+                currentZone = null;
+            }
+            return;
+        }
+
         InteractableZone nearest = GetNearestZone();
         if (nearest != currentZone)
         {
+            currentZone?.HidePrompt();
             currentZone = nearest;
-            if (currentZone != null)
-                InteractPromptUI.Instance?.Show(currentZone.PromptText, currentZone.PromptPosition);
-            else
-                InteractPromptUI.Instance?.Hide();
-        }
-        else if (currentZone != null)
-        {
-            InteractPromptUI.Instance?.UpdatePosition(currentZone.PromptPosition);
+            currentZone?.ShowPrompt();
         }
     }
 
@@ -57,7 +60,7 @@ public class InteractionManager : MonoBehaviour
 
         foreach (InteractableZone zone in ActiveZones)
         {
-            float sqrDist = (zone.PromptPosition - transform.position).sqrMagnitude;
+            float sqrDist = (zone.Position - transform.position).sqrMagnitude;
             if (sqrDist < bestSqrDist)
             {
                 bestSqrDist = sqrDist;
