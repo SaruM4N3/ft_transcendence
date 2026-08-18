@@ -37,7 +37,7 @@ public class MenuPanel : MonoBehaviour
         activeAnimation = StartCoroutine(Animate(opening: false));
     }
 
-    // Runs on unscaled time so it still plays while Time.timeScale is 0 (the menu's own pause).
+    // Runs on unscaled time for a consistent animation speed regardless of Time.timeScale.
     private IEnumerator Animate(bool opening)
     {
         float fromScale = opening ? closedScale : 1f;

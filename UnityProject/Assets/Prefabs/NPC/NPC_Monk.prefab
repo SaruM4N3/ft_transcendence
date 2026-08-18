@@ -368,6 +368,11 @@ MonoBehaviour:
   keyLabel: {fileID: 5603543046751860394}
   actionLabel: {fileID: 8845604594891145547}
   keyGlyph: E
+  animationDuration: 0.15
+  closedScale: 0.85
+  keyCapBlinkSpeed: 3
+  keyCapBlinkMinAlpha: 0.6
+  keyCapBlinkScaleAmplitude: 0.1
 --- !u!1 &6129677902248568737
 GameObject:
   m_ObjectHideFlags: 0

@@ -197,6 +197,29 @@ public class CharacterCustomizationMenu : MonoBehaviour
             customization.SetSelection(classIndex, colorIndex);
     }
 
+    /// <summary>Re-broadcasts the local player's current portrait/background/name to the HUD. Needed
+    /// when PlayerCustomization loads a saved profile in its own Start() - that happens after the
+    /// HUD's OnEnable-time initial sync (GetCurrentPortrait/Background/Name) and doesn't go through
+    /// Apply()/SetPlayerName(), so without this the HUD would keep showing stale defaults until the
+    /// player touched the menu again even though the world sprite/nametag updated correctly.</summary>
+    public void NotifyProfileLoaded(GameObject player)
+    {
+        int classIndex = CurrentClassIndex(player);
+        int colorIndex = CurrentColorIndex(player);
+        if (classIndex < 0 || classIndex >= classPresets.Length)
+            return;
+        if (colorIndex < 0 || colorIndex >= colorVariants.Length)
+            return;
+
+        OnPortraitChanged?.Invoke(colorVariants[colorIndex].portraitSpritesByClass[classIndex]);
+        if (colorIndex < backgroundSpritesByColor.Length)
+            OnBackgroundChanged?.Invoke(backgroundSpritesByColor[colorIndex]);
+
+        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        if (customization != null && !string.IsNullOrEmpty(customization.PlayerName))
+            OnNameChanged?.Invoke(customization.PlayerName);
+    }
+
     /// <summary>The mechanical half of a customization change (Animator controller + world sprite),
     /// with no HUD side effects. Called from Apply() for the local player, and by PlayerCustomization to
     /// reapply a networked puppet's replicated class/color - which must never touch the local HUD's
