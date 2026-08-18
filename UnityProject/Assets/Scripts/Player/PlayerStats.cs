@@ -7,18 +7,35 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float maxMana = 50f;
 
+    // Health is replicated (Owner-writable, read by Everyone) so the multiplayer lobby roster can show
+    // every player's health bar, not just the local one - Mana stays purely local since nothing outside
+    // this client needs to see it.
+    private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     public float MaxHealth => maxHealth;
     public float MaxMana => maxMana;
-    public float CurrentHealth { get; private set; }
+    public float CurrentHealth => currentHealth.Value;
     public float CurrentMana { get; private set; }
 
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
 
+    /// <summary>Fires for THIS instance specifically (any player, not just the local one) - the lobby
+    /// roster binds to a specific player's PlayerStats through this instead of the static
+    /// OnHealthChanged above, which only ever reflects the local player's own health.</summary>
+    public event Action<float, float> OnHealthReplicated;
+
     void Awake()
     {
-        CurrentHealth = maxHealth;
         CurrentMana = maxMana;
+        currentHealth.OnValueChanged += (_, newValue) =>
+        {
+            OnHealthReplicated?.Invoke(newValue, maxHealth);
+            if (this.IsLocallyControlled())
+                OnHealthChanged?.Invoke(newValue, maxHealth);
+        };
+        currentHealth.Value = maxHealth;
     }
 
     void Start()
@@ -32,18 +49,23 @@ public class PlayerStats : NetworkBehaviour
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
+    // Owner-only, same restriction as PlayerCustomization's setters - currentHealth is Owner-writable,
+    // so a non-owner call would be silently dropped by Netcode anyway; this just avoids doing that
+    // (and the warning it logs) in the first place.
     public void TakeDamage(float amount)
     {
-        CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0f, maxHealth);
-        if (this.IsLocallyControlled())
-            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (!this.IsLocallyControlled())
+            return;
+
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, 0f, maxHealth);
     }
 
     public void Heal(float amount)
     {
-        CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0f, maxHealth);
-        if (this.IsLocallyControlled())
-            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (!this.IsLocallyControlled())
+            return;
+
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value + amount, 0f, maxHealth);
     }
 
     public bool TrySpendMana(float amount)

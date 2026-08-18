@@ -117,8 +117,13 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (player == null)
             return null;
 
-        int classIndex = CurrentClassIndex(player);
-        int colorIndex = CurrentColorIndex(player);
+        return GetPortrait(CurrentClassIndex(player), CurrentColorIndex(player));
+    }
+
+    /// <summary>Resolves the portrait for an arbitrary class+color combo - used by the lobby roster UI
+    /// to show any connected player's avatar, not just the local one.</summary>
+    public Sprite GetPortrait(int classIndex, int colorIndex)
+    {
         if (classIndex < 0 || classIndex >= classPresets.Length)
             return null;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
