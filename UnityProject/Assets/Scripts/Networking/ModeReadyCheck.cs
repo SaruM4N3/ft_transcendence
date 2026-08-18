@@ -3,15 +3,13 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>Networked mode-select ready check: any client can propose a game mode (see
-/// GameModeLoader), which broadcasts a "ready check" to every connected client's screen. The scene
-/// loads - via Netcode's own NetworkSceneManager, so every client transitions together - once every
-/// currently connected player has marked themselves ready (PlayerCustomization.IsReady).</summary>
+/// <summary>Networked mode-select ready check: any client can propose a mode (see GameModeLoader),
+/// broadcasting it to every connected client's screen. Loads the scene via NetworkSceneManager - so
+/// everyone transitions together - once all players are marked ready (PlayerCustomization.IsReady).</summary>
 public class ModeReadyCheck : NetworkBehaviour
 {
-    /// <summary>Same inactive-inclusive fallback reasoning as CharacterCustomizationMenu.Instance -
-    /// this lives on the always-active NetworkManager GameObject, but callers shouldn't have to care
-    /// about Awake ordering.</summary>
+    /// <summary>Same inactive-inclusive fallback as CharacterCustomizationMenu.Instance, so callers
+    /// don't have to care about Awake ordering.</summary>
     public static ModeReadyCheck Instance
     {
         get
@@ -23,9 +21,8 @@ public class ModeReadyCheck : NetworkBehaviour
     }
     private static ModeReadyCheck instance;
 
-    // Empty = no ready check in progress. Server-writable only - clients propose a mode through the
-    // ServerRpc below rather than writing this directly, so the server can reset everyone's readiness
-    // at the same moment a new check starts.
+    // Empty = no ready check in progress. Clients propose a mode via the ServerRpc below (not a direct
+    // write) so the server can reset everyone's readiness at the same moment a new check starts.
     private readonly NetworkVariable<FixedString64Bytes> pendingSceneName = new NetworkVariable<FixedString64Bytes>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -45,8 +42,8 @@ public class ModeReadyCheck : NetworkBehaviour
         RequestReadyCheckServerRpc(sceneName);
     }
 
-    // RequireOwnership = false: this NetworkObject (the NetworkManager) is owned by the server, but any
-    // connected client needs to be able to propose a mode, not just the host.
+    // RequireOwnership = false: this NetworkObject is server-owned, but any client should be able to
+    // propose a mode, not just the host.
     [ServerRpc(RequireOwnership = false)]
     private void RequestReadyCheckServerRpc(FixedString64Bytes sceneName)
     {
@@ -55,10 +52,8 @@ public class ModeReadyCheck : NetworkBehaviour
             player.ServerResetReady();
     }
 
-    // Polls rather than wiring a change-event per currently-connected player (which would need
-    // subscribe/unsubscribe on every join/leave while a check is in progress) - this only does
-    // meaningful work while IsServer and a check is actually pending, which is a short-lived,
-    // low-frequency state, so the per-frame cost is negligible.
+    // Polls instead of wiring a per-player change-event (avoids subscribe/unsubscribe on every
+    // join/leave); only does real work while a check is pending, so the per-frame cost is negligible.
     private void Update()
     {
         if (!IsServer || pendingSceneName.Value.IsEmpty)

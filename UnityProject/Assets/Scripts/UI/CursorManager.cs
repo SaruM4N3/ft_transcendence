@@ -13,11 +13,9 @@ using UnityEngine.UI;
 public class CursorManager : MonoBehaviour
 {
     // Both sprites' hotspots are the arrow/hand tip's position within the *full* 64x64 source
-    // texture, top-left origin - the same convention the previous hardware-cursor version used for
-    // Cursor.SetCursor's hotspot. Computed relative to each sprite's own rect at runtime (see
-    // ApplySprite) instead of hardcoded as a pivot, so this still lines up if the sprites' import
-    // ever gets fixed to actually crop to their bounding box (currently it doesn't - the .meta files
-    // declare a crop but Resources.Load still returns the full untrimmed texture as the sprite).
+    // texture, top-left origin. Computed relative to each sprite's own rect at runtime (see
+    // ApplySprite) rather than hardcoded as a pivot, since the sprites' .meta crop isn't actually
+    // applied - Resources.Load still returns the full untrimmed texture.
     private static readonly Vector2 DefaultHotspot = new Vector2(21, 16);
     private static readonly Vector2 HoverHotspot = new Vector2(19, 16);
     private const string DefaultCursorResourcePath = "Tiny Swords/UI Elements/Cursors/Cursor_01";

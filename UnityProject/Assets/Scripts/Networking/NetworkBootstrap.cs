@@ -6,51 +6,40 @@ using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Wires the Lobby's MultiplayerPanel Host/Join buttons to real Netcode connections carried
-/// over Unity Relay (via the Multiplayer Services Session API), so players can connect across the
-/// internet without port-forwarding. The scene keeps its offline, non-networked player active by
-/// default (so solo play and every existing interact/UI system just work) - only once Host/Join is
-/// actually pressed does the offline player get replaced by a networked, Netcode-spawned one.</summary>
+/// <summary>Wires the Lobby's MultiplayerPanel Host/Join buttons to Netcode over Unity Relay, so
+/// players can connect across the internet without port-forwarding. The scene's offline player stays
+/// active by default for solo play - only Host/Join replaces it with a networked, Netcode-spawned one.</summary>
 public class NetworkBootstrap : MonoBehaviour
 {
     [SerializeField] private MenuPanel multiplayerPanel;
 
-    // Doubles as the relay join-code field: after hosting, the generated code is written into it
-    // (read-only) so the host can read/copy it; a joining client types a code into it before pressing
-    // Join. Left named "ipInputField" so the existing Inspector reference to the scene's IPInputField
-    // object isn't lost.
+    // Also the relay join-code field: hosting writes the generated code into it (read-only) for the
+    // host to copy; a joining client types a code in before pressing Join. Named ipInputField to match
+    // the existing Inspector wiring.
     [SerializeField] private TMP_InputField ipInputField;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private int maxPlayers = 4;
 
-    // Join-flow feedback: disabled/greyed while a join attempt is in flight so the player can't double
-    // click it into a second concurrent attempt, and a status label for "searching for the lobby" /
-    // error text (JoinGame is the only flow that surfaces this - Host has no "did we find it?" wait).
+    // Join-flow feedback: disabled while a join is in flight (no double-click), plus a status label for
+    // "searching"/error text. Host has no equivalent wait, so no matching fields there.
     [SerializeField] private Button joinButton;
     [SerializeField] private TMP_Text joinStatusText;
 
-    // Persistent in-game HUD readout (top-right) showing the relay code once hosting succeeds, so the
-    // host can still see/share it after the MultiplayerPanel is closed - unlike ipInputField, this one
-    // isn't shared with the Join flow's own placeholder/text.
+    // Top-right HUD readout showing the relay code after hosting, so it's still visible once
+    // MultiplayerPanel closes - separate from ipInputField, which the Join flow also uses.
     [SerializeField] private TMP_Text sessionCodeText;
 
-    // Where the host's own player was standing right before pressing Host - ApprovalCheck uses this
-    // instead of spawnPoint for the host's own connection, so hosting doesn't teleport them; joining
-    // clients still spawn at spawnPoint since they have no prior position in this session to keep.
+    // Captured pre-Host so ApprovalCheck can spawn the host back where they stood instead of at
+    // spawnPoint (used for actual joining clients, who have no prior position to keep).
     private Vector3? hostSpawnPosition;
     private Quaternion hostSpawnRotation;
 
-    // The offline player's "Main Camera"/"CinemachineCamera" children get reparented here right before
-    // the player itself is deactivated, so the camera keeps rendering during session setup (which takes
-    // real time) without keeping the whole player active - see CaptureOfflinePlayerState. Destroyed once
-    // the networked replacement (which brings its own camera pair) actually spawns.
+    // Holds the offline player's camera while it's reparented off during session setup - see
+    // CaptureOfflinePlayerState. Destroyed once the networked replacement spawns with its own camera.
     private GameObject detachedCameraHolder;
 
-    // NetworkManager.Singleton is set in NetworkManager's own Awake(), and Unity doesn't guarantee
-    // Awake() order between different components on the same GameObject - Start() does guarantee
-    // every Awake() in the scene has already run, so wire up here instead.
-    // Connection approval must be enabled (and the callback assigned) before StartHost/StartClient
-    // runs, so it has to happen here rather than inside HostGame/JoinGame.
+    // NetworkManager.Singleton is only set in its own Awake(), and Awake order across components isn't
+    // guaranteed - Start() runs after every Awake(), so connection approval is wired up here instead.
     private void Start()
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
@@ -63,18 +52,15 @@ public class NetworkBootstrap : MonoBehaviour
             NetworkManager.Singleton.ConnectionApprovalCallback -= ApprovalCheck;
     }
 
-    // Runs on the server for every connecting client, including the host's own local connection.
-    // Setting Position here spawns the player prefab already in place - the player's own
-    // NetworkTransform (AuthorityMode = Owner) reports that position out to everyone else, so unlike
-    // a post-spawn reposition it works uniformly for the host and for joining clients alike.
+    // Runs on the server for every connecting client, including the host's own. Setting Position here
+    // spawns the player prefab already in place, which the owner's own NetworkTransform then reports
+    // out to everyone else.
     private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
         response.Approved = true;
         response.CreatePlayerObject = true;
 
-        // The host's own connection always uses client id 0 (NetworkManager.ServerClientId) in
-        // client-server topology - keep it at hostSpawnPosition (where it stood before Host was
-        // pressed) instead of the shared spawnPoint used for actual joining clients.
+        // The host's own connection is always client id 0 in client-server topology.
         if (request.ClientNetworkId == NetworkManager.ServerClientId && hostSpawnPosition.HasValue)
         {
             response.Position = hostSpawnPosition.Value;
@@ -203,14 +189,11 @@ public class NetworkBootstrap : MonoBehaviour
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
-    // The offline player is a plain instance of the same prefab NetworkManager will spawn - and, like
-    // every scene-placed copy of a NetworkObject-bearing prefab, Netcode treats it as an in-scene
-    // network object that gets auto-spawned as a phantom extra "player" the moment the server actually
-    // starts (see NetworkConfig.EnableSceneManagement). It must therefore be deactivated immediately,
-    // synchronously, before any Host/Join network call - not once the replacement spawns. Its camera
-    // rig is detached first so the screen doesn't go dark for the (real) time session setup takes.
-    // Returns its current class/color/name so the caller can carry them over to the networked
-    // replacement, which otherwise spawns back at PlayerCustomization's defaults.
+    // The offline player carries a live NetworkObject (same prefab NetworkManager spawns), so Netcode
+    // auto-spawns it as a phantom extra "player" the moment the server starts unless it's deactivated
+    // first - synchronously, before any Host/Join call, not once the replacement spawns. Its camera is
+    // detached first so the screen doesn't go dark while session setup is in progress. Returns its
+    // current class/color/name so the caller can carry them over to the replacement.
     private (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) CaptureOfflinePlayerState()
     {
         GameObject offlinePlayer = GameObject.FindWithTag("Player");
@@ -239,16 +222,14 @@ public class NetworkBootstrap : MonoBehaviour
         return (current.classIndex, current.colorIndex, current.playerName, position, rotation);
     }
 
-    // Netcode's default player-prefab auto-spawn always creates a fresh instance at
-    // PlayerCustomization's defaults - reapply whatever the offline player was wearing/named right
-    // before Host/Join replaced it with this networked one.
+    // Netcode's auto-spawned player always starts at PlayerCustomization's defaults - reapply whatever
+    // the offline player was wearing/named before Host/Join replaced it.
     private System.Collections.IEnumerator RestoreLocalCustomizationWhenSpawned(int classIndex, int colorIndex, string playerName)
     {
         while (NetworkManager.Singleton.LocalClient == null || NetworkManager.Singleton.LocalClient.PlayerObject == null)
             yield return null;
 
-        // The networked replacement brings its own camera pair - the detached one from the old offline
-        // player has served its purpose (bridging the gap while session setup was in progress).
+        // The replacement brings its own camera pair - the detached one has served its purpose.
         if (detachedCameraHolder != null)
         {
             Destroy(detachedCameraHolder);

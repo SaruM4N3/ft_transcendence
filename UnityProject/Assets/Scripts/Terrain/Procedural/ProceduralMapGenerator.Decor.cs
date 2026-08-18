@@ -3,7 +3,6 @@ using UnityEngine;
 
 public partial class ProceduralMapGenerator
 {
-    /// <summary>Scatters configured decor prefabs (trees, rocks, ...) across a chunk.</summary>
     private void GenerateDecor(Vector2Int chunk, int originX, int originY, bool[,] waterMask, int maskOriginX, int maskOriginY)
     {
         if (decorEntries == null || decorEntries.Length == 0)
@@ -14,10 +13,9 @@ public partial class ProceduralMapGenerator
         float[] entryOffsetY = new float[entryCount];
         for (int i = 0; i < entryCount; i++)
         {
-            // Deterministic per-entry noise offset, independent of array order/count changing at
-            // design time - derived from the seed and the entry's index rather than a sequential
-            // RNG draw in Awake.
-            System.Random entryRandom = new(seed ^ (i * -1640531527)); // -1640531527 = 0x9E3779B9 as int32
+            // Derived from seed+index (not a sequential RNG draw) so offsets stay stable if entries
+            // are reordered/added later.
+            System.Random entryRandom = new(seed ^ (i * -1640531527)); // 0x9E3779B9 as int32
             entryOffsetX[i] = entryRandom.Next(-100000, 100000);
             entryOffsetY[i] = entryRandom.Next(-100000, 100000);
         }
@@ -57,13 +55,9 @@ public partial class ProceduralMapGenerator
             instance.transform.SetPositionAndRotation(position, Quaternion.identity);
             instance.SetActive(true);
 
-            // Two decor items on the same grid row get the exact same Y-based sortingOrder, which
-            // leaves their draw order to an unstable tie-break that can flicker frame to frame
-            // (most visible with animated sprites). Nudge by a small, deterministic, X-derived
-            // offset - just enough to break an exact integer tie (sortingOrder only needs a
-            // nonzero difference) without meaningfully shifting where short decor (e.g. bushes)
-            // crosses in front of/behind the player, since that threshold is this offset wide.
-            // A Set (not Add) since this instance may be reused from the pool with a stale offset.
+            // Same-row decor shares a Y-based sortingOrder, which flickers on an unstable tie-break -
+            // nudge by a small X-derived offset to break the tie. Set, not Add: a pooled instance may
+            // carry a stale offset from its previous use.
             SortingLayer_Auto sortScript = instance.GetComponent<SortingLayer_Auto>();
             if (sortScript != null)
             {
@@ -77,9 +71,8 @@ public partial class ProceduralMapGenerator
         decorObjects[chunk] = spawned;
     }
 
-    /// <summary>Gets a pooled, inactive instance of this prefab if one is available, otherwise instantiates
-    /// a new one under its category folder (e.g. "Decor/Tree", "Decor/Rock") - assigned once at creation,
-    /// since a pooled instance keeps the same parent for its whole life regardless of which chunk rents it.</summary>
+    // New instances are parented under their category folder ("Decor/Tree", ...) once at creation and
+    // keep that parent for life, even when reused by a different chunk later.
     private GameObject RentDecorInstance(GameObject prefab)
     {
         if (decorPool.TryGetValue(prefab, out Stack<GameObject> pool) && pool.Count > 0)
@@ -88,8 +81,7 @@ public partial class ProceduralMapGenerator
         return Instantiate(prefab, GetDecorCategoryParent(prefab));
     }
 
-    /// <summary>Gets (creating if needed) the "Decor/{category}" transform for a prefab, where category is
-    /// its name with any trailing variant digits stripped (e.g. "Tree1"/"Tree4" -> "Tree").</summary>
+    // Category = prefab name with trailing variant digits stripped ("Tree1"/"Tree4" -> "Tree").
     private Transform GetDecorCategoryParent(GameObject prefab)
     {
         if (decorParent == null)
@@ -111,7 +103,7 @@ public partial class ProceduralMapGenerator
         return categoryParent;
     }
 
-    /// <summary>Picks the first decor entry (in inspector order) that matches this cell's surface and noise/density roll.</summary>
+    // First entry (inspector order) that matches this cell's surface and noise/density roll.
     private GameObject PickDecorPrefab(
         System.Random chunkRandom, int worldX, int worldY, bool isWater, float[] entryOffsetX, float[] entryOffsetY)
     {

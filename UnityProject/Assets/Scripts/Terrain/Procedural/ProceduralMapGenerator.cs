@@ -4,9 +4,6 @@ using UnityEngine.Tilemaps;
 
 public partial class ProceduralMapGenerator : MonoBehaviour
 {
-    // ---------------------------------------------------------------------
-    // References
-    // ---------------------------------------------------------------------
     [Header("References")]
     [SerializeField] private Tilemap landTilemap;
     [SerializeField] private Tilemap waterTilemap;
@@ -14,9 +11,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private Tilemap coastFoamTilemap;
     [SerializeField] private Transform player;
 
-    // ---------------------------------------------------------------------
-    // Chunk streaming
-    // ---------------------------------------------------------------------
     [Header("Chunk Streaming")]
     [SerializeField] private int chunkSize = 16;
     [Tooltip("Extra chunks of buffer loaded beyond what the main camera actually shows, to avoid pop-in at the screen edges. The real load radius is computed every chunk update from the camera's current view plus this buffer.")]
@@ -26,9 +20,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private int seed;
     [SerializeField] private float spawnSafeRadius = 5f;
 
-    // ---------------------------------------------------------------------
-    // Biome & water
-    // ---------------------------------------------------------------------
     [Header("Biome & Water")]
     [SerializeField] private float biomeNoiseScale = 0.05f;
     [SerializeField] private TileBase[] biomeTiles;
@@ -38,15 +29,9 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private TileBase waterBackgroundTile;
     [SerializeField] private TileBase coastFoamTile;
 
-    // ---------------------------------------------------------------------
-    // Decor
-    // ---------------------------------------------------------------------
     [Header("Decor")]
     [SerializeField] private DecorEntry[] decorEntries;
 
-    // ---------------------------------------------------------------------
-    // Types
-    // ---------------------------------------------------------------------
     private enum DecorSurface { Land, Water }
 
     /// <summary>One decor prefab's placement rules: where it can spawn, how dense, and how it clusters.</summary>
@@ -66,9 +51,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         public float noiseThreshold = 0.75f;
     }
 
-    // ---------------------------------------------------------------------
-    // Runtime state
-    // ---------------------------------------------------------------------
     private readonly HashSet<Vector2Int> loadedChunks = new();
     private readonly HashSet<Vector2Int> pendingChunks = new();
     private readonly Queue<Vector2Int> pendingChunkQueue = new();
@@ -86,11 +68,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     private Vector2Int spawnCell;
     private int effectiveViewDistanceInChunks;
 
-    // ---------------------------------------------------------------------
-    // Unity lifecycle
-    // ---------------------------------------------------------------------
-
-    /// <summary>Setup.</summary>
     void Awake()
     {
         System.Random rng = new(seed);
@@ -153,11 +130,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         ProcessPendingChunks(firstRun ? int.MaxValue : maxChunkGenerationsPerFrame);
     }
 
-    // ---------------------------------------------------------------------
-    // Chunk streaming
-    // ---------------------------------------------------------------------
-
-    /// <summary>Recomputes which chunks are wanted, queues newly-needed ones, and unloads stale ones.</summary>
     private void UpdateChunks(Vector2Int centerChunk)
     {
         effectiveViewDistanceInChunks = ComputeEffectiveViewDistance();
@@ -205,7 +177,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         }
     }
 
-    /// <summary>Generates one chunk.</summary>
     private void GenerateChunk(Vector2Int chunk)
     {
         int originX = chunk.x * chunkSize;
@@ -271,7 +242,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         GenerateDecor(chunk, originX, originY, waterMask, maskOriginX, maskOriginY);
     }
 
-    /// <summary>Unloads one chunk.</summary>
     private void UnloadChunk(Vector2Int chunk)
     {
         int originX = chunk.x * chunkSize;
@@ -292,7 +262,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         }
     }
 
-    /// <summary>Deactivates a decor instance and returns it to its prefab's pool instead of destroying it.</summary>
+    // Pooled, not destroyed - chunks reload often enough that reuse matters.
     private void ReturnDecorToPool(GameObject instance, GameObject prefab)
     {
         instance.SetActive(false);
@@ -306,11 +276,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         pool.Push(instance);
     }
 
-    // ---------------------------------------------------------------------
-    // Coordinate helpers
-    // ---------------------------------------------------------------------
-
-    /// <summary>World to chunk coordinates.</summary>
     private Vector2Int WorldToChunk(Vector3 worldPosition)
     {
         Vector3Int cell = landTilemap.WorldToCell(worldPosition);
@@ -319,7 +284,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
             Mathf.FloorToInt(cell.y / (float)chunkSize));
     }
 
-    /// <summary>Deterministic per-chunk RNG.</summary>
+    // Seeded from chunk coords, so the same chunk always regenerates identically.
     private System.Random GetChunkRandom(Vector2Int chunk)
     {
         int hash = seed ^ (chunk.x * 73856093) ^ (chunk.y * 19349663);
