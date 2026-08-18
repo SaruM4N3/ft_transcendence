@@ -313,16 +313,20 @@ PrefabInstance:
       value: InteractPrompt_Archer
       objectReference: {fileID: 0}
     - target: {fileID: 4239071064445692561, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4239071064445692561, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 120
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 4239071064445692561, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -110
+      value: -120
       objectReference: {fileID: 0}
     - target: {fileID: 4281734878290004344, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
       propertyPath: keyCapBlinkMinAlpha
-      value: 0.6
+      value: 0.35
       objectReference: {fileID: 0}
     - target: {fileID: 4496719599031391616, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
       propertyPath: m_fontSize
