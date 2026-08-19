@@ -3,13 +3,11 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>Networked mode-select ready check: any client can propose a mode (see GameModeLoader),
-/// broadcasting it to every connected client's screen. Loads the scene via NetworkSceneManager - so
-/// everyone transitions together - once all players are marked ready (PlayerCustomization.IsReady).</summary>
+// Networked mode-select ready check: any client can propose a mode (GameModeLoader), broadcast to
+// everyone, then load the scene together via NetworkSceneManager once all players are ready.
 public class ModeReadyCheck : NetworkBehaviour
 {
-    /// <summary>Same inactive-inclusive fallback as CharacterCustomizationMenu.Instance, so callers
-    /// don't have to care about Awake ordering.</summary>
+    // Same inactive-inclusive fallback as CharacterCustomizationMenu.Instance.
     public static ModeReadyCheck Instance
     {
         get
@@ -21,13 +19,10 @@ public class ModeReadyCheck : NetworkBehaviour
     }
     private static ModeReadyCheck instance;
 
-    // Empty = no ready check in progress. Clients propose a mode via the ServerRpc below (not a direct
-    // write) so the server can reset everyone's readiness at the same moment a new check starts.
+    // Empty = no ready check in progress. Set only via the ServerRpc below so readiness resets atomically.
     private readonly NetworkVariable<FixedString64Bytes> pendingSceneName = new NetworkVariable<FixedString64Bytes>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    /// <summary>Fires with the pending scene name (empty string when the check ends) - the ready check
-    /// UI opens/closes itself off this.</summary>
     public event System.Action<string> OnPendingSceneChanged;
 
     private void Awake()
@@ -36,7 +31,6 @@ public class ModeReadyCheck : NetworkBehaviour
         pendingSceneName.OnValueChanged += (_, newValue) => OnPendingSceneChanged?.Invoke(newValue.ToString());
     }
 
-    /// <summary>Called by GameModeLoader when a mode button is pressed during a multiplayer session.</summary>
     public void RequestReadyCheck(string sceneName)
     {
         RequestReadyCheckServerRpc(sceneName);

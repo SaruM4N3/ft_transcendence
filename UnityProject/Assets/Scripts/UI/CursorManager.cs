@@ -5,17 +5,12 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-/// <summary>Replaces the OS cursor with a UI-rendered one, spawned once at startup (before any scene
-/// loads, so no GameObject needs to be wired into every scene) and kept alive across scenes. Needed
-/// because the hardware cursor (Cursor.SetCursor) can't be smoothly resized without regenerating its
-/// texture every frame - rendering our own lets the click feedback below just scale a RectTransform,
-/// and lets it swap to a different sprite while hovering a clickable UI element.</summary>
+// Replaces the OS cursor with a UI-rendered one (spawned once at startup, kept alive across scenes) so
+// click feedback can scale a RectTransform and hover can swap sprites - the hardware cursor can't do either.
 public class CursorManager : MonoBehaviour
 {
-    // Both sprites' hotspots are the arrow/hand tip's position within the *full* 64x64 source
-    // texture, top-left origin. Computed relative to each sprite's own rect at runtime (see
-    // ApplySprite) rather than hardcoded as a pivot, since the sprites' .meta crop isn't actually
-    // applied - Resources.Load still returns the full untrimmed texture.
+    // Hotspots are the tip's position within the full untrimmed 64x64 source texture (the .meta crop
+    // isn't actually applied by Resources.Load), converted to a pivot at runtime in ApplySprite.
     private static readonly Vector2 DefaultHotspot = new Vector2(21, 16);
     private static readonly Vector2 HoverHotspot = new Vector2(19, 16);
     private const string DefaultCursorResourcePath = "Tiny Swords/UI Elements/Cursors/Cursor_01";

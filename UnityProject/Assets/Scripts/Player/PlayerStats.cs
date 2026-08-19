@@ -7,8 +7,7 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float maxMana = 50f;
 
-    // Replicated so the lobby roster can show every player's health bar, not just the local one - Mana
-    // stays purely local since nothing outside this client needs to see it.
+    // Replicated so the lobby roster can show every player's health; mana stays purely local.
     private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -20,9 +19,7 @@ public class PlayerStats : NetworkBehaviour
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
 
-    /// <summary>Fires for THIS instance specifically (any player, not just the local one) - the lobby
-    /// roster binds to a specific player's health through this instead of the static OnHealthChanged,
-    /// which only ever reflects the local player.</summary>
+    // Fires for this instance specifically - lets the lobby roster bind to a non-local player's health.
     public event Action<float, float> OnHealthReplicated;
 
     void Awake()
@@ -47,8 +44,7 @@ public class PlayerStats : NetworkBehaviour
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
-    // currentHealth is Owner-writable, so a non-owner call would be silently dropped by Netcode anyway
-    // - this just avoids the warning it logs for that.
+    // Avoids the warning Netcode logs when a non-owner writes an Owner-writable NetworkVariable.
     public void TakeDamage(float amount)
     {
         if (!this.IsLocallyControlled())

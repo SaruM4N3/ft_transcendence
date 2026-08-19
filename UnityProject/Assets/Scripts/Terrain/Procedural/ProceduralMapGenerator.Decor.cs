@@ -13,8 +13,7 @@ public partial class ProceduralMapGenerator
         float[] entryOffsetY = new float[entryCount];
         for (int i = 0; i < entryCount; i++)
         {
-            // Derived from seed+index (not a sequential RNG draw) so offsets stay stable if entries
-            // are reordered/added later.
+            // Derived from seed+index, not a sequential RNG draw, so offsets stay stable if entries are reordered.
             System.Random entryRandom = new(seed ^ (i * -1640531527)); // 0x9E3779B9 as int32
             entryOffsetX[i] = entryRandom.Next(-100000, 100000);
             entryOffsetY[i] = entryRandom.Next(-100000, 100000);
@@ -55,9 +54,8 @@ public partial class ProceduralMapGenerator
             instance.transform.SetPositionAndRotation(position, Quaternion.identity);
             instance.SetActive(true);
 
-            // Same-row decor shares a Y-based sortingOrder, which flickers on an unstable tie-break -
-            // nudge by a small X-derived offset to break the tie. Set, not Add: a pooled instance may
-            // carry a stale offset from its previous use.
+            // Same-row decor shares a Y-based sortingOrder and flickers on ties - nudge by X. Set, not
+            // Add, since a pooled instance may carry a stale offset.
             SortingLayer_Auto sortScript = instance.GetComponent<SortingLayer_Auto>();
             if (sortScript != null)
             {

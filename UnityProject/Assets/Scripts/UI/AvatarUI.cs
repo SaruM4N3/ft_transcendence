@@ -15,12 +15,8 @@ public class AvatarUI : MonoBehaviour
     {
         CharacterCustomizationMenu.OnPortraitChanged += SetAvatar;
 
-        // Initial sync in case the Customize menu hasn't been opened yet this session (so it never
-        // fired OnPortraitChanged) - find it directly (even inactive) and ask it to resolve the
-        // portrait, rather than reading the player's raw (animating) world sprite.
-        CharacterCustomizationMenu menu = FindAnyObjectByType<CharacterCustomizationMenu>(FindObjectsInactive.Include);
-        if (menu != null)
-            SetAvatar(menu.GetCurrentPortrait());
+        // Initial sync in case the Customize menu hasn't been opened yet this session (never fired OnPortraitChanged).
+        SetAvatar(CharacterCustomizationMenu.Instance?.GetCurrentPortrait());
     }
 
     void OnDisable()

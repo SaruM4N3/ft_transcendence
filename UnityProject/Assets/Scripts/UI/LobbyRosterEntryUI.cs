@@ -2,10 +2,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>One row of the multiplayer lobby roster (LobbyRosterUI) - avatar, name and health bar for
-/// a single player. Unlike AvatarUI/PlayerNameUI/StatBarUI (which listen to the local-only static
-/// events and always represent the local player), an entry is explicitly Bind()'d to one specific
-/// PlayerCustomization/PlayerStats pair, so it can just as well represent another player.</summary>
+// One roster row (LobbyRosterUI) - avatar, name, health bar. Unlike AvatarUI/PlayerNameUI/StatBarUI
+// (local-player-only static events), this is explicitly Bind()'d to any PlayerCustomization/PlayerStats pair.
 public class LobbyRosterEntryUI : MonoBehaviour
 {
     [SerializeField] private Image avatarImage;
