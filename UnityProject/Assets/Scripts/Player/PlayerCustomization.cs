@@ -18,6 +18,7 @@ public class PlayerCustomization : NetworkBehaviour
 
     public event System.Action<int, int> OnClassOrColorChanged;
     public event System.Action<string> OnDisplayNameChanged;
+    public event System.Action<int> OnTeamChanged;
 
     // Disambiguated name (e.g. "Bob (2)") - lets a newly bound roster row read it immediately.
     public string CurrentDisplayName { get; private set; }
@@ -28,6 +29,9 @@ public class PlayerCustomization : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    // Per-session/per-mode choice (which team to join at ready-check time) - not saved to PlayerProfileStore.
+    private readonly NetworkVariable<int> teamIndex = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     // Server-writable (not Owner) so ServerResetReady() can clear any player's readiness; SetReady() below
     // goes through a ServerRpc since even the server can't bypass the write-permission check directly.
@@ -37,6 +41,7 @@ public class PlayerCustomization : NetworkBehaviour
     public int ClassIndex => classIndex.Value;
     public int ColorIndex => colorIndex.Value;
     public string PlayerName => playerName.Value.ToString();
+    public int TeamIndex => teamIndex.Value;
     public bool IsReady => isReady.Value;
 
     public event System.Action<bool> OnReadyChanged;
@@ -49,6 +54,7 @@ public class PlayerCustomization : NetworkBehaviour
         colorIndex.OnValueChanged += (_, _) => { ApplyVisuals(); OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value); };
         // A rename can create/resolve a collision with another player, so re-derive every name, not just this one.
         playerName.OnValueChanged += (_, _) => RefreshAllDisplayNames();
+        teamIndex.OnValueChanged += (_, newValue) => OnTeamChanged?.Invoke(newValue);
         isReady.OnValueChanged += (_, newValue) => OnReadyChanged?.Invoke(newValue);
     }
 
@@ -121,6 +127,14 @@ public class PlayerCustomization : NetworkBehaviour
         classIndex.Value = newClassIndex;
         colorIndex.Value = newColorIndex;
         PlayerProfileStore.Save(classIndex.Value, colorIndex.Value, playerName.Value.ToString());
+    }
+
+    public void SetTeam(int newTeamIndex)
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        teamIndex.Value = newTeamIndex;
     }
 
     public void SetName(string newName)
