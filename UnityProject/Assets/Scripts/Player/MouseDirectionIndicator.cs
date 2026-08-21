@@ -8,14 +8,49 @@ using UnityEngine.InputSystem;
 // can legitimately be null there.
 public class MouseDirectionIndicator : MonoBehaviour
 {
+    // Indexed the same as CharacterCustomizationMenu's colorVariants: Black, Blue, Purple, Red, Yellow.
+    [SerializeField] private Color[] colorsByColorIndex =
+    {
+        new Color(0.15f, 0.15f, 0.15f),
+        new Color(0.25f, 0.45f, 0.95f),
+        new Color(0.6f, 0.3f, 0.85f),
+        new Color(0.85f, 0.25f, 0.25f),
+        new Color(0.95f, 0.8f, 0.2f),
+    };
+
     private SpriteRenderer spriteRenderer;
     private NetworkObject networkObject;
+    private PlayerCustomization customization;
     private Camera cam;
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         networkObject = GetComponentInParent<NetworkObject>();
+        customization = GetComponentInParent<PlayerCustomization>();
+    }
+
+    void OnEnable()
+    {
+        if (customization == null)
+            return;
+
+        customization.OnClassOrColorChanged += ApplyColor;
+        ApplyColor(customization.ClassIndex, customization.ColorIndex);
+    }
+
+    void OnDisable()
+    {
+        if (customization != null)
+            customization.OnClassOrColorChanged -= ApplyColor;
+    }
+
+    private void ApplyColor(int classIndex, int colorIndex)
+    {
+        if (colorIndex < 0 || colorIndex >= colorsByColorIndex.Length)
+            return;
+
+        spriteRenderer.color = colorsByColorIndex[colorIndex];
     }
 
     void Update()

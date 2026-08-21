@@ -942,6 +942,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad27a6c88070c6459516eeb743e10a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseDirectionIndicator
+  colorsByColorIndex:
+  - {r: 0.15, g: 0.15, b: 0.15, a: 1}
+  - {r: 0.25, g: 0.45, b: 0.95, a: 1}
+  - {r: 0.6, g: 0.3, b: 0.85, a: 1}
+  - {r: 0.85, g: 0.25, b: 0.25, a: 1}
+  - {r: 0.95, g: 0.8, b: 0.2, a: 1}
 --- !u!1 &6154226964579139035
 GameObject:
   m_ObjectHideFlags: 0
