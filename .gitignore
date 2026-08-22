@@ -1,0 +1,47 @@
+# Unity generated folders
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# Crash dumps and editor recovery artifacts
+mono_crash.mem.*
+*.blob
+UnityProject/Assets/_Recovery/
+UnityProject/Assets/_Recovery.meta
+
+# Visual Studio / Rider / VS Code generated project files
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.unityproj
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Unity crash logs
+sysinfo.txt
+crashlytics-build.properties
+
+# Claude Code
+.claude/
+CLAUDE.md
