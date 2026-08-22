@@ -66,6 +66,15 @@ public class PlayerMovement : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
+        // Input callbacks keep tracking real input state even while paused (see Move/Run/Guard below) so
+        // state is accurate the instant we unpause - but movement itself must not apply while paused.
+        if (PauseManager.IsPaused)
+        {
+            rb.linearVelocity = Vector2.zero;
+            animator.SetBool(IsWalkingHash, false);
+            return;
+        }
+
         if (isGuarding)
         {
             rb.linearVelocity = Vector2.zero;
@@ -80,11 +89,16 @@ public class PlayerMovement : NetworkBehaviour
 
     public void Move(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || PauseManager.IsPaused)
+        if (!this.IsLocallyControlled())
             return;
 
+        // Always track the real input value, even while paused - otherwise a key released mid-pause
+        // never clears moveInput, and the player keeps sliding once unpaused (Update() reads this every frame).
         moveInput = ctx.ReadValue<Vector2>();
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
+
+        if (PauseManager.IsPaused)
+            return;
 
         animator.SetBool(IsWalkingHash, !isGuarding && hasDirection);
         animator.SetFloat(InputXHash, moveInput.x);
@@ -96,13 +110,16 @@ public class PlayerMovement : NetworkBehaviour
 
     public void Run(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || PauseManager.IsPaused)
+        if (!this.IsLocallyControlled())
             return;
         if (ctx.canceled)
         {
             isRunning = false;
             return;
         }
+        if (PauseManager.IsPaused)
+            return;
+
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
         isRunning = true;
         if (hasDirection)
@@ -122,12 +139,14 @@ public class PlayerMovement : NetworkBehaviour
 
     public void Guard(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || PauseManager.IsPaused)
+        if (!this.IsLocallyControlled())
             return;
 
         bool wantsGuard = !ctx.canceled;
 
-        if (wantsGuard && Time.time < guardReadyTime)
+        // Releasing guard must always go through, even while paused - otherwise isGuarding gets stuck
+        // true (Update() zeroes velocity for it) and the player is frozen even after unpausing.
+        if (wantsGuard && (PauseManager.IsPaused || Time.time < guardReadyTime))
             return;
 
         if (ctx.canceled && !isGuarding)
