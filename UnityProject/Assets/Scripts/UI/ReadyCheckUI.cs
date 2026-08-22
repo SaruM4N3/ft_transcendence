@@ -3,9 +3,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Ready check controller: opens ReadyCheckPanel when anyone proposes a mode (ModeReadyCheck/GameModeLoader),
-// lists ready status, lets the local player toggle theirs. Lives on an always-active object separate from
-// the panel, since MenuPanel.Close() deactivates its own GameObject and would kill these subscriptions.
+// Opens ReadyCheckPanel when a mode is proposed, shows ready status, lets the local player toggle ready.
+// Lives on a separate always-active object - MenuPanel.Close() would otherwise kill its subscriptions.
 public class ReadyCheckUI : MonoBehaviour
 {
     [SerializeField] private MenuPanel menuPanel;

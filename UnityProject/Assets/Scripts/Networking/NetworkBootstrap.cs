@@ -1,3 +1,4 @@
+using System.Reflection;
 using TMPro;
 using Unity.Netcode;
 using Unity.Services.Authentication;
@@ -10,6 +11,16 @@ using UnityEngine.UI;
 // active for solo play - only Host/Join replaces it with a networked, Netcode-spawned one.
 public class NetworkBootstrap : MonoBehaviour
 {
+    // Suppresses Netcode's harmless "written before spawn" warning - the offline player writes early on purpose.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void SuppressPreSpawnNetworkVariableWarning()
+    {
+        typeof(NetworkVariableBase)
+            .GetField("IgnoreInitializeWarning", BindingFlags.NonPublic | BindingFlags.Static)
+            ?.SetValue(null, true);
+    }
+
+
     [SerializeField] private MenuPanel multiplayerPanel;
 
     // Doubles as the relay join-code field: hosting writes the code here (read-only) to copy; joining reads it.
@@ -171,9 +182,8 @@ public class NetworkBootstrap : MonoBehaviour
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
-    // Deactivate the offline player before Host/Join so Netcode doesn't auto-spawn it as a phantom
-    // extra player; detach its camera first so the screen doesn't go dark. Returns its class/color/name
-    // so the caller can carry them over to the replacement.
+    // Deactivates the offline player before Host/Join so it doesn't auto-spawn as a phantom; detaches its camera first.
+    // Returns its class/color/name so the caller can copy them onto the replacement.
     private (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) CaptureOfflinePlayerState()
     {
         GameObject offlinePlayer = LocalPlayer.Get();

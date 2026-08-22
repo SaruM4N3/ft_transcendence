@@ -2,10 +2,8 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Ground-level ring at the local player's feet that rotates to point at the mouse. Own child GameObject
-// so rotation is independent of the body sprite's flipX facing. Plain MonoBehaviour, not NetworkBehaviour:
-// the customization preview stand-in has NetworkObject removed but still gets this child, so networkObject
-// can legitimately be null there.
+// Ground ring at the player's feet that rotates to point at the mouse; its own child so flipX doesn't affect it.
+// Not a NetworkBehaviour - the preview stand-in has no NetworkObject, so networkObject can be null.
 public class MouseDirectionIndicator : MonoBehaviour
 {
     // Indexed the same as CharacterCustomizationMenu's colorVariants: Black, Blue, Purple, Red, Yellow.

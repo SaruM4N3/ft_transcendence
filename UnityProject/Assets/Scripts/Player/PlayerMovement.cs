@@ -66,8 +66,7 @@ public class PlayerMovement : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        // Input callbacks keep tracking real input state even while paused (see Move/Run/Guard below) so
-        // state is accurate the instant we unpause - but movement itself must not apply while paused.
+        // Freezes movement while paused - Move/Run/Guard still track real input so state is correct on unpause.
         if (PauseManager.IsPaused)
         {
             rb.linearVelocity = Vector2.zero;
@@ -92,8 +91,7 @@ public class PlayerMovement : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        // Always track the real input value, even while paused - otherwise a key released mid-pause
-        // never clears moveInput, and the player keeps sliding once unpaused (Update() reads this every frame).
+        // Tracks input even while paused, so a key released mid-pause doesn't leave the player sliding after unpause.
         moveInput = ctx.ReadValue<Vector2>();
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
 
@@ -144,8 +142,7 @@ public class PlayerMovement : NetworkBehaviour
 
         bool wantsGuard = !ctx.canceled;
 
-        // Releasing guard must always go through, even while paused - otherwise isGuarding gets stuck
-        // true (Update() zeroes velocity for it) and the player is frozen even after unpausing.
+        // Releasing guard must work even while paused, or isGuarding stays stuck true and freezes the player.
         if (wantsGuard && (PauseManager.IsPaused || Time.time < guardReadyTime))
             return;
 
