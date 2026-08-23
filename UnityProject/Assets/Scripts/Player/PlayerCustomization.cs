@@ -61,6 +61,10 @@ public class PlayerCustomization : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         ApplyVisuals();
+        // OnValueChanged doesn't fire for the initial value a late-joining/observing client
+        // receives, so any listener that read a not-yet-synced default in its own OnEnable
+        // (e.g. MouseDirectionIndicator) needs this explicit nudge once spawn data has landed.
+        OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value);
         ActiveInstances.Add(this);
         RefreshAllDisplayNames();
         OnPlayerRegistered?.Invoke(this);
