@@ -50,6 +50,9 @@ const server = createServer(async (req, res) => {
 		} else {
 			headers['Content-Type'] = contentTypeFor(filePath);
 		}
+		// Without this, Node falls back to chunked transfer, which strips the signal
+		// Unity's WebGL client-side cache needs to detect a build has changed.
+		headers['Content-Length'] = content.length;
 
 		res.writeHead(200, headers);
 		res.end(content);
