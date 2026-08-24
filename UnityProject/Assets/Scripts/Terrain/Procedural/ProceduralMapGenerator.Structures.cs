@@ -5,7 +5,8 @@ using UnityEngine.Tilemaps;
 public partial class ProceduralMapGenerator
 {
     /// <summary>Tries to generate a structure.</summary>
-    private void TryGenerateStructure(Vector2Int chunk, int originX, int originY)
+    private void TryGenerateStructure(
+        Vector2Int chunk, int originX, int originY, bool[,] waterMask, int maskOriginX, int maskOriginY)
     {
         if (!generatePlatforms)
             return;
@@ -35,7 +36,9 @@ public partial class ProceduralMapGenerator
         List<StairsGap> stairsGaps = PlanStairsGaps(
             chunkRandom, platformOriginX, platformOriginY, platformWidth, platformHeight, floorMask);
 
-        PaintPlatformFloor(platformOriginX, platformOriginY, platformWidth, platformHeight, floorMask);
+        PaintPlatformFloor(
+            platformOriginX, platformOriginY, platformWidth, platformHeight, floorMask,
+            waterMask, maskOriginX, maskOriginY);
 
         GameObject platformRoot = new("Platform");
         platformRoot.transform.SetParent(platformTilemap.transform, false);
@@ -49,10 +52,23 @@ public partial class ProceduralMapGenerator
         SpawnStairsPrefabs(platformOriginX, platformOriginY, stairsGaps, platformRoot.transform);
     }
 
+    /// <summary>Clears the active [0, width) x [0, height) region of a reused scratch buffer.</summary>
+    private static void ClearBufferRegion(bool[,] buffer, int width, int height)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                buffer[x, y] = false;
+            }
+        }
+    }
+
     /// <summary>Generates the floor mask.</summary>
     private bool[,] GenerateFloorMask(int platformOriginX, int platformOriginY, int platformWidth, int platformHeight)
     {
-        bool[,] mask = new bool[platformWidth, platformHeight];
+        // Fully overwritten below, cell by cell, so no clearing needed before reuse.
+        bool[,] mask = structureMaskBuffer;
 
         for (int ly = 0; ly < platformHeight; ly++)
         {
@@ -80,8 +96,11 @@ public partial class ProceduralMapGenerator
     /// <summary>Keeps the largest floor component.</summary>
     private bool[,] KeepLargestComponent(bool[,] mask, int platformWidth, int platformHeight, out int floorCount)
     {
-        bool[,] visited = new bool[platformWidth, platformHeight];
-        List<Vector2Int> largest = null;
+        bool[,] visited = structureVisitedBuffer;
+        ClearBufferRegion(visited, platformWidth, platformHeight);
+
+        floodFillLargest.Clear();
+        bool hasLargest = false;
 
         for (int ly = 0; ly < platformHeight; ly++)
         {
@@ -91,22 +110,24 @@ public partial class ProceduralMapGenerator
                     continue;
 
                 List<Vector2Int> component = FloodFillComponent(mask, visited, platformWidth, platformHeight, lx, ly);
-                if (largest == null || component.Count > largest.Count)
-                    largest = component;
+                if (!hasLargest || component.Count > floodFillLargest.Count)
+                {
+                    floodFillLargest.Clear();
+                    floodFillLargest.AddRange(component);
+                    hasLargest = true;
+                }
             }
         }
 
-        bool[,] result = new bool[platformWidth, platformHeight];
-        if (largest != null)
+        bool[,] result = structureLargestBuffer;
+        ClearBufferRegion(result, platformWidth, platformHeight);
+        if (hasLargest)
         {
-            foreach (Vector2Int cell in largest)
+            foreach (Vector2Int cell in floodFillLargest)
                 result[cell.x, cell.y] = true;
         }
 
-        if (largest != null)
-            floorCount = largest.Count;
-        else
-            floorCount = 0;
+        floorCount = hasLargest ? floodFillLargest.Count : 0;
 
         return result;
     }
@@ -114,43 +135,43 @@ public partial class ProceduralMapGenerator
     /// <summary>Fills interior holes.</summary>
     private bool[,] FillInteriorHoles(bool[,] mask, int width, int height)
     {
-        bool[,] reachedFromOutside = new bool[width, height];
-        Queue<Vector2Int> queue = new();
+        bool[,] reachedFromOutside = structureReachedBuffer;
+        ClearBufferRegion(reachedFromOutside, width, height);
+        floodFillQueue.Clear();
 
         for (int x = 0; x < width; x++)
         {
-            EnqueueIfEmpty(mask, reachedFromOutside, queue, x, 0);
-            EnqueueIfEmpty(mask, reachedFromOutside, queue, x, height - 1);
+            EnqueueIfEmpty(mask, reachedFromOutside, floodFillQueue, x, 0);
+            EnqueueIfEmpty(mask, reachedFromOutside, floodFillQueue, x, height - 1);
         }
         for (int y = 0; y < height; y++)
         {
-            EnqueueIfEmpty(mask, reachedFromOutside, queue, 0, y);
-            EnqueueIfEmpty(mask, reachedFromOutside, queue, width - 1, y);
+            EnqueueIfEmpty(mask, reachedFromOutside, floodFillQueue, 0, y);
+            EnqueueIfEmpty(mask, reachedFromOutside, floodFillQueue, width - 1, y);
         }
 
-        Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
-
-        while (queue.Count > 0)
+        while (floodFillQueue.Count > 0)
         {
-            Vector2Int cell = queue.Dequeue();
+            Vector2Int cell = floodFillQueue.Dequeue();
 
-            foreach (Vector2Int dir in directions)
+            foreach (Vector2Int dir in CardinalDirections)
             {
                 Vector2Int next = cell + dir;
                 if (next.x < 0 || next.x >= width || next.y < 0 || next.y >= height)
                     continue;
 
-                EnqueueIfEmpty(mask, reachedFromOutside, queue, next.x, next.y);
+                EnqueueIfEmpty(mask, reachedFromOutside, floodFillQueue, next.x, next.y);
             }
         }
 
-        bool[,] result = (bool[,])mask.Clone();
+        // `mask` is `structureLargestBuffer` at this point in the pipeline, so `structureMaskBuffer`
+        // (the raw mask, already consumed by KeepLargestComponent) is safe to reuse as the result.
+        bool[,] result = structureMaskBuffer;
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                if (!mask[x, y] && !reachedFromOutside[x, y])
-                    result[x, y] = true;
+                result[x, y] = mask[x, y] || !reachedFromOutside[x, y];
             }
         }
 
@@ -170,19 +191,17 @@ public partial class ProceduralMapGenerator
     /// <summary>Flood-fills a component.</summary>
     private List<Vector2Int> FloodFillComponent(bool[,] mask, bool[,] visited, int width, int height, int startX, int startY)
     {
-        List<Vector2Int> component = new();
-        Queue<Vector2Int> queue = new();
-        queue.Enqueue(new Vector2Int(startX, startY));
+        floodFillScratch.Clear();
+        floodFillQueue.Clear();
+        floodFillQueue.Enqueue(new Vector2Int(startX, startY));
         visited[startX, startY] = true;
 
-        Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
-
-        while (queue.Count > 0)
+        while (floodFillQueue.Count > 0)
         {
-            Vector2Int cell = queue.Dequeue();
-            component.Add(cell);
+            Vector2Int cell = floodFillQueue.Dequeue();
+            floodFillScratch.Add(cell);
 
-            foreach (Vector2Int dir in directions)
+            foreach (Vector2Int dir in CardinalDirections)
             {
                 Vector2Int next = cell + dir;
                 if (next.x < 0 || next.x >= width || next.y < 0 || next.y >= height)
@@ -191,49 +210,65 @@ public partial class ProceduralMapGenerator
                     continue;
 
                 visited[next.x, next.y] = true;
-                queue.Enqueue(next);
+                floodFillQueue.Enqueue(next);
             }
         }
 
-        return component;
+        return floodFillScratch;
     }
 
     /// <summary>Paints the platform floor.</summary>
-    private void PaintPlatformFloor(int platformOriginX, int platformOriginY, int platformWidth, int platformHeight, bool[,] floorMask)
+    private void PaintPlatformFloor(
+        int platformOriginX, int platformOriginY, int platformWidth, int platformHeight, bool[,] floorMask,
+        bool[,] waterMask, int maskOriginX, int maskOriginY)
     {
+        int cellCount = platformWidth * platformHeight;
+        TileBase[] platformTiles = new TileBase[cellCount];
+        TileBase[] landTiles = new TileBase[cellCount];
+        TileBase[] waterTiles = new TileBase[cellCount];
+        TileBase[] waterBackgroundTiles = new TileBase[cellCount];
+        TileBase[] coastFoamTiles = new TileBase[cellCount];
+
         for (int ly = 0; ly < platformHeight; ly++)
         {
             for (int lx = 0; lx < platformWidth; lx++)
             {
-                if (!floorMask[lx, ly])
-                    continue;
-
+                int index = lx + ly * platformWidth;
                 int floorWorldX = platformOriginX + lx;
                 int floorWorldY = platformOriginY + ly;
-                Vector3Int cell = new(floorWorldX, floorWorldY, 0);
 
-                platformTilemap.SetTile(cell, interiorFloorTile);
+                bool isWater = MaskIsWater(waterMask, maskOriginX, maskOriginY, floorWorldX, floorWorldY);
 
-                bool isPlatformWater = IsWater(floorWorldX, floorWorldY);
-                if (isPlatformWater)
-                    landTilemap.SetTile(cell, null);
-                else
-                    landTilemap.SetTile(cell, PickLandTile(floorWorldX, floorWorldY));
-                waterTilemap.SetTile(cell, null);
-
-                bool isCoastalFloor = IsAdjacentToWater(floorWorldX, floorWorldY);
-                if (isCoastalFloor)
+                if (!floorMask[lx, ly])
                 {
-                    waterBackgroundTilemap.SetTile(cell, waterBackgroundTile);
-                    coastFoamTilemap.SetTile(cell, coastFoamTile);
+                    // Not part of the platform footprint: re-derive exactly what GenerateChunk
+                    // already painted here (same mask, same formula) instead of leaving it
+                    // untouched, since the whole region is written back in one SetTilesBlock call.
+                    waterTiles[index] = isWater ? waterTile : null;
+                    landTiles[index] = isWater ? null : PickLandTile(floorWorldX, floorWorldY);
+
+                    bool baseCoastal = !isWater && MaskIsAdjacentToWater(waterMask, maskOriginX, maskOriginY, floorWorldX, floorWorldY);
+                    waterBackgroundTiles[index] = baseCoastal ? waterBackgroundTile : null;
+                    coastFoamTiles[index] = baseCoastal ? coastFoamTile : null;
+                    continue;
                 }
-                else
-                {
-                    waterBackgroundTilemap.SetTile(cell, null);
-                    coastFoamTilemap.SetTile(cell, null);
-                }
+
+                platformTiles[index] = interiorFloorTile;
+                landTiles[index] = isWater ? null : PickLandTile(floorWorldX, floorWorldY);
+                waterTiles[index] = null;
+
+                bool isCoastalFloor = MaskIsAdjacentToWater(waterMask, maskOriginX, maskOriginY, floorWorldX, floorWorldY);
+                waterBackgroundTiles[index] = isCoastalFloor ? waterBackgroundTile : null;
+                coastFoamTiles[index] = isCoastalFloor ? coastFoamTile : null;
             }
         }
+
+        BoundsInt bounds = new(platformOriginX, platformOriginY, 0, platformWidth, platformHeight, 1);
+        platformTilemap.SetTilesBlock(bounds, platformTiles);
+        landTilemap.SetTilesBlock(bounds, landTiles);
+        waterTilemap.SetTilesBlock(bounds, waterTiles);
+        waterBackgroundTilemap.SetTilesBlock(bounds, waterBackgroundTiles);
+        coastFoamTilemap.SetTilesBlock(bounds, coastFoamTiles);
     }
 
     /// <summary>Paints the south walls.</summary>
