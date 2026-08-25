@@ -1,7 +1,8 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerStats : MonoBehaviour
+public class PlayerStats : NetworkBehaviour
 {
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float maxMana = 50f;
@@ -22,6 +23,11 @@ public class PlayerStats : MonoBehaviour
 
     void Start()
     {
+        // Every connected player's stats live on their own machine too (one instance per client),
+        // but only the local/owned instance should drive this client's HUD.
+        if (!this.IsLocallyControlled())
+            return;
+
         OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
@@ -29,13 +35,15 @@ public class PlayerStats : MonoBehaviour
     public void TakeDamage(float amount)
     {
         CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0f, maxHealth);
-        OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (this.IsLocallyControlled())
+            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
     }
 
     public void Heal(float amount)
     {
         CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0f, maxHealth);
-        OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (this.IsLocallyControlled())
+            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
     }
 
     public bool TrySpendMana(float amount)
@@ -44,13 +52,15 @@ public class PlayerStats : MonoBehaviour
             return false;
 
         CurrentMana -= amount;
-        OnManaChanged?.Invoke(CurrentMana, maxMana);
+        if (this.IsLocallyControlled())
+            OnManaChanged?.Invoke(CurrentMana, maxMana);
         return true;
     }
 
     public void RestoreMana(float amount)
     {
         CurrentMana = Mathf.Clamp(CurrentMana + amount, 0f, maxMana);
-        OnManaChanged?.Invoke(CurrentMana, maxMana);
+        if (this.IsLocallyControlled())
+            OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 }

@@ -1,8 +1,9 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     public static event Action<AbilityType, float> OnAbilityUsed;
 
@@ -25,6 +26,11 @@ public class PlayerMovement : MonoBehaviour
     private float heavyAttackReadyTime;
     private float guardReadyTime;
 
+    // PauseManager lives on its own GameObject in the scene, not on the player prefab - a prefab
+    // asset can't hold a direct reference to it, so it's resolved lazily instead (same fallback
+    // pattern as CharacterCustomizationMenu.Instance).
+    private PauseManager pauseManager;
+
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
     private static readonly int InputXHash = Animator.StringToHash("InputX");
@@ -41,8 +47,36 @@ public class PlayerMovement : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
+    // A player prefab is spawned once per connected client on every machine (so everyone can see
+    // everyone). Only the owner's copy should read local input or render a camera - every other
+    // copy is a remote puppet whose transform/animator are driven by NetworkTransform/NetworkAnimator.
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+            return;
+
+        PlayerInput input = GetComponent<PlayerInput>();
+        if (input != null)
+            input.enabled = false;
+
+        Transform mainCamera = transform.Find("Main Camera");
+        if (mainCamera != null)
+            mainCamera.gameObject.SetActive(false);
+
+        Transform cinemachineCamera = transform.Find("CinemachineCamera");
+        if (cinemachineCamera != null)
+            cinemachineCamera.gameObject.SetActive(false);
+    }
+
     void Update()
     {
+        // LastInputX is a NetworkAnimator-synced parameter, so this keeps a remote puppet's sprite
+        // mirrored to match its owner's facing too - flipX itself isn't a networked value.
+        FlipTowards(animator.GetFloat(LastInputXHash));
+
+        if (!this.IsLocallyControlled())
+            return;
+
         if (isGuarding)
         {
             rb.linearVelocity = Vector2.zero;
@@ -57,7 +91,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void Move(InputAction.CallbackContext ctx)
     {
-        if (PauseManager.IsPaused)
+        if (!this.IsLocallyControlled() || PauseManager.IsPaused)
             return;
 
         moveInput = ctx.ReadValue<Vector2>();
@@ -73,7 +107,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void Run(InputAction.CallbackContext ctx)
     {
-        if (PauseManager.IsPaused)
+        if (!this.IsLocallyControlled() || PauseManager.IsPaused)
             return;
         if (ctx.canceled)
         {
@@ -86,9 +120,20 @@ public class PlayerMovement : MonoBehaviour
             UpdateFacing(moveInput);
     }
 
+    public void OnPause(InputAction.CallbackContext ctx)
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        if (pauseManager == null)
+            pauseManager = FindAnyObjectByType<PauseManager>();
+
+        pauseManager?.Pause(ctx);
+    }
+
     public void Guard(InputAction.CallbackContext ctx)
     {
-        if (PauseManager.IsPaused)
+        if (!this.IsLocallyControlled() || PauseManager.IsPaused)
             return;
 
         bool wantsGuard = !ctx.canceled;
@@ -113,7 +158,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void LightAttack(InputAction.CallbackContext ctx)
     {
-        if (!ctx.performed || PauseManager.IsPaused || Time.time < lightAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || PauseManager.IsPaused || Time.time < lightAttackReadyTime)
             return;
 
         animator.SetTrigger(LightAttackHash);
@@ -123,7 +168,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void HeavyAttack(InputAction.CallbackContext ctx)
     {
-        if (!ctx.performed || PauseManager.IsPaused || Time.time < heavyAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || PauseManager.IsPaused || Time.time < heavyAttackReadyTime)
             return;
 
         animator.SetTrigger(HeavyAttackHash);
@@ -136,7 +181,8 @@ public class PlayerMovement : MonoBehaviour
         facing = direction;
         animator.SetFloat(LastInputXHash, facing.x);
         animator.SetFloat(LastInputYHash, facing.y);
-        FlipTowards(facing.x);
+        // Sprite flip itself is applied uniformly (owner and remote puppets alike) from Update(),
+        // reading this same LastInputX value back off the (NetworkAnimator-synced) Animator.
     }
 
     private void FlipTowards(float directionX)

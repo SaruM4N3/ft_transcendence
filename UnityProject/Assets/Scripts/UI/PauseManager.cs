@@ -20,6 +20,12 @@ public class PauseManager : MonoBehaviour
         if (!ctx.performed)
             return;
 
+        if (MenuPanel.CurrentOpen != null)
+        {
+            MenuPanel.CurrentOpen.Close();
+            return;
+        }
+
         if (IsPaused)
             Resume();
         else
@@ -57,6 +63,13 @@ public class PauseManager : MonoBehaviour
         Time.timeScale = 1f;
         IsPaused = false;
         SceneManager.LoadScene(mainMenuSceneName);
+    }
+
+    // Used by NPC menu panels: blocks player input via IsPaused but leaves Time.timeScale
+    // alone so the world keeps simulating and the player's idle animation keeps playing.
+    public static void SetExternalPause(bool paused)
+    {
+        IsPaused = paused;
     }
 
     private void SetPaused(bool paused)
