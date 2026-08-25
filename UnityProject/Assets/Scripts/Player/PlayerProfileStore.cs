@@ -2,11 +2,8 @@ using System;
 using System.IO;
 using UnityEngine;
 
-/// <summary>Local, file-based persistence for the player's customization choices (class, color,
-/// display name) across sessions - a JSON file in Application.persistentDataPath, independent of any
-/// networked session or user account. This is a starting point ahead of the web app's own user
-/// management (not implemented yet); a future account-synced profile would replace or wrap this call
-/// site, not be blocked by it.</summary>
+// Local JSON persistence (Application.persistentDataPath) for class/color/name, independent of any
+// network session or account. Placeholder ahead of the web app's own user management.
 public static class PlayerProfileStore
 {
     [Serializable]

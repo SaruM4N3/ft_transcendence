@@ -42,9 +42,7 @@ public class ProceduralMapGeneratorEditor : Editor
             bool expanded = EditorPrefs.GetBool(prefKey, true);
 
             EditorGUILayout.Space(2);
-            // Plain Foldout (not BeginFoldoutHeaderGroup): that API is stack-based and throws
-            // "can't nest Foldout Headers" as soon as a drawn property (e.g. an array/list field)
-            // opens its own foldout-like control while one of these is still open.
+            // Plain Foldout, not BeginFoldoutHeaderGroup - that stack-based API throws if a nested field opens its own foldout.
             bool newExpanded = EditorGUILayout.Foldout(expanded, section.Label, true, EditorStyles.foldoutHeader);
             if (newExpanded != expanded)
                 EditorPrefs.SetBool(prefKey, newExpanded);
