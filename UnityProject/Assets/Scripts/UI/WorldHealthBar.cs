@@ -1,12 +1,22 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-// World Space health bar bound to a specific DummyStats, same per-instance-binding idea as
-// LobbyRosterEntryUI (not the local-player-only static events StatBarUI uses).
+// World Space health bar bound to anything implementing IHealthStats (DummyStats, EnemyStats),
+// same per-instance-binding idea as LobbyRosterEntryUI (not the local-player-only static events StatBarUI uses).
 public class WorldHealthBar : MonoBehaviour
 {
     [SerializeField] private Image fillImage;
-    [SerializeField] private DummyStats stats;
+    // MonoBehaviour, not IHealthStats directly - Unity can't serialize a plain interface reference.
+    [FormerlySerializedAs("stats")]
+    [SerializeField] private MonoBehaviour statsSource;
+
+    private IHealthStats stats;
+
+    void Awake()
+    {
+        stats = statsSource as IHealthStats;
+    }
 
     void OnEnable()
     {
@@ -14,7 +24,7 @@ public class WorldHealthBar : MonoBehaviour
             stats.OnHealthChanged += SetFill;
     }
 
-    // Awake (where DummyStats sets its initial CurrentHealth) is guaranteed to run for every
+    // Awake (where the stats source sets its initial CurrentHealth) is guaranteed to run for every
     // object before any Start, so the initial sync belongs here rather than in OnEnable.
     void Start()
     {

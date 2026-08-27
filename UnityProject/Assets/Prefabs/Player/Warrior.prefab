@@ -622,6 +622,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
   GlobalObjectIdHash: 2647722884
   InScenePlacedSourceGlobalObjectIdHash: 1691225531
+  m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -667,8 +668,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
-  maxMana: 50
+  defaultStats: {fileID: 11400000, guid: b16f51070ed99a08ebeceb54cb20dca8, type: 2}
+  customization: {fileID: 0}
 --- !u!114 &8005166703726710935
 MonoBehaviour:
   m_ObjectHideFlags: 0

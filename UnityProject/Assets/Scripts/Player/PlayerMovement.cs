@@ -2,6 +2,7 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -59,14 +60,42 @@ public class PlayerMovement : NetworkBehaviour
     // Only the owner reads local input or renders a camera - other copies are remote puppets.
     public override void OnNetworkSpawn()
     {
-        if (IsOwner)
+        if (!IsOwner)
+        {
+            PlayerInput input = GetComponent<PlayerInput>();
+            if (input != null)
+                input.enabled = false;
+
+            PlayerCameraRig.SetActive(transform, active: false);
+            return;
+        }
+
+        // Player NetworkObjects persist across scene loads (DestroyWithScene = false), so without this
+        // everyone would land wherever they stood in the previous scene instead of together.
+        if (NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsOwner && NetworkManager != null && NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
+    }
+
+    private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
+    {
+        if (NetworkManager == null || clientId != NetworkManager.LocalClientId)
             return;
 
-        PlayerInput input = GetComponent<PlayerInput>();
-        if (input != null)
-            input.enabled = false;
+        PlayerSpawnPoint spawnPoint = FindAnyObjectByType<PlayerSpawnPoint>();
+        if (spawnPoint == null)
+            return;
 
-        PlayerCameraRig.SetActive(transform, active: false);
+        // Not the cached rb field - this can fire before Start() assigns it.
+        Rigidbody2D body = GetComponent<Rigidbody2D>();
+        body.position = spawnPoint.transform.position;
+        body.linearVelocity = Vector2.zero;
+        transform.position = spawnPoint.transform.position;
     }
 
     void Update()
