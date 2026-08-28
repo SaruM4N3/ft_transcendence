@@ -1,0 +1,6 @@
+<linker>
+  <!-- Netcode's ILPP-generated NetworkVariable/RPC serialization isn't fully visible to
+       UnityLinker's static analysis, which can strip generic instantiations IL2CPP needs
+       at runtime (crashes as "indirect call to null" in WebGL builds). -->
+  <assembly fullname="Unity.Netcode.Runtime" preserve="all" />
+</linker>

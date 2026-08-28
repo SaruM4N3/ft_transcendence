@@ -38,7 +38,7 @@ public class ModeReadyCheck : NetworkBehaviour
 
     // RequireOwnership = false: this NetworkObject is server-owned, but any client should be able to
     // propose a mode, not just the host.
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestReadyCheckServerRpc(FixedString64Bytes sceneName)
     {
         pendingSceneName.Value = sceneName;
