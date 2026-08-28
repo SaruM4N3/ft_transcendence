@@ -8,7 +8,6 @@ public class GameModeLoader : MonoBehaviour
         bool isMultiplayerSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         if (isMultiplayerSession && ModeReadyCheck.Instance != null)
         {
-            // Broadcasts a ready check instead of loading immediately - ModeReadyCheck loads the scene for everyone once ready.
             ModeReadyCheck.Instance.RequestReadyCheck(sceneName);
             return;
         }

@@ -42,7 +42,6 @@ public class ProceduralMapGeneratorEditor : Editor
             bool expanded = EditorPrefs.GetBool(prefKey, true);
 
             EditorGUILayout.Space(2);
-            // Plain Foldout, not BeginFoldoutHeaderGroup - that stack-based API throws if a nested field opens its own foldout.
             bool newExpanded = EditorGUILayout.Foldout(expanded, section.Label, true, EditorStyles.foldoutHeader);
             if (newExpanded != expanded)
                 EditorPrefs.SetBool(prefKey, newExpanded);

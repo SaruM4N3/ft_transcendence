@@ -11,37 +11,17 @@ using UnityEngine.UI;
 // active for solo play - only Host/Join replaces it with a networked, Netcode-spawned one.
 public class NetworkBootstrap : MonoBehaviour
 {
-#if UNITY_EDITOR
-    // Suppresses Netcode's harmless "written before spawn" warning - the offline player writes early on purpose.
-    // Editor-only: touching this type via reflection at startup crashes IL2CPP/WebGL builds ("indirect call to null").
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void SuppressPreSpawnNetworkVariableWarning()
-    {
-        typeof(NetworkVariableBase)
-            .GetField("IgnoreInitializeWarning", BindingFlags.NonPublic | BindingFlags.Static)
-            ?.SetValue(null, true);
-    }
-#endif
-
-
     [SerializeField] private MenuPanel multiplayerPanel;
-
-    // Doubles as the relay join-code field: hosting writes the code here (read-only) to copy; joining reads it.
+    [SerializeField] private GameObject gameModeManagerPrefab;
     [SerializeField] private TMP_InputField ipInputField;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private int maxPlayers = 4;
-
+    [SerializeField] private Button hostButton;
     [SerializeField] private Button joinButton;
     [SerializeField] private TMP_Text joinStatusText;
-
-    // Persists the relay code in the HUD after MultiplayerPanel closes.
     [SerializeField] private TMP_Text sessionCodeText;
-
-    // Captured pre-Host so ApprovalCheck can spawn the host back where they stood, not at spawnPoint.
     private Vector3? hostSpawnPosition;
     private Quaternion hostSpawnRotation;
-
-    // Holds the offline player's camera while reparented off during session setup - see CaptureOfflinePlayerState.
     private GameObject detachedCameraHolder;
 
     // NetworkManager.Singleton is only set in its own Awake(); Start() runs after every Awake().
@@ -88,6 +68,11 @@ public class NetworkBootstrap : MonoBehaviour
         if (sessionCodeText != null)
             sessionCodeText.text = string.Empty;
 
+        // Can't host twice, and can't join your own session once hosting - re-enabled on failure below.
+        if (hostButton != null)
+            hostButton.interactable = false;
+        SetJoinControlsInteractable(false);
+
         try
         {
             await EnsureSignedInAsync();
@@ -99,6 +84,12 @@ public class NetworkBootstrap : MonoBehaviour
             // Allocates the relay, wires UnityTransport, and starts Netcode as host - no manual StartHost() needed.
             SessionOptions options = new SessionOptions { MaxPlayers = maxPlayers }.WithRelayNetwork();
             IHostSession session = await MultiplayerService.Instance.CreateSessionAsync(options);
+
+            if (gameModeManagerPrefab != null)
+            {
+                GameObject gameModeManager = Instantiate(gameModeManagerPrefab);
+                gameModeManager.GetComponent<NetworkObject>().Spawn();
+            }
 
             if (ipInputField != null)
             {
@@ -116,6 +107,9 @@ public class NetworkBootstrap : MonoBehaviour
             Debug.LogError($"NetworkBootstrap: failed to host - {e.Message}");
             if (placeholderText != null)
                 placeholderText.text = originalPlaceholder;
+            if (hostButton != null)
+                hostButton.interactable = true;
+            SetJoinControlsInteractable(true);
         }
     }
 
@@ -130,6 +124,10 @@ public class NetworkBootstrap : MonoBehaviour
 
         SetJoinControlsInteractable(false);
         SetJoinStatus("Searching for the lobby...", isError: false);
+
+        // Can't host once joined - re-enabled below only if the join attempt actually fails.
+        if (hostButton != null)
+            hostButton.interactable = false;
 
         try
         {
@@ -149,6 +147,8 @@ public class NetworkBootstrap : MonoBehaviour
         {
             Debug.LogError($"NetworkBootstrap: failed to join - {e.Message}");
             SetJoinStatus("Couldn't find that lobby - check the code and try again.", isError: true);
+            if (hostButton != null)
+                hostButton.interactable = true;
         }
         finally
         {

@@ -2,8 +2,7 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
-// World Space Canvas above this player, same pattern as InteractPromptUI's per-NPC prompt. Only shown
-// during an actual multiplayer session - solo play has nobody else to label for.
+// World Space Canvas above this player, same pattern as InteractPromptUI's per-NPC prompt. (Only multi)
 public class PlayerNameTag : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI nameLabel;

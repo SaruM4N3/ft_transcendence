@@ -12,16 +12,43 @@ public class WaveSpawner : NetworkBehaviour
     [SerializeField] private int extraEnemiesPerWave = 2;
     [SerializeField] private float spawnRadius = 12f;
     [SerializeField] private float timeBetweenWaves = 5f;
-    // Avoids landing a spawn point on water - see ProceduralMapGenerator.IsWaterAtWorldPosition.
     [SerializeField] private int maxSpawnPointAttempts = 10;
 
     private readonly List<NetworkObject> aliveEnemies = new List<NetworkObject>();
     private int waveNumber;
+    private bool wavesStarted;
+
+    void Start()
+    {
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (!isNetworked)
+            BeginWaves();
+    }
 
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
-            StartCoroutine(RunWaves());
+        if (IsServer && NetworkManager != null && NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted += HandleSceneLoadEventCompleted;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (NetworkManager != null && NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted -= HandleSceneLoadEventCompleted;
+    }
+
+    private void HandleSceneLoadEventCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        BeginWaves();
+    }
+
+    private void BeginWaves()
+    {
+        if (wavesStarted)
+            return;
+
+        wavesStarted = true;
+        StartCoroutine(RunWaves());
     }
 
     private IEnumerator RunWaves()
@@ -45,11 +72,14 @@ public class WaveSpawner : NetworkBehaviour
 
     private void SpawnWave(int count)
     {
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+
         for (int i = 0; i < count; i++)
         {
             GameObject instance = Instantiate(enemyPrefab, FindSpawnPosition(), Quaternion.identity);
             NetworkObject netObj = instance.GetComponent<NetworkObject>();
-            netObj.Spawn(true);
+            if (isNetworked)
+                netObj.Spawn(true);
             aliveEnemies.Add(netObj);
         }
     }
@@ -69,7 +99,6 @@ public class WaveSpawner : NetworkBehaviour
                 return candidate;
         }
 
-        // Ran out of attempts - better to place an enemy awkwardly than to hang the spawner.
         return candidate;
     }
 }

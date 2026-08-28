@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 
 public class PlayerStats : NetworkBehaviour, IDamageable
 {
-    // Fallback used when no class stat set is resolved (e.g. offline test scenes).
     [SerializeField] private ClassStats defaultStats;
     [SerializeField] private PlayerCustomization customization;
 
@@ -13,7 +12,6 @@ public class PlayerStats : NetworkBehaviour, IDamageable
     private float maxHealth;
     private float maxMana;
 
-    // Replicated so the lobby roster can show every player's health; mana stays purely local.
     private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -21,13 +19,11 @@ public class PlayerStats : NetworkBehaviour, IDamageable
     public float MaxMana => maxMana;
     public float CurrentHealth => currentHealth.Value;
     public float CurrentMana { get; private set; }
-    // Dead players stay dead within the scene - only a full scene reset (ResetToFull) revives them.
     public bool IsDead => currentHealth.Value <= 0f;
 
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
 
-    // Fires for this instance specifically - lets the lobby roster bind to a non-local player's health.
     public event Action<float, float> OnHealthReplicated;
 
     void Awake()
@@ -45,20 +41,18 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         };
         if (customization != null)
             customization.OnClassOrColorChanged += (_, _) => HandleClassChanged();
-        // Deferred a frame: writing a NetworkVariable directly from Awake() crashes IL2CPP/WebGL
-        // builds ("indirect call to null" in NetworkVariable's generic-shared setter).
         StartCoroutine(InitializeHealthNextFrame());
     }
 
     private System.Collections.IEnumerator InitializeHealthNextFrame()
     {
         yield return null;
-        currentHealth.Value = maxHealth;
+        if (this.IsLocallyControlled())
+            currentHealth.Value = maxHealth;
     }
 
     void Start()
     {
-        // Only the local/owned instance should drive this client's HUD.
         if (!this.IsLocallyControlled())
             return;
 
@@ -66,33 +60,20 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
-    // Player NetworkObjects persist across scene loads (DestroyWithScene = false), so lobby PvP
-    // damage would otherwise carry into the next match - wipe it clean on every scene arrival.
     public override void OnNetworkSpawn()
     {
         if (NetworkManager != null && NetworkManager.SceneManager != null)
-            NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
+            NetworkManager.SceneManager.OnLoadEventCompleted += HandleSceneLoadEventCompleted;
     }
 
     public override void OnNetworkDespawn()
     {
-        // NetworkManager can already be null here when this fires as part of full shutdown teardown.
         if (NetworkManager != null && NetworkManager.SceneManager != null)
-            NetworkManager.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
+            NetworkManager.SceneManager.OnLoadEventCompleted -= HandleSceneLoadEventCompleted;
     }
 
-    private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
+    private void HandleSceneLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, System.Collections.Generic.List<ulong> clientsCompleted, System.Collections.Generic.List<ulong> clientsTimedOut)
     {
-        if (NetworkManager != null && clientId == NetworkManager.LocalClientId)
-            // A real delay, not just a frame: RefreshActiveStats/maxHealth may not have re-resolved
-            // the correct class yet, and Netcode's own post-load resync can otherwise clobber a
-            // NetworkVariable write made too soon after the scene finishes loading.
-            StartCoroutine(ResetToFullAfterSettling());
-    }
-
-    private System.Collections.IEnumerator ResetToFullAfterSettling()
-    {
-        yield return new WaitForSecondsRealtime(0.3f);
         ResetToFull();
     }
 
@@ -117,7 +98,6 @@ public class PlayerStats : NetworkBehaviour, IDamageable
             RestoreMana(activeStats.ManaRegenPerSecond * Time.deltaTime);
     }
 
-    // A class switch can lower maxHealth/maxMana - reclamp so current values never sit above the new max.
     private void HandleClassChanged()
     {
         RefreshActiveStats();
@@ -126,8 +106,6 @@ public class PlayerStats : NetworkBehaviour, IDamageable
             currentHealth.Value = Mathf.Min(currentHealth.Value, maxHealth);
     }
 
-    // Pulls the current class's stat set from the customization menu's per-class table; falls back
-    // to defaultStats when there's no customization component/menu (e.g. terrain test scenes).
     private void RefreshActiveStats()
     {
         ClassStats stats = null;
@@ -139,7 +117,6 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         maxMana = activeStats != null ? activeStats.MaxMana : 50f;
     }
 
-    // Avoids the warning Netcode logs when a non-owner writes an Owner-writable NetworkVariable.
     public void TakeDamage(float amount)
     {
         if (!this.IsLocallyControlled())
@@ -148,8 +125,6 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, 0f, maxHealth);
     }
 
-    // Callable from any client (e.g. an attacker's hit detection); routes to the target's own
-    // owner so the Owner-permission currentHealth write above stays valid.
     public void RequestDamage(float amount)
     {
         if (!NetworkObject.IsSpawned)

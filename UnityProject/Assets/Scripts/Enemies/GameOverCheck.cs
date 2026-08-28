@@ -7,25 +7,46 @@ using UnityEngine.SceneManagement;
 public class GameOverCheck : NetworkBehaviour
 {
     [SerializeField] private string lobbySceneName = "Lobby";
-
+    [SerializeField] private float startupGracePeriod = 0.5f;
     private bool hasTriggeredGameOver;
+    private float readyTime;
+
+    void Start()
+    {
+        readyTime = Time.time + startupGracePeriod;
+    }
 
     void Update()
     {
-        if (!IsServer || hasTriggeredGameOver)
+        if (!this.HasServerAuthority() || hasTriggeredGameOver || Time.time < readyTime)
             return;
 
-        if (PlayerCustomization.AllActiveInstances.Count == 0)
+        if (!AllPlayersDead())
             return;
+
+        hasTriggeredGameOver = true;
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isNetworked)
+            NetworkManager.SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Single);
+        else
+            LoadingScreenManager.LoadScene(lobbySceneName);
+    }
+
+    private bool AllPlayersDead()
+    {
+        if (PlayerCustomization.AllActiveInstances.Count == 0)
+        {
+            GameObject localPlayer = LocalPlayer.Get();
+            PlayerStats localStats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
+            return localStats != null && localStats.CurrentHealth <= 0f;
+        }
 
         foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
         {
             PlayerStats stats = player.GetComponent<PlayerStats>();
             if (stats == null || stats.CurrentHealth > 0f)
-                return;
+                return false;
         }
-
-        hasTriggeredGameOver = true;
-        NetworkManager.SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Single);
+        return true;
     }
 }
