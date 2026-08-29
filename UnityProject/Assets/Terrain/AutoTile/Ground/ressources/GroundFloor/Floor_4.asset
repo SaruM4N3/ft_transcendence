@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b08ceb78e3b2495b8d808a5860e66794, type: 3}
+  m_Name: Floor_4
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AutoTile
+  m_DefaultSprite: {fileID: -36024545, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+  m_DefaultGameObject: {fileID: 0}
+  m_DefaultColliderType: 0
+  m_MaskType: 1
+  m_Random: 0
+  m_PhysicsShapeCheck: 0
+  m_AutoTileDictionary:
+    keyData: b0010000d8000000db000000ff010000120000003800000018000000b6010000360000003f0000001b00000090000000f8010000920000003000000010000000
+    valueData:
+    - spriteList:
+      - {fileID: -1877537859, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 1607701611, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 2140776217, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: -1334209589, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 1344427104, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: -7802155, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 844576803, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 1853073541, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: -1597514750, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 1841870003, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 2098104330, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: -1999697230, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 1061614281, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 795247054, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: -116900997, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+    - spriteList:
+      - {fileID: 1831745010, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+  m_TextureList:
+  - {fileID: 2800000, guid: 2eb2b1f913d3245c9aa29f6d6126c080, type: 3}
+  m_TextureScaleList:
+  - 1

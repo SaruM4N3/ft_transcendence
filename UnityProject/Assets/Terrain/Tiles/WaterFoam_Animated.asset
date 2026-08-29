@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13b75c95f34a00d4e8c04f76b73312e6, type: 3}
+  m_Name: WaterFoam_Animated
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AnimatedTile
+  m_AnimatedSprites:
+  - {fileID: 4292285838037326215, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -3282804323621240569, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -8480871951410153816, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -3251040720994058167, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: 3662819761520135829, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -7454822337431360871, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: 3539622205994397890, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -7969842075426192941, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -2857926922066066687, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -1489428756100873344, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -7385780345627893643, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -1113922839001279310, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -7197448433467359399, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: 5249465772908078297, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: 8865207477938806370, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  - {fileID: -3177326194178895303, guid: 350fe2478c605bdfa8d695d2adf0d759, type: 3}
+  m_MinSpeed: 9
+  m_MaxSpeed: 11
+  m_AnimationStartTime: 0
+  m_AnimationStartFrame: 0
+  m_TileColliderType: 0
+  m_TileAnimationFlags: 0

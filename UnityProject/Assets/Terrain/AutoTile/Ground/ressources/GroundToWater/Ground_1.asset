@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b08ceb78e3b2495b8d808a5860e66794, type: 3}
+  m_Name: Ground_1
+  m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.Tilemaps.AutoTile
+  m_DefaultSprite: {fileID: 1317816526, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+  m_DefaultGameObject: {fileID: 0}
+  m_DefaultColliderType: 0
+  m_MaskType: 1
+  m_Random: 0
+  m_PhysicsShapeCheck: 0
+  m_AutoTileDictionary:
+    keyData: 12000000920000003f00000038000000180000009000000030000000100000001b000000b0010000ff010000b6010000d8000000f8010000db00000036000000
+    valueData:
+    - spriteList:
+      - {fileID: -1483446518, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -438687076, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -2801873246907429078, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 1292135869, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -55024715, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 196836861, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 1599712627, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 157780901, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -1844109271, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 1611736068, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -985832654, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -529755566, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 659350005, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: -160155248, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 1273371556, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+    - spriteList:
+      - {fileID: 4684625920699962428, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+      textureList:
+      - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+  m_TextureList:
+  - {fileID: 2800000, guid: 027fd9e06196b4e62a8e40527bfbf3a9, type: 3}
+  m_TextureScaleList:
+  - 1
