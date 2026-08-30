@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,8 @@ public class StatBarUI : MonoBehaviour
     private enum Stat { Health, Mana }
 
     [SerializeField] private Stat stat;
+    // Optional "current/max" label centered on the bar, e.g. the HealthBar's "80/100".
+    [SerializeField] private TMP_Text valueText;
 
     private Image fillImage;
 
@@ -32,9 +35,9 @@ public class StatBarUI : MonoBehaviour
 
     private void SetFill(float current, float max)
     {
-        if (max > 0f)
-            fillImage.fillAmount = current / max;
-        else
-            fillImage.fillAmount = 0f;
+        fillImage.fillAmount = max > 0f ? current / max : 0f;
+
+        if (valueText != null)
+            valueText.text = $"{Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}";
     }
 }

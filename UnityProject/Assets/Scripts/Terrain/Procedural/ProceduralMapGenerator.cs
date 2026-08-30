@@ -9,6 +9,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private Tilemap waterTilemap;
     [SerializeField] private Tilemap waterBackgroundTilemap;
     [SerializeField] private Tilemap coastFoamTilemap;
+    // Fallback only for offline/solo testing before a session exists - see GetTrackedPlayer().
     [SerializeField] private Transform player;
 
     [Header("Chunk Streaming")]
@@ -75,8 +76,16 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         waterOffsetX = rng.Next(-100000, 100000);
         waterOffsetY = rng.Next(-100000, 100000);
 
-        Vector3Int cell = landTilemap.WorldToCell(player.position);
+        Vector3Int cell = landTilemap.WorldToCell(GetTrackedPlayer().position);
         spawnCell = new Vector2Int(cell.x, cell.y);
+    }
+
+    // Client-side only: each client streams chunks around its own local character (networked or
+    // offline solo), never a server-wide view - the inspector-assigned player is just the pre-session fallback.
+    private Transform GetTrackedPlayer()
+    {
+        GameObject localPlayer = LocalPlayer.Get();
+        return localPlayer != null ? localPlayer.transform : player;
     }
 
     // Chunk radius covering the camera's current view + buffer; recomputed every call to track Cinemachine zoom/lag.
@@ -109,7 +118,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
 
     void Update()
     {
-        Vector2Int playerChunk = WorldToChunk(player.position);
+        Vector2Int playerChunk = WorldToChunk(GetTrackedPlayer().position);
         bool firstRun = !hasGeneratedOnce;
 
         if (firstRun || playerChunk != lastPlayerChunk)

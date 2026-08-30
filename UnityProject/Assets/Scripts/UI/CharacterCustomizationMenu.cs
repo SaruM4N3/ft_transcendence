@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class CharacterCustomizationMenu : MonoBehaviour
 {
-    // Fallback FindAnyObjectByType because the panel starts disabled, so Awake() hasn't set instance yet.
     public static CharacterCustomizationMenu Instance
     {
         get
@@ -17,7 +16,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     [SerializeField] private TMP_InputField nameInputField;
     [SerializeField] private int maxNameLength = 20;
-    // Non-networked preview instance rendered by PreviewStage's camera onto the panel's RawImage.
     [SerializeField] private GameObject previewCharacter;
 
     private void Awake()
@@ -28,7 +26,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
             nameInputField.onEndEdit.AddListener(SetPlayerName);
     }
 
-    // Panel is re-activated (not reloaded) each time an NPC menu opens, so refresh from current state here.
     private void OnEnable()
     {
         GameObject player = LocalPlayer.Get();
@@ -73,8 +70,8 @@ public class CharacterCustomizationMenu : MonoBehaviour
     public static event System.Action<string> OnNameChanged;
 
     [SerializeField] private GameObject[] classPresets;
+    [SerializeField] private ClassStats[] statsByClass;
     [SerializeField] private ColorVariant[] colorVariants;
-    // HUD background sword sprite per color, indexed the same as colorVariants.
     [SerializeField] private Sprite[] backgroundSpritesByColor;
 
     [System.Serializable]
@@ -82,11 +79,9 @@ public class CharacterCustomizationMenu : MonoBehaviour
     {
         public RuntimeAnimatorController[] controllersByClass;
         public Sprite[] worldSpritesByClass;
-        // HUD bust icon (Human Avatars) - never shown on the world character.
         public Sprite[] portraitSpritesByClass;
     }
 
-    // Lets the HUD sync on startup even if this menu has never been opened.
     public Sprite GetCurrentPortrait()
     {
         GameObject player = LocalPlayer.Get();
@@ -96,7 +91,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
         return GetPortrait(CurrentClassIndex(player), CurrentColorIndex(player));
     }
 
-    // Resolves a portrait for an arbitrary class+color combo, e.g. for the lobby roster UI.
     public Sprite GetPortrait(int classIndex, int colorIndex)
     {
         if (classIndex < 0 || classIndex >= classPresets.Length)
@@ -105,6 +99,14 @@ public class CharacterCustomizationMenu : MonoBehaviour
             return null;
 
         return colorVariants[colorIndex].portraitSpritesByClass[classIndex];
+    }
+
+    public ClassStats GetStats(int classIndex)
+    {
+        if (classIndex < 0 || classIndex >= statsByClass.Length)
+            return null;
+
+        return statsByClass[classIndex];
     }
 
     public Sprite GetCurrentBackground()
@@ -171,8 +173,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
             customization.SetSelection(classIndex, colorIndex);
     }
 
-    // Re-broadcasts to the HUD after PlayerCustomization loads a saved profile, since that happens
-    // after the HUD's initial sync and bypasses Apply()/SetPlayerName().
     public void NotifyProfileLoaded(GameObject player)
     {
         int classIndex = CurrentClassIndex(player);
@@ -191,7 +191,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
             OnNameChanged?.Invoke(customization.PlayerName);
     }
 
-    // Animator controller + world sprite only, no HUD side effects - also used to reapply a remote puppet's replicated class/color.
     public bool ApplyVisuals(GameObject player, int classIndex, int colorIndex)
     {
         if (classIndex < 0 || classIndex >= classPresets.Length)
@@ -205,13 +204,11 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (controller == null)
             return false;
 
-        // Controller assignment resets the animator frame synchronously, so set sprite after or it gets clobbered.
         player.GetComponent<Animator>().runtimeAnimatorController = controller;
         player.GetComponent<SpriteRenderer>().sprite = worldSprite;
         return true;
     }
 
-    // Compares against the un-overridden base controller so a color pick never silently resets the class.
     private int CurrentClassIndex(GameObject player)
     {
         RuntimeAnimatorController current = player.GetComponent<Animator>().runtimeAnimatorController;

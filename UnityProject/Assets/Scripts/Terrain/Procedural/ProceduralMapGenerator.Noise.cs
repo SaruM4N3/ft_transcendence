@@ -3,6 +3,13 @@ using UnityEngine.Tilemaps;
 
 public partial class ProceduralMapGenerator
 {
+    // Lets other systems (e.g. WaveSpawner) avoid placing things on water without duplicating the noise logic.
+    public bool IsWaterAtWorldPosition(Vector3 worldPosition)
+    {
+        Vector3Int cell = landTilemap.WorldToCell(worldPosition);
+        return IsWater(cell.x, cell.y);
+    }
+
     private bool IsWater(int worldX, int worldY)
     {
         bool withinSpawnSafeZone = Vector2Int.Distance(new Vector2Int(worldX, worldY), spawnCell) <= spawnSafeRadius;

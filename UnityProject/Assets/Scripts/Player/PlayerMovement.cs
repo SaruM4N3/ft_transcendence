@@ -2,6 +2,7 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -39,6 +40,11 @@ public class PlayerMovement : NetworkBehaviour
 
     // Not serialized - PauseManager lives on its own scene GameObject, not the player prefab.
     private PauseManager pauseManager;
+    private PlayerStats stats;
+
+    // Movement/actions freeze the same way for a pause as for death; a dead player also disappears
+    // visually (OnHealthReplicated fires for every observer, not just the local owner).
+    private bool IsBlocked => PauseManager.IsPaused || (stats != null && stats.IsDead);
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
@@ -54,19 +60,64 @@ public class PlayerMovement : NetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+
+        stats = GetComponent<PlayerStats>();
+        if (stats != null)
+            stats.OnHealthReplicated += HandleHealthReplicated;
+    }
+
+    void OnDestroy()
+    {
+        if (stats != null)
+            stats.OnHealthReplicated -= HandleHealthReplicated;
+    }
+
+    // Fires for every observer (not just the local owner), so a player dying is visible to everyone.
+    private void HandleHealthReplicated(float currentHealth, float maxHealth)
+    {
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = currentHealth > 0f;
     }
 
     // Only the owner reads local input or renders a camera - other copies are remote puppets.
     public override void OnNetworkSpawn()
     {
-        if (IsOwner)
+        if (!IsOwner)
+        {
+            PlayerInput input = GetComponent<PlayerInput>();
+            if (input != null)
+                input.enabled = false;
+
+            PlayerCameraRig.SetActive(transform, active: false);
+            return;
+        }
+
+        // Player NetworkObjects persist across scene loads (DestroyWithScene = false), so without this
+        // everyone would land wherever they stood in the previous scene instead of together.
+        if (NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsOwner && NetworkManager != null && NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
+    }
+
+    private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
+    {
+        if (NetworkManager == null || clientId != NetworkManager.LocalClientId)
             return;
 
-        PlayerInput input = GetComponent<PlayerInput>();
-        if (input != null)
-            input.enabled = false;
+        PlayerSpawnPoint spawnPoint = FindAnyObjectByType<PlayerSpawnPoint>();
+        if (spawnPoint == null)
+            return;
 
-        PlayerCameraRig.SetActive(transform, active: false);
+        // Not the cached rb field - this can fire before Start() assigns it.
+        Rigidbody2D body = GetComponent<Rigidbody2D>();
+        body.position = spawnPoint.transform.position;
+        body.linearVelocity = Vector2.zero;
+        transform.position = spawnPoint.transform.position;
     }
 
     void Update()
@@ -77,8 +128,8 @@ public class PlayerMovement : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        // Freezes movement while paused - Move/Run/Guard still track real input so state is correct on unpause.
-        if (PauseManager.IsPaused)
+        // Freezes movement while paused or dead - Move/Run/Guard still track real input so state is correct on unpause.
+        if (IsBlocked)
         {
             rb.linearVelocity = Vector2.zero;
             animator.SetBool(IsWalkingHash, false);
@@ -109,7 +160,7 @@ public class PlayerMovement : NetworkBehaviour
         moveInput = ctx.ReadValue<Vector2>();
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
 
-        if (PauseManager.IsPaused)
+        if (IsBlocked)
             return;
 
         animator.SetBool(IsWalkingHash, !isGuarding && hasDirection);
@@ -129,7 +180,7 @@ public class PlayerMovement : NetworkBehaviour
             isRunning = false;
             return;
         }
-        if (PauseManager.IsPaused)
+        if (IsBlocked)
             return;
 
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
@@ -157,7 +208,7 @@ public class PlayerMovement : NetworkBehaviour
         bool wantsGuard = !ctx.canceled;
 
         // Releasing guard must work even while paused, or isGuarding stays stuck true and freezes the player.
-        if (wantsGuard && (PauseManager.IsPaused || Time.time < guardReadyTime))
+        if (wantsGuard && (IsBlocked || Time.time < guardReadyTime))
             return;
 
         if (ctx.canceled && !isGuarding)
@@ -177,7 +228,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void LightAttack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || PauseManager.IsPaused || Time.time < lightAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || IsBlocked || Time.time < lightAttackReadyTime)
             return;
 
         animator.SetTrigger(LightAttackHash);
@@ -241,7 +292,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void HeavyAttack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || PauseManager.IsPaused || Time.time < heavyAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || IsBlocked || Time.time < heavyAttackReadyTime)
             return;
 
         animator.SetTrigger(HeavyAttackHash);
