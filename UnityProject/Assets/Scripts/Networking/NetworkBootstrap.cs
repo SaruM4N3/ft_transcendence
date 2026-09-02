@@ -1,8 +1,6 @@
 using System.Reflection;
 using TMPro;
 using Unity.Netcode;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
 using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,8 +53,17 @@ public class NetworkBootstrap : MonoBehaviour
         }
     }
 
-    public async void HostGame()
+    public void HostGame()
     {
+        _ = HostGameAsync();
+    }
+
+    // Shared by the Host button and friend invites; returns false if hosting failed or a session is already running.
+    public async System.Threading.Tasks.Task<bool> HostGameAsync()
+    {
+        if (NetworkManager.Singleton.IsListening)
+            return false;
+
         // Relay code doesn't exist until CreateSessionAsync returns - show a placeholder while waiting.
         string originalPlaceholder = null;
         TMP_Text placeholderText = ipInputField != null ? ipInputField.placeholder as TMP_Text : null;
@@ -75,7 +82,7 @@ public class NetworkBootstrap : MonoBehaviour
 
         try
         {
-            await EnsureSignedInAsync();
+            await ServicesAuth.EnsureSignedInAsync();
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
             hostSpawnPosition = customization.position;
@@ -101,6 +108,7 @@ public class NetworkBootstrap : MonoBehaviour
                 sessionCodeText.text = $"Code: <font=\"LiberationSans SDF\">{session.Code}</font>";
 
             StartCoroutine(RestoreLocalCustomizationWhenSpawned(customization.classIndex, customization.colorIndex, customization.playerName));
+            return true;
         }
         catch (System.Exception e)
         {
@@ -110,17 +118,27 @@ public class NetworkBootstrap : MonoBehaviour
             if (hostButton != null)
                 hostButton.interactable = true;
             SetJoinControlsInteractable(true);
+            return false;
         }
     }
 
     public async void JoinGame()
     {
         string code = ipInputField != null ? ipInputField.text.Trim() : string.Empty;
+        await JoinWithCodeAsync(code);
+    }
+
+    // Shared by the Join button and the friend-invite toast, which supplies a code that didn't come from the input field.
+    public async System.Threading.Tasks.Task<bool> JoinWithCodeAsync(string code)
+    {
         if (string.IsNullOrEmpty(code))
         {
             SetJoinStatus("Enter a join code before joining.", isError: true);
-            return;
+            return false;
         }
+
+        if (NetworkManager.Singleton.IsListening)
+            return false;
 
         SetJoinControlsInteractable(false);
         SetJoinStatus("Searching for the lobby...", isError: false);
@@ -131,7 +149,7 @@ public class NetworkBootstrap : MonoBehaviour
 
         try
         {
-            await EnsureSignedInAsync();
+            await ServicesAuth.EnsureSignedInAsync();
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
 
@@ -139,9 +157,11 @@ public class NetworkBootstrap : MonoBehaviour
             await MultiplayerService.Instance.JoinSessionByCodeAsync(code);
 
             SetJoinStatus(string.Empty, isError: false);
-            multiplayerPanel.Close();
+            if (multiplayerPanel.gameObject.activeInHierarchy)
+                multiplayerPanel.Close();
 
             StartCoroutine(RestoreLocalCustomizationWhenSpawned(customization.classIndex, customization.colorIndex, customization.playerName));
+            return true;
         }
         catch (System.Exception e)
         {
@@ -149,6 +169,7 @@ public class NetworkBootstrap : MonoBehaviour
             SetJoinStatus("Couldn't find that lobby - check the code and try again.", isError: true);
             if (hostButton != null)
                 hostButton.interactable = true;
+            return false;
         }
         finally
         {
@@ -174,15 +195,6 @@ public class NetworkBootstrap : MonoBehaviour
 
         joinStatusText.text = message;
         joinStatusText.color = isError ? JoinErrorColor : Color.white;
-    }
-
-    private static async System.Threading.Tasks.Task EnsureSignedInAsync()
-    {
-        if (UnityServices.State != ServicesInitializationState.Initialized)
-            await UnityServices.InitializeAsync();
-
-        if (!AuthenticationService.Instance.IsSignedIn)
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
     // Deactivates the offline player before Host/Join so it doesn't auto-spawn as a phantom; detaches its camera first.
