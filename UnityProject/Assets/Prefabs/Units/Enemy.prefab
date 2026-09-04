@@ -325,9 +325,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 2.5
-  attackRange: 1
+  attackRange: 0.8
   damage: 10
   attackCooldown: 1
+  attackHitDelay: 0.3
+  attackAnimationDuration: 0.7
+  hitRangeTolerance: 1.25
+  retargetInterval: 0.25
+  steerInterval: 0.1
+  directChaseRange: 8
+  lineOfSightInterval: 0.3
 --- !u!114 &1403939639179829679
 MonoBehaviour:
   m_ObjectHideFlags: 0
