@@ -1,6 +1,7 @@
 #if UNITY_STANDALONE && !UNITY_EDITOR
 using System.Linq;
 using Unity.Netcode;
+using Unity.Services.Authentication;
 using UnityEngine;
 
 // TEMPORARY multiplayer client-side diagnostic probe - auto-joins via a -testJoinCode= command line
@@ -14,6 +15,20 @@ public class TestClientProbe : MonoBehaviour
     private bool hasReadied;
     private bool servicesReady;
     private float nextLogTime;
+
+    // Picks the profile before any scene script (e.g. FriendsManager) can sign in under the default one.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static async void InitServicesWithProfile()
+    {
+        foreach (string arg in System.Environment.GetCommandLineArgs())
+        {
+            if (!arg.StartsWith("-testJoinCode="))
+                continue;
+            var options = new Unity.Services.Core.InitializationOptions().SetProfile("TestClientProbe");
+            await Unity.Services.Core.UnityServices.InitializeAsync(options);
+            return;
+        }
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -35,11 +50,7 @@ public class TestClientProbe : MonoBehaviour
 
     async void Start()
     {
-        // Same-machine testing only: Editor host and this standalone client would otherwise share
-        // the same local Unity Services auth cache and sign in as the same anonymous player.
-        // AuthenticationService.Instance requires UnityServices to be initialized first.
         await Unity.Services.Core.UnityServices.InitializeAsync();
-        Unity.Services.Authentication.AuthenticationService.Instance.SwitchProfile("TestClientProbe");
         servicesReady = true;
     }
 

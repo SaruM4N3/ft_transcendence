@@ -5,6 +5,8 @@ using UnityEngine;
 // visible to everyone; only the attacker's own copy keeps a live hitbox (see PlayerMovement).
 public class SlashAttackFX : MonoBehaviour
 {
+    public static event System.Action<GameObject, Vector3> OnHitLanded;
+
     [SerializeField] private Sprite[] frames;
     [SerializeField] private float frameRate = 24f;
     [SerializeField] private float damage = 15f;
@@ -61,5 +63,6 @@ public class SlashAttackFX : MonoBehaviour
 
         hitTargets.Add(damageable);
         damageable.RequestDamage(damage);
+        OnHitLanded?.Invoke(owner, other.ClosestPoint(transform.position));
     }
 }
