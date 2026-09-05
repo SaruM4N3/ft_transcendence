@@ -126,6 +126,7 @@ GameObject:
   - component: {fileID: 85481915221976166}
   - component: {fileID: 5244544881717188477}
   - component: {fileID: 504759635816113444}
+  - component: {fileID: 4574043758259649459}
   m_Layer: 0
   m_Name: CinemachineCamera
   m_TagString: Untagged
@@ -222,6 +223,30 @@ MonoBehaviour:
     Time: 0
     Smoothing: 0
     IgnoreY: 0
+--- !u!114 &4574043758259649459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 703338332802846812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00b2d199b96b516448144ab30fb26aed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseListener
+  ApplyAfter: 2
+  ChannelMask: 1
+  Gain: 1
+  Use2DDistance: 0
+  UseCameraSpace: 1
+  SignalCombinationMode: 0
+  ReactionSettings:
+    m_SecondaryNoise: {fileID: 0}
+    AmplitudeGain: 1
+    FrequencyGain: 1
+    Duration: 1
+    m_NoiseOffsets: {x: 0, y: 0, z: 0}
 --- !u!1 &1635566535792072546
 GameObject:
   m_ObjectHideFlags: 0
@@ -244,6 +269,9 @@ GameObject:
   - component: {fileID: 4910918963102752019}
   - component: {fileID: 671615751618776591}
   - component: {fileID: 4002818080156656593}
+  - component: {fileID: 5351956015967429100}
+  - component: {fileID: 493192744301220450}
+  - component: {fileID: 8990027266730438623}
   m_Layer: 0
   m_Name: Warrior
   m_TagString: Player
@@ -840,6 +868,94 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomization
   ShowTopMostFoldoutHeaderGroup: 1
   nameTag: {fileID: 826270409130490218}
+--- !u!114 &5351956015967429100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 808510938eb2d86bcae80d33d4804186, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteHitFlash
+  flashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  duration: 0.15
+--- !u!114 &493192744301220450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5cd6eb50ae6be48fb33ff33de3016bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFeedback
+  ShowTopMostFoldoutHeaderGroup: 1
+  impulseSource: {fileID: 0}
+  hitFlash: {fileID: 0}
+  hurtShake: 0.35
+  hurtVignetteStrength: 0.6
+  hurtVignetteDuration: 0.45
+  lightAttackShake: 0.06
+  heavyAttackShake: 0.15
+  hitLandedShake: 0.12
+--- !u!114 &8990027266730438623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 180ecf9b41d478f468eb3e9083753217, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseSource
+  ImpulseDefinition:
+    ImpulseChannel: 1
+    ImpulseShape: 2
+    CustomImpulseShape:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ImpulseDuration: 0.2
+    ImpulseType: 0
+    DissipationRate: 0.25
+    RawSignal: {fileID: 0}
+    AmplitudeGain: 1
+    FrequencyGain: 1
+    RepeatMode: 0
+    Randomize: 1
+    TimeEnvelope:
+      AttackShape:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      DecayShape:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      AttackTime: 0
+      SustainTime: 0.2
+      DecayTime: 0.7
+      ScaleWithImpact: 1
+      HoldForever: 0
+    ImpactRadius: 100
+    DirectionMode: 0
+    DissipationMode: 2
+    DissipationDistance: 100
+    PropagationSpeed: 343
+  DefaultVelocity: {x: 0, y: -1, z: 0}
 --- !u!1 &4646007241080426997
 GameObject:
   m_ObjectHideFlags: 0
