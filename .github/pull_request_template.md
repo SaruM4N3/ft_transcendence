@@ -14,7 +14,7 @@
 
 ## Checklist
 
-- [ ] Targets `develop` (not `main`, unless this is a release merge)
+- [ ] Targets `develop/web` or `develop/game` (not `main`, unless this is a release merge)
 - [ ] CI is green
 - [ ] No secrets/credentials committed
 - [ ] Reviewed by at least one teammate
