@@ -141,7 +141,7 @@ GitHub Actions run automatically on every push/PR that touches the relevant part
   Docker image. Required to pass before merging into `main`.
 - **Unity Build Check** (`unity-ci.yml`) — on any push/PR touching `UnityProject/**`: compiles the
   Unity project headlessly via [GameCI](https://game.ci/) (no test suite exists yet, so this is a
-  compile check only). **Currently skipped** until a Unity license is added as repo secrets — see the
+  compile check only). **Currently a no-op** until a Unity license is added as repo secrets — see the
   comment at the top of the workflow file for setup steps.
 
 ## Technical Stack
