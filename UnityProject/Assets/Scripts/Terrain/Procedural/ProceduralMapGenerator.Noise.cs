@@ -51,4 +51,33 @@ public partial class ProceduralMapGenerator
             (worldX + platformOffsetX) * platformNoiseScale,
             (worldY + platformOffsetY) * platformNoiseScale);
     }
+
+    /// <summary>Looks up water state from a precomputed chunk-local mask, falling back to a fresh
+    /// noise sample if the requested cell falls outside the mask's coverage.</summary>
+    private bool MaskIsWater(bool[,] waterMask, int maskOriginX, int maskOriginY, int worldX, int worldY)
+    {
+        int mx = worldX - maskOriginX;
+        int my = worldY - maskOriginY;
+        int size = waterMask.GetLength(0);
+
+        if (mx < 0 || my < 0 || mx >= size || my >= size)
+            return IsWater(worldX, worldY);
+
+        return waterMask[mx, my];
+    }
+
+    /// <summary>Adjacent-to-water check backed by a precomputed chunk-local water mask.</summary>
+    private bool MaskIsAdjacentToWater(bool[,] waterMask, int maskOriginX, int maskOriginY, int worldX, int worldY)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            for (int x = -1; x <= 1; x++)
+            {
+                if ((x != 0 || y != 0) && MaskIsWater(waterMask, maskOriginX, maskOriginY, worldX + x, worldY + y))
+                    return true;
+            }
+        }
+
+        return false;
+    }
 }
