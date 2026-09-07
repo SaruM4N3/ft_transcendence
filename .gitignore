@@ -2,8 +2,8 @@
 Library/
 Temp/
 Obj/
-Build/
-Builds/
+UnityProject/Build/
+UnityProject/Builds/
 Logs/
 UserSettings/
 MemoryCaptures/

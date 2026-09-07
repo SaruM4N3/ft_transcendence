@@ -484,7 +484,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SortingLayer_Auto
   spriteRenderer: {fileID: 8269691404384447113}
-  sortingOffset: 0
+  sortingOffset: 30
 --- !u!114 &2201204286648064290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -498,6 +498,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   moveSpeed: 5
+  runSpeed: 10
   lightAttackCooldown: 0.5
   heavyAttackCooldown: 2
   guardCooldown: 5
