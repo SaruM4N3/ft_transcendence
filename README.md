@@ -91,16 +91,13 @@ This is only needed to work on the Unity game itself; it is not required to run 
 
 ### AI usage
 
-This project uses Claude Code (Anthropic) as a coding assistant. Concretely, in this repository so
+This project uses Claude (Anthropic) as a coding assistant. Concretely, in this repository so
 far, it was used for:
 
 - Scaffolding the bare-bones static web app (`web/`) and its Docker/Compose/nginx setup (HTTPS via a
   self-signed certificate, reverse proxy config), iteratively tested end-to-end (built, run, and
   exercised with real HTTP requests) rather than written blind.
-- Cleanup and setup of the Unity project's C# scripts and this repository's git history (see the
-  Unity project's own development history for that side of the work).
-- Maintaining this repository's `README.md` and `CLAUDE.md` (project-context notes for Claude Code
-  itself, gitignored, not part of the graded deliverable) as the project evolves.
+- Maintaining this repository's `README.md` as the project evolves.
 
 <!-- TODO: keep this section updated as AI is used for more parts of the project — the subject
      requires specifying which tasks and which parts of the project it was used for. -->
@@ -114,7 +111,7 @@ the project.
 
 - **zsonie** — Product Owner, Technical Lead, Developer: defines product priorities, owns
   architecture/technical decisions, and implements features — currently focused mainly on the
-  Unity game (`UnityProject/`), while also covering the `web/` side solo for now.
+  Unity game (`UnityProject/`).
 - **erbuffet** — Developer <!-- TODO: additional role(s) once active on the project -->
 - **jureix-c** — Developer <!-- TODO: additional role(s) once active on the project -->
 
