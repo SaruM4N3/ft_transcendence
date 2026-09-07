@@ -124,12 +124,18 @@ the project.
 
 ## Project Management
 
-- **Branching model**: `main` (always deployable, protected — PRs only, CI must pass) ←`develop`
-  (integration branch, where finished features land first) ← `feature/<short-name>` branches (one per
-  task/feature, branched off `develop`, merged back via Pull Request).
-- **Workflow**: branch off `develop` as `feature/<short-name>`, open a PR into `develop` when ready
-  (CI runs automatically, see [CI/CD](#cicd)), get it reviewed by at least one teammate, merge.
-  `develop` is merged into `main` at milestones / before evaluation.
+- **Branching model**: `main` (always deployable, protected — PRs only, CI must pass) is fed by two
+  separate integration branches, matching the repo's two very different lifecycles (see
+  [Description](#description)):
+  - `develop/web` — integration branch for everything under `web/`.
+  - `develop/game` — integration branch for everything under `UnityProject/`.
+
+  Day-to-day work happens on `feature/<short-name>` branches, branched off whichever of the two
+  matches what's being worked on, merged back into it via Pull Request.
+- **Workflow**: branch off `develop/web` or `develop/game` as `feature/<short-name>`, open a PR
+  into that same branch when ready (CI runs automatically, see [CI/CD](#cicd)), get it reviewed by
+  at least one teammate, merge. `develop/web`/`develop/game` are merged into `main` at
+  milestones / before evaluation.
 
 <!-- TODO: fill in the tools the team actually uses for task tracking (GitHub Issues/Projects,
      Trello, etc.), the communication channel (Discord, Slack, etc.), and meeting cadence. -->
@@ -139,7 +145,7 @@ the project.
 GitHub Actions run automatically on every push/PR that touches the relevant part of the repo (see
 `.github/workflows/`):
 
-- **Web CI** (`web-ci.yml`) — on any push/PR to `main`/`develop` touching `web/**`: lints and builds
+- **Web CI** (`web-ci.yml`) — on any push/PR to `main`/`develop/web` touching `web/**`: lints and builds
   it with npm once a frontend/backend framework is added (for now, since there's no `package.json`
   yet, it just syntax-checks the plain JS scaffold), validates `docker compose config`, and builds the
   Docker image. Required to pass before merging into `main`.
