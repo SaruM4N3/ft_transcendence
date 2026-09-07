@@ -1,16 +1,13 @@
 name: Web CI
 
+# No `paths:` filter: this is a required status check on `main` (branch protection), and a required
+# check that never runs (e.g. on a docs-only PR that doesn't touch web/) blocks merging forever. The
+# job itself is fast, so running it unconditionally is cheap.
 on:
   push:
     branches: [main, develop/web]
-    paths:
-      - "web/**"
-      - ".github/workflows/web-ci.yml"
   pull_request:
     branches: [main, develop/web]
-    paths:
-      - "web/**"
-      - ".github/workflows/web-ci.yml"
 
 jobs:
   build:
