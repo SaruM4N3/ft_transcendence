@@ -45,3 +45,6 @@ crashlytics-build.properties
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Project reference materials (subject PDF, drafts, local notes)
+.datas/
