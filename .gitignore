@@ -15,6 +15,10 @@ mono_crash.mem.*
 UnityProject/Assets/_Recovery/
 UnityProject/Assets/_Recovery.meta
 
+# Editor debug screenshots
+UnityProject/Assets/Screenshots/
+UnityProject/Assets/Screenshots.meta
+
 # Visual Studio / Rider / VS Code generated project files
 .vs/
 .vscode/
