@@ -2,8 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-// Local JSON persistence (Application.persistentDataPath) for class/color/name, independent of any
-// network session or account. Placeholder ahead of the web app's own user management.
+// Local JSON save of class, color and name; placeholder for web user management.
 public static class PlayerProfileStore
 {
     [Serializable]

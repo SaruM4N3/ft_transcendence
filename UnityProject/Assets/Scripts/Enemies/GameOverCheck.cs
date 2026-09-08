@@ -2,8 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Server-authoritative wipe check: once every connected player's health hits zero, send everyone
-// back to the Lobby - PlayerStats.ResetToFull already revives them the moment they arrive there.
+// Sends everyone back to the Lobby once every player is dead.
 public class GameOverCheck : NetworkBehaviour
 {
     [SerializeField] private string lobbySceneName = "Lobby";

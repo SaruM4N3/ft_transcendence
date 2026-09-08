@@ -20,7 +20,7 @@ public class PresenceActivity
     public string Status = "Lobby";
 }
 
-// Thin static wrapper over Unity Friends: lazy init, cached own name, and a single OnChanged event for the UI.
+// Static wrapper over Unity Friends with lazy init and an OnChanged event.
 public static class FriendsManager
 {
     public static event Action OnChanged;
@@ -36,7 +36,7 @@ public static class FriendsManager
     public static IReadOnlyList<Relationship> Incoming => IsReady ? FriendsService.Instance.IncomingFriendRequests : Empty;
     public static IReadOnlyList<Relationship> Outgoing => IsReady ? FriendsService.Instance.OutgoingFriendRequests : Empty;
 
-    // Safe to call repeatedly - concurrent callers share one init; a failed init can be retried.
+    // Safe to call repeatedly; concurrent callers share one init.
     public static Task InitializeAsync()
     {
         if (IsReady)
@@ -65,7 +65,7 @@ public static class FriendsManager
         OnChanged?.Invoke();
     }
 
-    // Ignores anything that isn't a well-formed session invite from a friend.
+    // Ignores anything that isn't a valid friend session invite.
     private static void HandleMessage(IMessageReceivedEvent message)
     {
         FriendInvite invite;
@@ -82,7 +82,7 @@ public static class FriendsManager
             OnInviteReceived?.Invoke(invite);
     }
 
-    // Code of the session the local player is currently in (hosting or joined), or null when solo.
+    // Code of the current session, or null when solo.
     public static string CurrentSessionCode
     {
         get
@@ -94,7 +94,7 @@ public static class FriendsManager
         }
     }
 
-    // Name without the "#1234" suffix, for showing to players.
+    // Name without the "#1234" suffix.
     public static string ShortName(string fullName)
     {
         if (string.IsNullOrEmpty(fullName))
@@ -104,7 +104,7 @@ public static class FriendsManager
         return hash > 0 ? fullName.Substring(0, hash) : fullName;
     }
 
-    // Sends the current session's join code to a friend; only reaches them if they're online.
+    // Sends the session code to an online friend.
     public static Task InviteAsync(string memberId)
     {
         string code = CurrentSessionCode;
@@ -114,7 +114,7 @@ public static class FriendsManager
         return FriendsService.Instance.MessageAsync(memberId, new FriendInvite { SessionCode = code, SenderName = OwnName });
     }
 
-    // Sends a request, or accepts one if the other player already sent theirs.
+    // Sends a friend request, or accepts one already received.
     public static async Task AddByNameAsync(string playerName)
     {
         await FriendsService.Instance.AddFriendByNameAsync(playerName);

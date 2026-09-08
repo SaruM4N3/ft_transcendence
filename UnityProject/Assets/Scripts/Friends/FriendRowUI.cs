@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-// One row of the friends panel: name, a small kind tag, and up to two action buttons.
+// One friends-panel row: name, tag, and up to two action buttons.
 public class FriendRowUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text nameText;
@@ -23,7 +23,7 @@ public class FriendRowUI : MonoBehaviour
         ConfigureButton(secondaryButton, secondaryLabel, secondaryText, onSecondary);
     }
 
-    // Online green, Request yellow, anything else (Offline) red.
+    // Online green, Request yellow, otherwise red.
     private static Color TagColor(string tag)
     {
         switch (tag)

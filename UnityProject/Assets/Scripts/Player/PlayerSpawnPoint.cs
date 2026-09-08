@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Marks where players should appear when they arrive in this scene - see PlayerMovement.HandleSceneLoadComplete.
+// Where players appear when they arrive in this scene.
 public class PlayerSpawnPoint : MonoBehaviour
 {
 }

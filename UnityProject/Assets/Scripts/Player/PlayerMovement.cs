@@ -21,8 +21,6 @@ public class PlayerMovement : NetworkBehaviour
     private Rigidbody2D rb;
     private Camera cam;
 
-    // Synced so remote clients can orient the direction indicator and this player's attack FX
-    // the same way the owner sees them, not just replicate position/animation.
     private readonly NetworkVariable<float> aimAngle = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -38,12 +36,10 @@ public class PlayerMovement : NetworkBehaviour
     private float heavyAttackReadyTime;
     private float guardReadyTime;
 
-    // Not serialized - PauseManager lives on its own scene GameObject, not the player prefab.
     private PauseManager pauseManager;
     private PlayerStats stats;
 
-    // Movement/actions freeze the same way for a pause as for death; a dead player also disappears
-    // visually (OnHealthReplicated fires for every observer, not just the local owner).
+    // Blocked while paused or dead.
     private bool IsBlocked => PauseManager.IsPaused || (stats != null && stats.IsDead);
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
@@ -72,14 +68,14 @@ public class PlayerMovement : NetworkBehaviour
             stats.OnHealthReplicated -= HandleHealthReplicated;
     }
 
-    // Fires for every observer (not just the local owner), so a player dying is visible to everyone.
+    // Fires for every observer so a death is visible to all.
     private void HandleHealthReplicated(float currentHealth, float maxHealth)
     {
         if (spriteRenderer != null)
             spriteRenderer.enabled = currentHealth > 0f;
     }
 
-    // Only the owner reads local input or renders a camera - other copies are remote puppets.
+    // Only the owner reads input and renders a camera.
     public override void OnNetworkSpawn()
     {
         if (!IsOwner)
@@ -92,8 +88,6 @@ public class PlayerMovement : NetworkBehaviour
             return;
         }
 
-        // Player NetworkObjects persist across scene loads (DestroyWithScene = false), so without this
-        // everyone would land wherever they stood in the previous scene instead of together.
         if (NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
     }
@@ -113,7 +107,6 @@ public class PlayerMovement : NetworkBehaviour
         if (spawnPoint == null)
             return;
 
-        // Not the cached rb field - this can fire before Start() assigns it.
         Rigidbody2D body = GetComponent<Rigidbody2D>();
         body.position = spawnPoint.transform.position;
         body.linearVelocity = Vector2.zero;
@@ -122,13 +115,11 @@ public class PlayerMovement : NetworkBehaviour
 
     void Update()
     {
-        // LastInputX is NetworkAnimator-synced, so this mirrors a remote puppet's sprite too - flipX itself isn't.
         FlipTowards(animator.GetFloat(LastInputXHash));
 
         if (!this.IsLocallyControlled())
             return;
 
-        // Freezes movement while paused or dead - Move/Run/Guard still track real input so state is correct on unpause.
         if (IsBlocked)
         {
             rb.linearVelocity = Vector2.zero;
@@ -156,7 +147,6 @@ public class PlayerMovement : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        // Tracks input even while paused, so a key released mid-pause doesn't leave the player sliding after unpause.
         moveInput = ctx.ReadValue<Vector2>();
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
 
@@ -207,7 +197,6 @@ public class PlayerMovement : NetworkBehaviour
 
         bool wantsGuard = !ctx.canceled;
 
-        // Releasing guard must work even while paused, or isGuarding stays stuck true and freezes the player.
         if (wantsGuard && (IsBlocked || Time.time < guardReadyTime))
             return;
 
@@ -258,8 +247,7 @@ public class PlayerMovement : NetworkBehaviour
         SpawnLightAttackFxClientRpc(position, angle, OwnerClientId);
     }
 
-    // Every client spawns the same cosmetic flipbook so an attack is visible to everyone, but only
-    // the attacker's own copy keeps its hitbox - otherwise every client would independently deal damage.
+    // Spawns the slash FX on every client; only the attacker's copy deals damage.
     [ClientRpc]
     private void SpawnLightAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
     {
@@ -273,8 +261,7 @@ public class PlayerMovement : NetworkBehaviour
         fx.GetComponent<SlashAttackFX>()?.Init(gameObject, hasHitbox);
     }
 
-    // Same mouse-to-world math as MouseDirectionIndicator, kept local since the FX's rotation
-    // needs it at the moment of attack rather than every frame.
+    // Mouse-to-world aim, evaluated at the moment of attack.
     private Vector2 GetMouseAimDirection()
     {
         if (cam == null)

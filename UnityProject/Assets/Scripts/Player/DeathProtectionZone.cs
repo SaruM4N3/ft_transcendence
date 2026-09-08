@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Place in a scene so players can take damage but never drop below 1 HP while it is loaded (e.g. the Lobby).
+// Keeps players at 1 HP minimum while loaded, e.g. in the Lobby.
 public class DeathProtectionZone : MonoBehaviour
 {
     void OnEnable()

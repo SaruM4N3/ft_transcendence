@@ -5,7 +5,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Shows a friend's game invite with Join/Dismiss; sits on an always-active object so it keeps listening while the toast is hidden.
+// Shows a friend's invite with Join/Dismiss; stays on an always-active object.
 public class InviteToastUI : MonoBehaviour
 {
     [SerializeField] private GameObject content;
@@ -35,7 +35,7 @@ public class InviteToastUI : MonoBehaviour
         FriendsManager.OnInviteReceived -= Show;
     }
 
-    // Connects to the friends service up front so invites arrive even if the friends panel was never opened.
+    // Connects up front so invites arrive before the panel is ever opened.
     private async void Start()
     {
         try

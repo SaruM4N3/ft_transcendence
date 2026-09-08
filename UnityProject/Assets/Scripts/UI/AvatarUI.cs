@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Keeps the HUD portrait in sync with the player's current class/color.</summary>
+// Keeps the HUD portrait in sync with class and color.
 public class AvatarUI : MonoBehaviour
 {
     private Image avatarImage;

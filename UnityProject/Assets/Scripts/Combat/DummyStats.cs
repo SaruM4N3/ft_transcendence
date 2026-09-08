@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-// A practice target (e.g. the Lobby's training dummy) - not networked, unlike PlayerStats.
+// Non-networked practice target, e.g. the Lobby dummy.
 public class DummyStats : MonoBehaviour, IDamageable, IHealthStats
 {
     [SerializeField] private float maxHealth = 100f;

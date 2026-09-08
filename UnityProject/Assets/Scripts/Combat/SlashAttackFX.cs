@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// One-shot flipbook FX, spawned locally (not networked itself) on every client so an attack is
-// visible to everyone; only the attacker's own copy keeps a live hitbox (see PlayerMovement).
+// Local one-shot slash FX; only the attacker's copy keeps a live hitbox.
 public class SlashAttackFX : MonoBehaviour
 {
     public static event System.Action<GameObject, Vector3> OnHitLanded;

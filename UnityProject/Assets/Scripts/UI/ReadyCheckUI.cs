@@ -3,8 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Opens ReadyCheckPanel when a mode is proposed, shows ready status, lets the local player toggle ready.
-// Lives on a separate always-active object - MenuPanel.Close() would otherwise kill its subscriptions.
+// Opens the ready-check panel on a proposal and lets the local player toggle ready.
 public class ReadyCheckUI : MonoBehaviour
 {
     [SerializeField] private MenuPanel menuPanel;
@@ -13,14 +12,11 @@ public class ReadyCheckUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI modeNameText;
     [SerializeField] private TextMeshProUGUI readyButtonLabel;
 
-    // Team picker: one instantiated teamButtonTemplate clone per team name, parented under
-    // teamButtonContainer. Hidden entirely when the pending mode declares no teams (e.g. Coop).
     [SerializeField] private RectTransform teamButtonContainer;
     [SerializeField] private RectTransform teamButtonTemplate;
     [SerializeField] private float teamButtonSpacing = 160f;
 
-    // Per-mode metadata keyed by GameModeLoader's raw scene name; falls back to the raw name if unlisted.
-    // TeamNames null/empty = no team picker shown (today's only mode, Coop). 2v2/3v1 plug in here later.
+    // Per-mode display metadata keyed by scene name; no TeamNames means no team picker.
     private readonly struct ModeInfo
     {
         public readonly string DisplayName;
@@ -72,9 +68,7 @@ public class ReadyCheckUI : MonoBehaviour
         RebuildTeamButtons(null);
     }
 
-    // ModeReadyCheck is now spawned dynamically by NetworkBootstrap.HostGame() (see
-    // project_coop_scene_transition_bugs_fixed) rather than scene-placed, so its Instance is
-    // guaranteed null when this always-active object's OnEnable runs - poll until it exists instead.
+    // Polls until the dynamically spawned ModeReadyCheck exists.
     private void Update()
     {
         if (subscribedInstance == ModeReadyCheck.Instance)
@@ -158,7 +152,7 @@ public class ReadyCheckUI : MonoBehaviour
         orderedPlayers.Clear();
     }
 
-    // Handles a player joining while a check is already showing (RebuildRows covers the "check just started" case).
+    // Adds a row when a player joins during a check.
     private void HandlePlayerRegistered(PlayerCustomization player)
     {
         if (!isOpen || rows.ContainsKey(player))

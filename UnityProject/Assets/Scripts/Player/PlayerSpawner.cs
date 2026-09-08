@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Spawns the offline solo player at the scene's PlayerSpawnPoint; networked players are placed by NetworkBootstrap/PlayerMovement instead.
+// Spawns the offline solo player at PlayerSpawnPoint.
 [DefaultExecutionOrder(-100)]
 public class PlayerSpawner : MonoBehaviour
 {

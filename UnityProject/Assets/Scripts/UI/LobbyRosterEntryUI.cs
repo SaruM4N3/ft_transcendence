@@ -2,8 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// One roster row (LobbyRosterUI) - avatar, name, health bar. Unlike AvatarUI/PlayerNameUI/StatBarUI
-// (local-player-only static events), this is explicitly Bind()'d to any PlayerCustomization/PlayerStats pair.
+// One roster row, explicitly bound to a player's customization and stats.
 public class LobbyRosterEntryUI : MonoBehaviour
 {
     [SerializeField] private Image avatarImage;

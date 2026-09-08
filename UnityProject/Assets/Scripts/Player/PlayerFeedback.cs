@@ -2,7 +2,7 @@ using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
 
-// Game-feel for the player: hurt (flash, screen shake, red edges) and attack (swing kick, hit-confirm shake).
+// Hurt and attack game-feel: flash, shake, red edges.
 [RequireComponent(typeof(PlayerStats))]
 public class PlayerFeedback : NetworkBehaviour
 {
@@ -20,7 +20,7 @@ public class PlayerFeedback : NetworkBehaviour
     private ScreenEdgeFlash edgeFlash;
     private float lastHealth = -1f;
 
-    // Skips the customization preview copy, which has no NetworkObject and would break the static ability event.
+    // Skips the customization preview, which has no NetworkObject.
     void Awake()
     {
         if (GetComponent<NetworkObject>() == null)
@@ -58,7 +58,7 @@ public class PlayerFeedback : NetworkBehaviour
             Destroy(edgeFlash.gameObject);
     }
 
-    // Fires for every observer, so everyone sees the flash but only the owner gets shake and red edges.
+    // Everyone sees the flash; only the owner gets shake and red edges.
     private void HandleHealthReplicated(float current, float max)
     {
         bool tookDamage = lastHealth >= 0f && current < lastHealth;
@@ -87,7 +87,7 @@ public class PlayerFeedback : NetworkBehaviour
             Shake(heavyAttackShake);
     }
 
-    // Only the attacker's own hitbox raises this, so it never fires for a remote player's attack.
+    // Raised only by the attacker's own hitbox.
     private void HandleHitLanded(GameObject attacker, Vector3 position)
     {
         if (attacker == gameObject && this.IsLocallyControlled())

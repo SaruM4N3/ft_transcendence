@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Dijkstra cost grid centred on one player: every enemy chasing that player reads its direction in O(1).
+// Dijkstra cost grid around one player; enemies read directions in O(1).
 public class EnemyFlowField
 {
     public const float CellSize = 0.75f;
@@ -41,7 +41,7 @@ public class EnemyFlowField
 
     public static Vector2Int ToCell(Vector2 world) => Vector2Int.RoundToInt(world / CellSize);
 
-    // Recomputes costs outward from the goal over every walkable cell inside the window.
+    // Recomputes costs outward from the goal over walkable cells.
     public void Rebuild(Vector2 goalWorld)
     {
         origin = ToCell(goalWorld);
@@ -84,7 +84,7 @@ public class EnemyFlowField
         BuiltAt = Time.time;
     }
 
-    // Downhill direction at a world position; false when it lies outside the window or the goal is unreachable.
+    // Downhill direction at a position; false if outside the grid or unreachable.
     public bool TryGetDirection(Vector2 world, out Vector2 direction)
     {
         direction = Vector2.zero;
