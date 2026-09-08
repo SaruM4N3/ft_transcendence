@@ -272,6 +272,7 @@ GameObject:
   - component: {fileID: 5351956015967429100}
   - component: {fileID: 493192744301220450}
   - component: {fileID: 8990027266730438623}
+  - component: {fileID: 8213982752947477093}
   m_Layer: 0
   m_Name: Warrior
   m_TagString: Player
@@ -960,6 +961,22 @@ MonoBehaviour:
     DissipationDistance: 100
     PropagationSpeed: 343
   DefaultVelocity: {x: 0, y: -1, z: 0}
+--- !u!114 &8213982752947477093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899268b510075988799e81185c54c2c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PigForm
+  pigPrefab: {fileID: -2253911629886400664, guid: 13c2269ca7f9951d2a4281654eab6d39, type: 3}
+  pigScale: 1.5
+  transformFxPrefab: {fileID: -2253911629886400664, guid: 9ab4d137f132008c899723fb836e3080, type: 3}
+  transformFxOffset: {x: 0, y: -1.1}
 --- !u!1 &4646007241080426997
 GameObject:
   m_ObjectHideFlags: 0
