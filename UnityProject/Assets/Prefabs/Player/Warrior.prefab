@@ -853,6 +853,10 @@ MonoBehaviour:
       NameHash: -1715759148
       Synchronize: 1
       ParameterType: 9
+    - name: MoveSpeedMult
+      NameHash: 564422778
+      Synchronize: 1
+      ParameterType: 1
   AnimatorParametersExpanded: 0
 --- !u!114 &4002818080156656593
 MonoBehaviour:
