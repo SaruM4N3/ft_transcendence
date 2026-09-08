@@ -36,9 +36,6 @@ public partial class ProceduralMapGenerator
                     continue;
 
                 Vector3Int cell = new(worldX, worldY, 0);
-                if (platformTilemap.GetTile(cell) != null)
-                    continue;
-
                 bool isWater = MaskIsWater(waterMask, maskOriginX, maskOriginY, worldX, worldY);
 
                 GameObject prefab = PickDecorPrefab(chunkRandom, worldX, worldY, isWater, entryOffsetX, entryOffsetY);

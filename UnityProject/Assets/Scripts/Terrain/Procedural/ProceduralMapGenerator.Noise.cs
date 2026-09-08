@@ -44,14 +44,6 @@ public partial class ProceduralMapGenerator
         return biomeTiles[biomeIndex];
     }
 
-    /// <summary>Platform noise.</summary>
-    private float PlatformNoiseAt(int worldX, int worldY)
-    {
-        return Mathf.PerlinNoise(
-            (worldX + platformOffsetX) * platformNoiseScale,
-            (worldY + platformOffsetY) * platformNoiseScale);
-    }
-
     /// <summary>Looks up water state from a precomputed chunk-local mask, falling back to a fresh
     /// noise sample if the requested cell falls outside the mask's coverage.</summary>
     private bool MaskIsWater(bool[,] waterMask, int maskOriginX, int maskOriginY, int worldX, int worldY)

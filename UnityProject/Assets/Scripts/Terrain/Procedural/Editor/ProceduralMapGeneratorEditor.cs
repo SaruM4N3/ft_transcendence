@@ -21,21 +21,12 @@ public class ProceduralMapGeneratorEditor : Editor
     private static readonly Section[] Sections =
     {
         new("References", "References",
-            "landTilemap", "waterTilemap", "waterBackgroundTilemap", "coastFoamTilemap",
-            "platformTilemap", "wallTilemap", "shadowTilemap", "player"),
+            "landTilemap", "waterTilemap", "waterBackgroundTilemap", "coastFoamTilemap", "player"),
         new("ChunkStreaming", "Chunk Streaming",
             "chunkSize", "viewDistanceInChunks", "maxChunkGenerationsPerFrame", "seed", "spawnSafeRadius"),
         new("BiomeWater", "Biome & Water",
             "biomeNoiseScale", "biomeTiles", "waterNoiseScale", "waterThreshold",
             "waterTile", "waterBackgroundTile", "coastFoamTile"),
-        new("Structures", "Structures",
-            "generatePlatforms", "structureChance", "roomSizeRange", "platformNoiseScale",
-            "platformFillThreshold", "platformEdgeFalloff", "minPlatformFloorTiles", "interiorFloorTile"),
-        new("Walls", "Walls",
-            "wallTilesByShape", "waterWallTilesByShape", "shadowTile"),
-        new("Stairs", "Stairs",
-            "cornerStairsPrefab", "cornerStairsWidth", "edgeStairsPrefab", "edgeStairsWidth",
-            "edgeStairsPrefabHeight", "stairsPrefabWidth", "minStairsPerPlatform"),
         new("Decor", "Decor", "decorEntries"),
     };
 
