@@ -94,6 +94,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SortingLayer_Auto
   spriteRenderer: {fileID: 7780406170098127301}
   sortingOffset: 0
+  sortPivotOffset: {x: 0, y: 0.12, z: 0}
 --- !u!1 &5052273220380032198
 GameObject:
   m_ObjectHideFlags: 0
