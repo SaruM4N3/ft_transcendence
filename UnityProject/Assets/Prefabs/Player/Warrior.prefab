@@ -124,8 +124,9 @@ GameObject:
   - component: {fileID: 2648682993640114919}
   - component: {fileID: 2201204286648064290}
   - component: {fileID: 3618725718313327464}
+  - component: {fileID: 8005166703726710935}
   m_Layer: 0
-  m_Name: Player
+  m_Name: Warrior
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -485,6 +486,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SortingLayer_Auto
   spriteRenderer: {fileID: 8269691404384447113}
   sortingOffset: 30
+  sortPivotOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &2201204286648064290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -516,6 +518,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   maxHealth: 100
   maxMana: 50
+--- !u!114 &8005166703726710935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04b31211eaea967b4a1bf5619b4a0f27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionManager
 --- !u!1 &8161917205163886775
 GameObject:
   m_ObjectHideFlags: 0

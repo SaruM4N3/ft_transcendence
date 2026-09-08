@@ -59,6 +59,12 @@ public class PauseManager : MonoBehaviour
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
+    public static void SetExternalPause(bool paused)
+    {
+        IsPaused = paused;
+        Time.timeScale = paused ? 0f : 1f;
+    }
+
     private void SetPaused(bool paused)
     {
         IsPaused = paused;
