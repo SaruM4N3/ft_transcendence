@@ -19,7 +19,7 @@ public class AvatarUI : MonoBehaviour
         // fired OnPortraitChanged itself - its own Awake/OnEnable haven't run while its panel is
         // inactive). Find it directly (even inactive) and ask it to resolve the correct portrait,
         // rather than reading the player's raw (animating, non-portrait) world sprite.
-        CharacterCustomizationMenu menu = FindFirstObjectByType<CharacterCustomizationMenu>(FindObjectsInactive.Include);
+        CharacterCustomizationMenu menu = FindAnyObjectByType<CharacterCustomizationMenu>(FindObjectsInactive.Include);
         if (menu != null)
             SetAvatar(menu.GetCurrentPortrait());
     }

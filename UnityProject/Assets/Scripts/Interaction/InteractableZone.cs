@@ -5,11 +5,11 @@ using UnityEngine.Events;
 public class InteractableZone : MonoBehaviour
 {
     [SerializeField] private string promptText = "Enter";
-    [SerializeField] private Transform promptAnchor;
+    [SerializeField] private InteractPromptUI promptUI;
     [SerializeField] private UnityEvent onInteract;
 
     public string PromptText => promptText;
-    public Vector3 PromptPosition => promptAnchor != null ? promptAnchor.position : transform.position;
+    public Vector3 Position => transform.position;
 
     private void Reset()
     {
@@ -26,6 +26,18 @@ public class InteractableZone : MonoBehaviour
     {
         if (other.CompareTag("Player"))
             InteractionManager.Unregister(this);
+    }
+
+    public void ShowPrompt()
+    {
+        if (promptUI != null)
+            promptUI.Show(promptText);
+    }
+
+    public void HidePrompt()
+    {
+        if (promptUI != null)
+            promptUI.Hide();
     }
 
     public void Interact()

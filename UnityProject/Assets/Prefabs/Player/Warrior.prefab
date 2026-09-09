@@ -122,12 +122,16 @@ GameObject:
   - component: {fileID: 8269691404384447113}
   - component: {fileID: 8491688095466546631}
   - component: {fileID: 2648682993640114919}
+  - component: {fileID: 4414951797551109567}
   - component: {fileID: 2201204286648064290}
   - component: {fileID: 3618725718313327464}
   - component: {fileID: 8005166703726710935}
+  - component: {fileID: 4910918963102752019}
+  - component: {fileID: 671615751618776591}
+  - component: {fileID: 4002818080156656593}
   m_Layer: 0
   m_Name: Warrior
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -487,6 +491,32 @@ MonoBehaviour:
   spriteRenderer: {fileID: 8269691404384447113}
   sortingOffset: 30
   sortPivotOffset: {x: 0, y: 0, z: 0}
+--- !u!114 &4414951797551109567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1691225531
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2201204286648064290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -499,6 +529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9212d8435fdf74b9e9db29fd6cb04178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 5
   runSpeed: 10
   lightAttackCooldown: 0.5
@@ -516,6 +547,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c06e990bb83ce1941b42cdbd23b71499, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxMana: 50
 --- !u!114 &8005166703726710935
@@ -530,6 +562,163 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04b31211eaea967b4a1bf5619b4a0f27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionManager
+--- !u!114 &4910918963102752019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 1
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!114 &671615751618776591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkAnimator
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkAnimatorExpanded: 0
+  AuthorityMode: 1
+  m_Animator: {fileID: 3903869059114739796}
+  TransitionStateInfoList:
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1488830767
+    DestinationState: -972315506
+    TransitionDuration: 0.16723196
+    TriggerNameHash: 1218592651
+    TransitionIndex: 1
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1488830767
+    DestinationState: 2135138783
+    TransitionDuration: 0.25
+    TriggerNameHash: -1715759148
+    TransitionIndex: 2
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1314207704
+    DestinationState: -972315506
+    TransitionDuration: 0.25
+    TriggerNameHash: 1218592651
+    TransitionIndex: 2
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1314207704
+    DestinationState: 2135138783
+    TransitionDuration: 0.25
+    TriggerNameHash: -1715759148
+    TransitionIndex: 3
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1560324282
+    DestinationState: 2135138783
+    TransitionDuration: 0.25
+    TriggerNameHash: -1715759148
+    TransitionIndex: 2
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1560324282
+    DestinationState: -972315506
+    TransitionDuration: 0.25
+    TriggerNameHash: 1218592651
+    TransitionIndex: 3
+  AnimatorParameterEntries:
+    ParameterEntries:
+    - name: Blend
+      NameHash: 1784438316
+      Synchronize: 1
+      ParameterType: 1
+    - name: LastInputX
+      NameHash: 257918319
+      Synchronize: 1
+      ParameterType: 1
+    - name: LastInputY
+      NameHash: 2019079673
+      Synchronize: 1
+      ParameterType: 1
+    - name: InputX
+      NameHash: -1468965832
+      Synchronize: 1
+      ParameterType: 1
+    - name: InputY
+      NameHash: -545887058
+      Synchronize: 1
+      ParameterType: 1
+    - name: IsWalking
+      NameHash: 1282839668
+      Synchronize: 1
+      ParameterType: 4
+    - name: IsGuarding
+      NameHash: 1314112013
+      Synchronize: 1
+      ParameterType: 4
+    - name: LightAttack
+      NameHash: 1218592651
+      Synchronize: 1
+      ParameterType: 9
+    - name: HeavyAttack
+      NameHash: -1715759148
+      Synchronize: 1
+      ParameterType: 9
+  AnimatorParametersExpanded: 0
+--- !u!114 &4002818080156656593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bd7c8495171af62fa04d73c28405148, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomization
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &8161917205163886775
 GameObject:
   m_ObjectHideFlags: 0
@@ -559,7 +748,7 @@ Transform:
   m_GameObject: {fileID: 8161917205163886775}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: -4, z: -12}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

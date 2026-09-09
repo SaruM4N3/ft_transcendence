@@ -12,10 +12,10 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 80d46951a24ba3982bb6c257f789252a
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 3fbece1d986eeebf2aa9f57d3729b69d
+    path: Assets/Scenes/GameModes/Coop.unity
+    guid: d800aca622ca1253297a3ac0875f3604
   - enabled: 1
-    path: Assets/Scenes/MapGenTest.unity
+    path: Assets/Scenes/Test/MapGenTest.unity
     guid: 3347fb431a76b42f9941e6db0a1d9e48
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
