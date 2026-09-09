@@ -34,7 +34,7 @@ public class PauseManager : MonoBehaviour
 
     public void Pause(InputAction.CallbackContext ctx)
     {
-        if (!ctx.performed)
+        if (!ctx.performed || GameOverUI.IsShowing)
             return;
 
         if (MenuPanel.CurrentOpen != null)
