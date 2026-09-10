@@ -11,6 +11,7 @@ public class TestClientProbe : MonoBehaviour
     private bool hasJoined;
     private bool hasReadied;
     private bool servicesReady;
+    private bool eventsHooked;
     private float nextLogTime;
 
     // Sets the profile before any scene script signs in under the default one.
@@ -51,8 +52,23 @@ public class TestClientProbe : MonoBehaviour
         servicesReady = true;
     }
 
+    // Logs the disconnect events a client receives when the host goes away.
+    private void HookNetworkEvents()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (eventsHooked || manager == null)
+            return;
+
+        eventsHooked = true;
+        manager.OnClientDisconnectCallback += id => Debug.Log($"[TestClientProbe] OnClientDisconnect id={id} reason='{manager.DisconnectReason}'");
+        manager.OnClientStopped += wasHost => Debug.Log($"[TestClientProbe] OnClientStopped wasHost={wasHost}");
+        manager.OnTransportFailure += () => Debug.Log("[TestClientProbe] OnTransportFailure");
+    }
+
     void Update()
     {
+        HookNetworkEvents();
+
         if (!hasJoined && servicesReady && AuthenticationService.Instance.IsSignedIn && NetworkManager.Singleton != null)
         {
             var bootstrap = FindAnyObjectByType<NetworkBootstrap>(FindObjectsInactive.Include);
@@ -107,7 +123,12 @@ public class TestClientProbe : MonoBehaviour
             return $"{g.name}(active={g.activeSelf},IsSpawned={gno?.IsSpawned},IsOwner={gno?.IsOwner},Owner={gno?.OwnerClientId},IsPlayerObj={gno?.IsPlayerObject})";
         }));
 
-        Debug.Log($"[TestClientProbe] scene={scene} players=[{string.Join(" | ", players)}] rawPlayerTagged=[{rawInfo}] enemyCount={enemies.Length} enemies=[{enemyInfo}] myHealth={stats?.CurrentHealth}/{stats?.MaxHealth} isDead={stats?.IsDead}");
+        NetworkManager manager = NetworkManager.Singleton;
+        CoopHUD hud = FindAnyObjectByType<CoopHUD>();
+        string hudInfo = hud == null ? "none" : string.Join("/", hud.GetComponentsInChildren<TMPro.TMP_Text>().Select(t => t.text));
+        int sessions = Unity.Services.Multiplayer.MultiplayerService.Instance.Sessions.Count;
+        string net = manager == null ? "nm=null" : $"nm[listening={manager.IsListening} connected={manager.IsConnectedClient} shuttingDown={manager.ShutdownInProgress} sessions={sessions}] hud={hudInfo}";
+        Debug.Log($"[TestClientProbe] {net} scene={scene} players=[{string.Join(" | ", players)}] rawPlayerTagged=[{rawInfo}] enemyCount={enemies.Length} enemies=[{enemyInfo}] myHealth={stats?.CurrentHealth}/{stats?.MaxHealth} isDead={stats?.IsDead}");
     }
 }
 #endif
