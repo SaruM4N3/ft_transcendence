@@ -26,6 +26,11 @@ public class PlayerMovement : NetworkBehaviour
     private float heavyAttackReadyTime;
     private float guardReadyTime;
 
+    // PauseManager lives on its own GameObject in the scene, not on the player prefab - a prefab
+    // asset can't hold a direct reference to it, so it's resolved lazily instead (same fallback
+    // pattern as CharacterCustomizationMenu.Instance).
+    private PauseManager pauseManager;
+
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
     private static readonly int InputXHash = Animator.StringToHash("InputX");
@@ -113,6 +118,17 @@ public class PlayerMovement : NetworkBehaviour
         isRunning = true;
         if (hasDirection)
             UpdateFacing(moveInput);
+    }
+
+    public void OnPause(InputAction.CallbackContext ctx)
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        if (pauseManager == null)
+            pauseManager = FindAnyObjectByType<PauseManager>();
+
+        pauseManager?.Pause(ctx);
     }
 
     public void Guard(InputAction.CallbackContext ctx)

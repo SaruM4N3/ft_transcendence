@@ -1,7 +1,8 @@
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>Replicates the local player's class/color choice (made through
+/// <summary>Replicates the local player's class/color/name choice (made through
 /// CharacterCustomizationMenu) to every connected client, so a change is visible on this player's
 /// networked puppet everywhere - not just on the owner's own screen. Subscribed in Awake rather than
 /// OnNetworkSpawn so the same code path also drives the scene's offline, never-spawned player instance
@@ -12,14 +13,20 @@ public class PlayerCustomization : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<int> colorIndex = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>(
+        default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     public int ClassIndex => classIndex.Value;
     public int ColorIndex => colorIndex.Value;
+    public string PlayerName => playerName.Value.ToString();
+
+    [SerializeField] private PlayerNameTag nameTag;
 
     private void Awake()
     {
         classIndex.OnValueChanged += (_, _) => ApplyVisuals();
         colorIndex.OnValueChanged += (_, _) => ApplyVisuals();
+        playerName.OnValueChanged += (_, newValue) => ApplyName(newValue);
     }
 
     // A late-joining client's copy of an already-customized player needs the current values applied
@@ -27,6 +34,7 @@ public class PlayerCustomization : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         ApplyVisuals();
+        ApplyName(playerName.Value);
     }
 
     /// <summary>Called by CharacterCustomizationMenu when this player picks a class/color. Ignored on a
@@ -41,9 +49,25 @@ public class PlayerCustomization : NetworkBehaviour
         colorIndex.Value = newColorIndex;
     }
 
+    /// <summary>Called by CharacterCustomizationMenu when this player sets their display name. Same
+    /// owner-only restriction as SetSelection.</summary>
+    public void SetName(string newName)
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        playerName.Value = newName;
+    }
+
     private void ApplyVisuals()
     {
         if (CharacterCustomizationMenu.Instance != null)
             CharacterCustomizationMenu.Instance.ApplyVisuals(gameObject, classIndex.Value, colorIndex.Value);
+    }
+
+    private void ApplyName(FixedString32Bytes value)
+    {
+        if (nameTag != null)
+            nameTag.SetName(value.ToString());
     }
 }
