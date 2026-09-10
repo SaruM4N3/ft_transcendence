@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Pawn_Yellow
+  m_Controller: {fileID: 9100000, guid: cb07dd3e7fc9e4b119f2ef2b28c0ce66, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 2f1f3c729be9385b18564655eaad050d, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 00872f8342bd4440e9d673f4335744a5, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 4c9e8aa7e0f209887893a381d663d83c, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 1b28c63ed359241cdbac288441dc8561, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 4ce393c11f58abae2b271979f5117d91, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 9f363c00a0fdb434ba094a9609747cbd, type: 2}

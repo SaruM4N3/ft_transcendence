@@ -78,7 +78,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.5, y: 0.3}
+  m_Size: {x: 0.3, y: 0.2}
   m_EdgeRadius: 0
 --- !u!114 &1976565016300648049
 MonoBehaviour:
@@ -94,6 +94,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SortingLayer_Auto
   spriteRenderer: {fileID: 8587013288542305694}
   sortingOffset: 0
+  sortPivotOffset: {x: 0, y: 0.12, z: 0}
 --- !u!1 &9102046974828952166
 GameObject:
   m_ObjectHideFlags: 0
