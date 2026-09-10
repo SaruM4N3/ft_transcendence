@@ -37,6 +37,29 @@ public class PlayerCustomization : NetworkBehaviour
         ApplyName(playerName.Value);
     }
 
+    // Runs for every instance (offline scene-placed or networked spawn) regardless of Netcode state,
+    // unlike OnNetworkSpawn which never fires offline - see IsLocallyControlled. Loads the local save
+    // file and applies it through the same owner-only setters the customization menu uses, so a
+    // returning player keeps their class/color/name without having to reopen the menu.
+    private void Start()
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        if (!PlayerProfileStore.TryLoad(out int savedClassIndex, out int savedColorIndex, out string savedName))
+            return;
+
+        classIndex.Value = savedClassIndex;
+        colorIndex.Value = savedColorIndex;
+        if (!string.IsNullOrEmpty(savedName))
+            playerName.Value = savedName;
+
+        // The HUD already ran its one-time initial sync (in OnEnable, which fires before this Start)
+        // off the pre-load defaults, so nudge it to pick up what we just loaded.
+        if (CharacterCustomizationMenu.Instance != null)
+            CharacterCustomizationMenu.Instance.NotifyProfileLoaded(gameObject);
+    }
+
     /// <summary>Called by CharacterCustomizationMenu when this player picks a class/color. Ignored on a
     /// spawned instance that isn't locally owned - only the real owner is allowed to write these
     /// NetworkVariables.</summary>
@@ -47,6 +70,7 @@ public class PlayerCustomization : NetworkBehaviour
 
         classIndex.Value = newClassIndex;
         colorIndex.Value = newColorIndex;
+        PlayerProfileStore.Save(classIndex.Value, colorIndex.Value, playerName.Value.ToString());
     }
 
     /// <summary>Called by CharacterCustomizationMenu when this player sets their display name. Same
@@ -57,6 +81,7 @@ public class PlayerCustomization : NetworkBehaviour
             return;
 
         playerName.Value = newName;
+        PlayerProfileStore.Save(classIndex.Value, colorIndex.Value, playerName.Value.ToString());
     }
 
     private void ApplyVisuals()
