@@ -1,9 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Server-authoritative chase-and-melee AI built for hundreds of instances: shared per-player flow fields
-// route it around water and decor, it re-aggros when its target dies, and deals contact damage on arrival.
-// Movement replicates to clients via NetworkTransform (Server authority).
+// Server-authoritative chase-and-melee AI driven by shared flow fields.
 public class EnemyAI : NetworkBehaviour
 {
     [SerializeField] private float moveSpeed = 2.5f;
@@ -47,7 +45,6 @@ public class EnemyAI : NetworkBehaviour
     private static readonly int RunHash = Animator.StringToHash("Run");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
 
-    // Counts swings so remote clients replay the attack animation; only written by the server while spawned.
     private readonly NetworkVariable<byte> swingCount = new NetworkVariable<byte>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -65,7 +62,7 @@ public class EnemyAI : NetworkBehaviour
         EnemyFlowFieldManager.BodyOffset = bodyOffset;
     }
 
-    // Random phase offsets spread the per-enemy timers so hundreds of enemies never all work on the same frame.
+    // Staggers timers so enemies don't all update on the same frame.
     void Start()
     {
         lastPosition = transform.position;
@@ -84,14 +81,14 @@ public class EnemyAI : NetworkBehaviour
         swingCount.OnValueChanged -= HandleSwingCountChanged;
     }
 
-    // Remote clients replay the swing; the server already started it locally in StartAttack.
+    // Replays the swing on remote clients.
     private void HandleSwingCountChanged(byte previous, byte current)
     {
         if (!IsServer)
             PlayAttackAnimation();
     }
 
-    // Runs on every peer: facing and Idle/Run/Attack come from real movement, so no extra sync is needed.
+    // Runs on every peer; facing and animation come from real movement.
     void Update()
     {
         UpdateVisuals();
@@ -115,7 +112,7 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
-        Vector2 toTarget = (Vector2)target.transform.position - rb.position;
+        Vector2 toTarget = TargetCenter(target) - BodyCenter;
         if (toTarget.sqrMagnitude <= attackRange * attackRange)
         {
             rb.linearVelocity = Vector2.zero;
@@ -133,8 +130,15 @@ public class EnemyAI : NetworkBehaviour
         rb.linearVelocity = steerDirection * moveSpeed;
     }
 
-    // The collider is offset from the pivot, so every obstacle query must start at the real body, not the root.
+    // The collider is offset from the pivot; queries must start at the real body.
     private Vector2 BodyCenter => rb.position + bodyOffset;
+
+    // Range checks use collider centres, since pivots sit at different heights.
+    private static Vector2 TargetCenter(PlayerStats player)
+    {
+        Collider2D collider = player.GetComponent<Collider2D>();
+        return collider != null ? (Vector2)collider.bounds.center : (Vector2)player.transform.position;
+    }
 
     private void ChooseTarget(EnemyFlowFieldManager manager)
     {
@@ -143,7 +147,7 @@ public class EnemyAI : NetworkBehaviour
         target = manager.FindNearestLivingPlayer(rb.position);
     }
 
-    // Straight at the player when close with a clear line, otherwise downhill along the shared flow field.
+    // Straight at the player with a clear line, otherwise along the flow field.
     private Vector2 ComputeSteerDirection(EnemyFlowFieldManager manager, Vector2 toTarget)
     {
         if (toTarget.sqrMagnitude <= directChaseRange * directChaseRange && HasClearLine(toTarget))
@@ -155,7 +159,7 @@ public class EnemyAI : NetworkBehaviour
         return toTarget.normalized;
     }
 
-    // Cached for lineOfSightInterval so the cast cost stays flat however many enemies are near the player.
+    // Cached so cast cost stays flat however many enemies are near.
     private bool HasClearLine(Vector2 toTarget)
     {
         if (Time.time >= nextLineOfSightTime)
@@ -166,7 +170,7 @@ public class EnemyAI : NetworkBehaviour
         return hasLineOfSight;
     }
 
-    // Zero friction so pushing against a trunk slides along it instead of sticking.
+    // Zero friction so enemies slide along trunks.
     private static PhysicsMaterial2D GetSlipperyMaterial()
     {
         if (slipperyMaterial == null)
@@ -174,7 +178,7 @@ public class EnemyAI : NetworkBehaviour
         return slipperyMaterial;
     }
 
-    // Windup first: the damage lands attackHitDelay later, on the swing's impact frame.
+    // Damage lands attackHitDelay after the windup starts.
     private void StartAttack()
     {
         nextAttackTime = Time.time + attackCooldown;
@@ -186,7 +190,7 @@ public class EnemyAI : NetworkBehaviour
         PlayAttackAnimation();
     }
 
-    // The swing only connects if its victim is still alive and roughly within reach when the impact lands.
+    // Connects only if the victim is alive and still in reach.
     private void ResolveHit()
     {
         pendingHitTime = 0f;
@@ -194,7 +198,7 @@ public class EnemyAI : NetworkBehaviour
             return;
 
         float reach = attackRange * hitRangeTolerance;
-        if (((Vector2)swingTarget.transform.position - rb.position).sqrMagnitude <= reach * reach)
+        if ((TargetCenter(swingTarget) - BodyCenter).sqrMagnitude <= reach * reach)
             swingTarget.RequestDamage(damage);
     }
 
@@ -208,7 +212,7 @@ public class EnemyAI : NetworkBehaviour
         animator.Play(AttackHash, 0, 0f);
     }
 
-    // Faces the way it actually moved, and picks Attack/Run/Idle; only calls Play when the state changes.
+    // Faces movement and picks Attack/Run/Idle, playing only on state change.
     private void UpdateVisuals()
     {
         Vector2 position = transform.position;

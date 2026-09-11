@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Server-side hub shared by every enemy: the living-player list and one flow field per chased player.
+// Server hub: living players and one flow field per chased player.
 public class EnemyFlowFieldManager : MonoBehaviour
 {
     private const float PlayerRefreshInterval = 0.25f;
@@ -71,7 +71,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
         return nearest;
     }
 
-    // Marks the target's field as in use and samples it; false while it is not built yet or out of range.
+    // Samples the target's field; false if not built yet or out of range.
     public bool TryGetDirection(PlayerStats target, Vector2 position, out Vector2 direction)
     {
         direction = Vector2.zero;
@@ -90,14 +90,12 @@ public class EnemyFlowFieldManager : MonoBehaviour
         RefreshPlayers();
     }
 
-    // Bumps PlayersVersion only when the living set actually changed, so enemies re-aggro on deaths and revives.
+    // Bumps PlayersVersion when the living set changes; solo falls back to the local player.
     private void RefreshPlayers()
     {
         nextPlayerRefreshTime = Time.time + PlayerRefreshInterval;
         scratchPlayers.Clear();
 
-        // Solo play never spawns PlayerCustomization (no session), so the registry stays empty -
-        // fall back to the one local player, same resolution ProceduralMapGenerator uses.
         if (PlayerCustomization.AllActiveInstances.Count == 0)
         {
             GameObject localPlayer = LocalPlayer.Get();
@@ -136,7 +134,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
         return true;
     }
 
-    // Drops unused or dead-player fields, then rebuilds the most out-of-date one(s) within the per-step budget.
+    // Drops stale fields, then rebuilds the most out-of-date within the budget.
     private void UpdateFields()
     {
         float now = Time.time;

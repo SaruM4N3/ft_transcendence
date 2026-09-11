@@ -4,19 +4,17 @@ using Unity.Netcode;
 using Unity.Services.Authentication;
 using UnityEngine;
 
-// TEMPORARY multiplayer client-side diagnostic probe - auto-joins via a -testJoinCode= command line
-// argument and periodically logs this client's own view of the world to its log file, so client-side
-// bugs (missing enemies, ghost players, dead-player visuals) can be diagnosed without interacting
-// with the standalone window. Compiles out of Editor and WebGL builds. Remove before shipping.
+// TEMPORARY: auto-joins via -testJoinCode and logs the client's view.
 public class TestClientProbe : MonoBehaviour
 {
     private string joinCode;
     private bool hasJoined;
     private bool hasReadied;
     private bool servicesReady;
+    private bool eventsHooked;
     private float nextLogTime;
 
-    // Picks the profile before any scene script (e.g. FriendsManager) can sign in under the default one.
+    // Sets the profile before any scene script signs in under the default one.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static async void InitServicesWithProfile()
     {
@@ -54,9 +52,24 @@ public class TestClientProbe : MonoBehaviour
         servicesReady = true;
     }
 
+    // Logs the disconnect events a client receives when the host goes away.
+    private void HookNetworkEvents()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (eventsHooked || manager == null)
+            return;
+
+        eventsHooked = true;
+        manager.OnClientDisconnectCallback += id => Debug.Log($"[TestClientProbe] OnClientDisconnect id={id} reason='{manager.DisconnectReason}'");
+        manager.OnClientStopped += wasHost => Debug.Log($"[TestClientProbe] OnClientStopped wasHost={wasHost}");
+        manager.OnTransportFailure += () => Debug.Log("[TestClientProbe] OnTransportFailure");
+    }
+
     void Update()
     {
-        if (!hasJoined && servicesReady && NetworkManager.Singleton != null)
+        HookNetworkEvents();
+
+        if (!hasJoined && servicesReady && AuthenticationService.Instance.IsSignedIn && NetworkManager.Singleton != null)
         {
             var bootstrap = FindAnyObjectByType<NetworkBootstrap>(FindObjectsInactive.Include);
             if (bootstrap != null)
@@ -103,9 +116,6 @@ public class TestClientProbe : MonoBehaviour
         GameObject localPlayer = LocalPlayer.Get();
         PlayerStats stats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
 
-        // Raw scene check, not just the network-tracked registry above - catches a GameObject that's
-        // still visually active/rendered but no longer network-spawned (e.g. despawned on the server
-        // without ever being locally deactivated on this client).
         GameObject[] activePlayerTagged = GameObject.FindGameObjectsWithTag("Player");
         string rawInfo = string.Join(",", activePlayerTagged.Select(g =>
         {
@@ -113,7 +123,12 @@ public class TestClientProbe : MonoBehaviour
             return $"{g.name}(active={g.activeSelf},IsSpawned={gno?.IsSpawned},IsOwner={gno?.IsOwner},Owner={gno?.OwnerClientId},IsPlayerObj={gno?.IsPlayerObject})";
         }));
 
-        Debug.Log($"[TestClientProbe] scene={scene} players=[{string.Join(" | ", players)}] rawPlayerTagged=[{rawInfo}] enemyCount={enemies.Length} enemies=[{enemyInfo}] myHealth={stats?.CurrentHealth}/{stats?.MaxHealth} isDead={stats?.IsDead}");
+        NetworkManager manager = NetworkManager.Singleton;
+        CoopHUD hud = FindAnyObjectByType<CoopHUD>();
+        string hudInfo = hud == null ? "none" : string.Join("/", hud.GetComponentsInChildren<TMPro.TMP_Text>().Select(t => t.text));
+        int sessions = Unity.Services.Multiplayer.MultiplayerService.Instance.Sessions.Count;
+        string net = manager == null ? "nm=null" : $"nm[listening={manager.IsListening} connected={manager.IsConnectedClient} shuttingDown={manager.ShutdownInProgress} sessions={sessions}] hud={hudInfo}";
+        Debug.Log($"[TestClientProbe] {net} scene={scene} players=[{string.Join(" | ", players)}] rawPlayerTagged=[{rawInfo}] enemyCount={enemies.Length} enemies=[{enemyInfo}] myHealth={stats?.CurrentHealth}/{stats?.MaxHealth} isDead={stats?.IsDead}");
     }
 }
 #endif

@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Lightweight looping sprite animation for ambient decor - cycles a frame array on a timer instead
-// of an Animator, which is unnecessary overhead at decor's hundreds-of-instances scale.
+// Looping sprite animation for decor, cheaper than an Animator at scale.
 public class DecorFlipbook : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;

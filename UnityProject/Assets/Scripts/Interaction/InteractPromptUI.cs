@@ -2,8 +2,7 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 
-// One NPC's own "press E" prompt - a World Space Canvas at a fixed local position above it, so it
-// moves for free via the Transform hierarchy instead of needing runtime screen-position math.
+// Per-NPC world-space "press E" prompt at a fixed local position.
 public class InteractPromptUI : MonoBehaviour
 {
     [SerializeField] private RectTransform promptRoot;
@@ -37,7 +36,6 @@ public class InteractPromptUI : MonoBehaviour
             canvasGroup.alpha = 0f;
             promptRoot.gameObject.SetActive(false);
 
-            // Keycap badge blinks on its own while shown, fading/scaling as one unit.
             keyCap = promptRoot.Find("KeyCap") as RectTransform;
             if (keyCap != null)
             {
@@ -83,7 +81,7 @@ public class InteractPromptUI : MonoBehaviour
         activeAnimation = StartCoroutine(Animate(opening: false));
     }
 
-    // Same unscaled-time scale+alpha tween as MenuPanel's Open/Close, so a prompt can fade out even while paused.
+    // Unscaled-time scale and alpha tween, so it works while paused.
     private IEnumerator Animate(bool opening)
     {
         float fromScale = opening ? closedScale : 1f;
@@ -110,7 +108,7 @@ public class InteractPromptUI : MonoBehaviour
         activeAnimation = null;
     }
 
-    // Continuous alpha+scale pulse on the keycap to draw the eye to the key to press.
+    // Pulses the keycap's alpha and scale.
     private IEnumerator BlinkKeyCap()
     {
         while (true)

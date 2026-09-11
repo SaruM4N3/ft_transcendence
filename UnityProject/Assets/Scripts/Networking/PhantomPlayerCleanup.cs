@@ -3,10 +3,7 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
-// Server-side safety net: a scene's own placed offline-player object can still get auto-spawned as a
-// phantom despite OfflinePlayerGate's Awake-time deactivation - Netcode's own scene-population timing
-// during a networked scene load can race ahead of that check. Sweep any such ghost away right after
-// every scene finishes loading, for every scene (this object persists across all of them).
+// Removes ghost offline players auto-spawned after each scene load.
 public class PhantomPlayerCleanup : NetworkBehaviour
 {
     public override void OnNetworkSpawn()

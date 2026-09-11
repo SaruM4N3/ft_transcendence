@@ -7,7 +7,6 @@ public class StatBarUI : MonoBehaviour
     private enum Stat { Health, Mana }
 
     [SerializeField] private Stat stat;
-    // Optional "current/max" label centered on the bar, e.g. the HealthBar's "80/100".
     [SerializeField] private TMP_Text valueText;
 
     private Image fillImage;

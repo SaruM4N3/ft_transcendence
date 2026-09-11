@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Physics2D queries against static colliders (water composite, decor), the only things enemies path around.
+// Physics2D queries against the static colliders enemies path around.
 public static class ObstacleQuery
 {
     private static readonly Collider2D[] overlapBuffer = new Collider2D[16];
@@ -8,7 +8,7 @@ public static class ObstacleQuery
     private static ContactFilter2D filter;
     private static bool filterReady;
 
-    // True when nothing static blocks a circle of this radius travelling from one point to the other.
+    // True when nothing static blocks the circle's path.
     public static bool IsClear(Vector2 from, Vector2 to, float radius)
     {
         EnsureFilter();
@@ -26,7 +26,7 @@ public static class ObstacleQuery
         return true;
     }
 
-    // True when a static collider overlaps a circle of this radius at the point.
+    // True when a static collider overlaps the circle.
     public static bool IsBlocked(Vector2 point, float radius)
     {
         EnsureFilter();
@@ -39,7 +39,7 @@ public static class ObstacleQuery
         return false;
     }
 
-    // True when a static collider touches the whole square area, so small trunks and rocks can't slip between grid samples.
+    // True when a static collider touches the whole square, catching thin trunks.
     public static bool IsAreaBlocked(Vector2 center, float size)
     {
         EnsureFilter();

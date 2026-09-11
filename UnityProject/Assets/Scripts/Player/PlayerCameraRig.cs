@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Centralizes camera-child lookups by name, used in multiple places, so a prefab rename only touches one spot.
+// Camera child lookups by name, in one place.
 public static class PlayerCameraRig
 {
     private const string MainCameraName = "Main Camera";
@@ -17,7 +17,7 @@ public static class PlayerCameraRig
             cinemachineCamera.gameObject.SetActive(active);
     }
 
-    // Reparents the player's camera(s) so they survive the player being deactivated.
+    // Reparents the player's cameras so they survive its deactivation.
     public static GameObject Detach(Transform player)
     {
         Transform mainCamera = player.Find(MainCameraName);

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-// Server-authoritative horde spawner: waves of enemies appear in a ring around this object and
-// chase the players down; the next wave starts once the current one is fully cleared.
+// Server-side wave spawner; the next wave starts when the current one is cleared.
 public class WaveSpawner : NetworkBehaviour
 {
     [SerializeField] private GameObject enemyPrefab;
@@ -16,8 +15,28 @@ public class WaveSpawner : NetworkBehaviour
     [SerializeField] private float spawnClearance = 1f;
 
     private readonly List<NetworkObject> aliveEnemies = new List<NetworkObject>();
+    private readonly NetworkVariable<int> currentWave = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<double> startServerTime = new NetworkVariable<double>(
+        0d, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private int waveNumber;
+    private float offlineStartTime;
     private bool wavesStarted;
+
+    public int CurrentWave => IsSpawned ? currentWave.Value : waveNumber;
+
+    // Seconds since the first wave began, on the shared server clock when networked.
+    public float ElapsedSeconds
+    {
+        get
+        {
+            if (CurrentWave <= 0)
+                return 0f;
+
+            return IsSpawned ? (float)(NetworkManager.ServerTime.Time - startServerTime.Value) : Time.time - offlineStartTime;
+        }
+    }
 
     void Start()
     {
@@ -56,13 +75,27 @@ public class WaveSpawner : NetworkBehaviour
     {
         while (true)
         {
+            if (waveNumber == 0)
+                MarkStartTime();
+
             waveNumber++;
+            if (IsSpawned)
+                currentWave.Value = waveNumber;
+
             int count = baseEnemiesPerWave + (waveNumber - 1) * extraEnemiesPerWave;
             SpawnWave(count);
 
             yield return new WaitUntil(AllEnemiesDead);
             yield return new WaitForSeconds(timeBetweenWaves);
         }
+    }
+
+    private void MarkStartTime()
+    {
+        if (IsSpawned)
+            startServerTime.Value = NetworkManager.ServerTime.Time;
+        else
+            offlineStartTime = Time.time;
     }
 
     private bool AllEnemiesDead()
@@ -85,7 +118,7 @@ public class WaveSpawner : NetworkBehaviour
         }
     }
 
-    // Never returns a water or blocked point: after all attempts fail it falls back to the spawner's own (safe) position.
+    // Falls back to the spawner's own position if no valid point is found.
     private Vector3 FindSpawnPosition()
     {
         ProceduralMapGenerator mapGenerator = FindAnyObjectByType<ProceduralMapGenerator>();
@@ -103,14 +136,14 @@ public class WaveSpawner : NetworkBehaviour
         return transform.position;
     }
 
-    // The enemy's collider sits above its pivot, so spawn checks must test where the body will actually be.
+    // The collider sits above the pivot, so spawn checks test the body position.
     private Vector2 GetEnemyBodyOffset()
     {
         CircleCollider2D circle = enemyPrefab.GetComponent<CircleCollider2D>();
         return circle != null ? circle.offset * (Vector2)enemyPrefab.transform.localScale : Vector2.zero;
     }
 
-    // Land at the point and at its four sides (so no coast-edge spawns) with no static collider on it.
+    // Valid when the point and its four sides are land with no static collider.
     private bool IsValidSpawnPoint(Vector3 root, ProceduralMapGenerator mapGenerator)
     {
         Vector3 point = root + (Vector3)GetEnemyBodyOffset();

@@ -21,8 +21,6 @@ public class PlayerMovement : NetworkBehaviour
     private Rigidbody2D rb;
     private Camera cam;
 
-    // Synced so remote clients can orient the direction indicator and this player's attack FX
-    // the same way the owner sees them, not just replicate position/animation.
     private readonly NetworkVariable<float> aimAngle = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -31,6 +29,8 @@ public class PlayerMovement : NetworkBehaviour
     private Animator animator;
     private Vector2 moveInput;
     private Vector2 facing = Vector2.down;
+    private bool facingApplied;
+    private float moveSpeedMult = 1f;
     private bool isGuarding;
     private bool isRunning;
 
@@ -38,18 +38,20 @@ public class PlayerMovement : NetworkBehaviour
     private float heavyAttackReadyTime;
     private float guardReadyTime;
 
-    // Not serialized - PauseManager lives on its own scene GameObject, not the player prefab.
     private PauseManager pauseManager;
     private PlayerStats stats;
 
-    // Movement/actions freeze the same way for a pause as for death; a dead player also disappears
-    // visually (OnHealthReplicated fires for every observer, not just the local owner).
-    private bool IsBlocked => PauseManager.IsPaused || (stats != null && stats.IsDead);
+    private bool IsBlocked => PauseManager.IsPaused;
+
+    // Dead players (pigs) can still move but not fight.
+    private bool CanFight => !IsBlocked && (stats == null || !stats.IsDead);
+
+    private const float FacingHysteresis = 1.15f;
+    private const float BackwardDotThreshold = -0.1f;
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
-    private static readonly int InputXHash = Animator.StringToHash("InputX");
-    private static readonly int InputYHash = Animator.StringToHash("InputY");
+    private static readonly int MoveSpeedMultHash = Animator.StringToHash("MoveSpeedMult");
     private static readonly int LastInputXHash = Animator.StringToHash("LastInputX");
     private static readonly int LastInputYHash = Animator.StringToHash("LastInputY");
     private static readonly int LightAttackHash = Animator.StringToHash("LightAttack");
@@ -62,24 +64,9 @@ public class PlayerMovement : NetworkBehaviour
         animator = GetComponent<Animator>();
 
         stats = GetComponent<PlayerStats>();
-        if (stats != null)
-            stats.OnHealthReplicated += HandleHealthReplicated;
     }
 
-    void OnDestroy()
-    {
-        if (stats != null)
-            stats.OnHealthReplicated -= HandleHealthReplicated;
-    }
-
-    // Fires for every observer (not just the local owner), so a player dying is visible to everyone.
-    private void HandleHealthReplicated(float currentHealth, float maxHealth)
-    {
-        if (spriteRenderer != null)
-            spriteRenderer.enabled = currentHealth > 0f;
-    }
-
-    // Only the owner reads local input or renders a camera - other copies are remote puppets.
+    // Only the owner reads input and renders a camera.
     public override void OnNetworkSpawn()
     {
         if (!IsOwner)
@@ -92,8 +79,6 @@ public class PlayerMovement : NetworkBehaviour
             return;
         }
 
-        // Player NetworkObjects persist across scene loads (DestroyWithScene = false), so without this
-        // everyone would land wherever they stood in the previous scene instead of together.
         if (NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
     }
@@ -113,7 +98,6 @@ public class PlayerMovement : NetworkBehaviour
         if (spawnPoint == null)
             return;
 
-        // Not the cached rb field - this can fire before Start() assigns it.
         Rigidbody2D body = GetComponent<Rigidbody2D>();
         body.position = spawnPoint.transform.position;
         body.linearVelocity = Vector2.zero;
@@ -122,13 +106,11 @@ public class PlayerMovement : NetworkBehaviour
 
     void Update()
     {
-        // LastInputX is NetworkAnimator-synced, so this mirrors a remote puppet's sprite too - flipX itself isn't.
         FlipTowards(animator.GetFloat(LastInputXHash));
 
         if (!this.IsLocallyControlled())
             return;
 
-        // Freezes movement while paused or dead - Move/Run/Guard still track real input so state is correct on unpause.
         if (IsBlocked)
         {
             rb.linearVelocity = Vector2.zero;
@@ -138,6 +120,11 @@ public class PlayerMovement : NetworkBehaviour
 
         Vector2 aimDir = GetMouseAimDirection();
         aimAngle.Value = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
+        UpdateFacing(aimDir);
+        UpdateMoveSpeedMult();
+
+        if (isGuarding && !CanFight)
+            StopGuarding();
 
         if (isGuarding)
         {
@@ -156,7 +143,6 @@ public class PlayerMovement : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        // Tracks input even while paused, so a key released mid-pause doesn't leave the player sliding after unpause.
         moveInput = ctx.ReadValue<Vector2>();
         bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
 
@@ -164,11 +150,6 @@ public class PlayerMovement : NetworkBehaviour
             return;
 
         animator.SetBool(IsWalkingHash, !isGuarding && hasDirection);
-        animator.SetFloat(InputXHash, moveInput.x);
-        animator.SetFloat(InputYHash, moveInput.y);
-
-        if (hasDirection)
-            UpdateFacing(moveInput);
     }
 
     public void Run(InputAction.CallbackContext ctx)
@@ -183,10 +164,7 @@ public class PlayerMovement : NetworkBehaviour
         if (IsBlocked)
             return;
 
-        bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
         isRunning = true;
-        if (hasDirection)
-            UpdateFacing(moveInput);
     }
 
     public void OnPause(InputAction.CallbackContext ctx)
@@ -207,8 +185,7 @@ public class PlayerMovement : NetworkBehaviour
 
         bool wantsGuard = !ctx.canceled;
 
-        // Releasing guard must work even while paused, or isGuarding stays stuck true and freezes the player.
-        if (wantsGuard && (IsBlocked || Time.time < guardReadyTime))
+        if (wantsGuard && (!CanFight || Time.time < guardReadyTime))
             return;
 
         if (ctx.canceled && !isGuarding)
@@ -228,7 +205,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void LightAttack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || IsBlocked || Time.time < lightAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < lightAttackReadyTime)
             return;
 
         animator.SetTrigger(LightAttackHash);
@@ -258,8 +235,7 @@ public class PlayerMovement : NetworkBehaviour
         SpawnLightAttackFxClientRpc(position, angle, OwnerClientId);
     }
 
-    // Every client spawns the same cosmetic flipbook so an attack is visible to everyone, but only
-    // the attacker's own copy keeps its hitbox - otherwise every client would independently deal damage.
+    // Spawns the slash FX on every client; only the attacker's copy deals damage.
     [ClientRpc]
     private void SpawnLightAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
     {
@@ -273,8 +249,7 @@ public class PlayerMovement : NetworkBehaviour
         fx.GetComponent<SlashAttackFX>()?.Init(gameObject, hasHitbox);
     }
 
-    // Same mouse-to-world math as MouseDirectionIndicator, kept local since the FX's rotation
-    // needs it at the moment of attack rather than every frame.
+    // Mouse-to-world aim, evaluated at the moment of attack.
     private Vector2 GetMouseAimDirection()
     {
         if (cam == null)
@@ -292,7 +267,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void HeavyAttack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || IsBlocked || Time.time < heavyAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < heavyAttackReadyTime)
             return;
 
         animator.SetTrigger(HeavyAttackHash);
@@ -300,11 +275,47 @@ public class PlayerMovement : NetworkBehaviour
         OnAbilityUsed?.Invoke(AbilityType.HeavyAttack, heavyAttackCooldown);
     }
 
-    private void UpdateFacing(Vector2 direction)
+    // Drops the guard when it can no longer be held, e.g. on death.
+    private void StopGuarding()
     {
-        facing = direction;
+        isGuarding = false;
+        animator.SetBool(IsGuardingHash, false);
+        animator.SetBool(IsWalkingHash, moveInput.sqrMagnitude > 0.01f);
+    }
+
+    // Snaps the aim to a cardinal facing, with hysteresis so diagonals don't flicker.
+    private void UpdateFacing(Vector2 aim)
+    {
+        float absX = Mathf.Abs(aim.x);
+        float absY = Mathf.Abs(aim.y);
+        Vector2 next = facing;
+
+        if (absX > absY * FacingHysteresis)
+            next = new Vector2(Mathf.Sign(aim.x), 0f);
+        else if (absY > absX * FacingHysteresis)
+            next = new Vector2(0f, Mathf.Sign(aim.y));
+
+        if (facingApplied && next == facing)
+            return;
+
+        facing = next;
+        facingApplied = true;
         animator.SetFloat(LastInputXHash, facing.x);
         animator.SetFloat(LastInputYHash, facing.y);
+    }
+
+    // Reverses the walk cycle while moving away from the facing.
+    private void UpdateMoveSpeedMult()
+    {
+        bool hasDirection = moveInput.sqrMagnitude > 0.0001f;
+        bool backward = hasDirection && Vector2.Dot(moveInput.normalized, facing) < BackwardDotThreshold;
+        float next = backward ? -1f : 1f;
+
+        if (Mathf.Approximately(next, moveSpeedMult))
+            return;
+
+        moveSpeedMult = next;
+        animator.SetFloat(MoveSpeedMultHash, moveSpeedMult);
     }
 
     private void FlipTowards(float directionX)

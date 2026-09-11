@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Top-left lobby roster: one LobbyRosterEntryUI row per connected player, stacked below the personal HUD.
-// Container stays always-active - zero rows during solo play is just nothing to show, not a reason to disable.
+// Top-left roster with one row per connected player.
 public class LobbyRosterUI : MonoBehaviour
 {
     [SerializeField] private RectTransform rowTemplate;
@@ -23,7 +22,6 @@ public class LobbyRosterUI : MonoBehaviour
         PlayerCustomization.OnPlayerRegistered += HandlePlayerRegistered;
         PlayerCustomization.OnPlayerUnregistered += HandlePlayerUnregistered;
 
-        // Pick up players that spawned before this enabled (re-enable, or a late-joining client).
         foreach (PlayerCustomization existing in PlayerCustomization.AllActiveInstances)
             HandlePlayerRegistered(existing);
     }
@@ -42,7 +40,6 @@ public class LobbyRosterUI : MonoBehaviour
 
     private void HandlePlayerRegistered(PlayerCustomization player)
     {
-        // Local player already has their own stats in the personal HUD - roster is for everyone else.
         if (rowTemplate == null || rows.ContainsKey(player) || player.IsOwner)
             return;
 
@@ -68,7 +65,7 @@ public class LobbyRosterUI : MonoBehaviour
         RelayoutRows();
     }
 
-    // Ordered by join order, not Dictionary iteration order, so the list doesn't reshuffle on join/leave.
+    // Rows keep join order so the list doesn't reshuffle.
     private void RelayoutRows()
     {
         for (int i = 0; i < orderedPlayers.Count; i++)

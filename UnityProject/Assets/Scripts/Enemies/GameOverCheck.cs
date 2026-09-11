@@ -2,14 +2,22 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Server-authoritative wipe check: once every connected player's health hits zero, send everyone
-// back to the Lobby - PlayerStats.ResetToFull already revives them the moment they arrive there.
+// Detects a full wipe and lets the host (or solo player) restart the mode or return to the Lobby.
 public class GameOverCheck : NetworkBehaviour
 {
     [SerializeField] private string lobbySceneName = "Lobby";
     [SerializeField] private float startupGracePeriod = 0.5f;
-    private bool hasTriggeredGameOver;
+
+    private readonly NetworkVariable<bool> gameOver = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private bool offlineGameOver;
+    private bool isLoading;
     private float readyTime;
+
+    public bool IsGameOver => IsSpawned ? gameOver.Value : offlineGameOver;
+
+    public bool CanChoose => this.HasServerAuthority();
 
     void Start()
     {
@@ -18,18 +26,40 @@ public class GameOverCheck : NetworkBehaviour
 
     void Update()
     {
-        if (!this.HasServerAuthority() || hasTriggeredGameOver || Time.time < readyTime)
+        if (!this.HasServerAuthority() || IsGameOver || Time.time < readyTime)
             return;
 
         if (!AllPlayersDead())
             return;
 
-        hasTriggeredGameOver = true;
+        if (IsSpawned)
+            gameOver.Value = true;
+        else
+            offlineGameOver = true;
+    }
+
+    public void Restart()
+    {
+        LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void ReturnToLobby()
+    {
+        LoadScene(lobbySceneName);
+    }
+
+    // Only the host or a solo player may change scene, and only once.
+    private void LoadScene(string sceneName)
+    {
+        if (!CanChoose || isLoading)
+            return;
+
+        isLoading = true;
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         if (isNetworked)
-            NetworkManager.SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Single);
+            NetworkManager.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
         else
-            LoadingScreenManager.LoadScene(lobbySceneName);
+            LoadingScreenManager.LoadScene(sceneName);
     }
 
     private bool AllPlayersDead()

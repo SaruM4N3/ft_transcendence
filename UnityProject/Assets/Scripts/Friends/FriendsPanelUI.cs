@@ -6,7 +6,7 @@ using Unity.Services.Friends.Models;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Friends menu: shows own shareable name, add-by-name input, and friends / incoming / sent-request rows.
+// Friends menu: own name, add-by-name, friends and requests.
 public class FriendsPanelUI : MonoBehaviour
 {
     [SerializeField] private FriendRowUI rowTemplate;
@@ -37,7 +37,7 @@ public class FriendsPanelUI : MonoBehaviour
         Connect();
     }
 
-    // Also runs when the parent multiplayer panel closes, so this overlay never reappears stale on reopen.
+    // Also runs when the parent panel closes, so the overlay never reopens stale.
     private void OnDisable()
     {
         FriendsManager.OnChanged -= Rebuild;
@@ -86,7 +86,7 @@ public class FriendsPanelUI : MonoBehaviour
             AddRow(request, "Request", "Cancel", () => Run(FriendsManager.CancelRequestAsync(request.Member.Id)));
     }
 
-    // Online for any reachable availability, Offline otherwise.
+    // Online for any reachable availability, otherwise Offline.
     private static string PresenceTag(Relationship friend)
     {
         Availability availability = friend.Member.Presence?.Availability ?? Availability.Unknown;
@@ -126,7 +126,7 @@ public class FriendsPanelUI : MonoBehaviour
         addButton.interactable = FriendsManager.IsReady;
     }
 
-    // Starts hosting first when the local player isn't in a session yet, then sends the invite.
+    // Hosts first if not in a session, then sends the invite.
     private async void Invite(string memberId)
     {
         if (string.IsNullOrEmpty(FriendsManager.CurrentSessionCode))
@@ -149,7 +149,7 @@ public class FriendsPanelUI : MonoBehaviour
         Run(FriendsManager.InviteAsync(memberId), "Invite sent.");
     }
 
-    // Runs a row action and surfaces failures in the status line instead of losing them in an async void.
+    // Runs a row action and shows failures in the status line.
     private async void Run(Task action, string successMessage = "")
     {
         try

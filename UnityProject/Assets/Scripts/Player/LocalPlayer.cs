@@ -1,8 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Resolves the local client's own player: the spawned networked instance once a session is running,
-// or the offline solo player (tag lookup) before Host/Join or when there's no session at all.
+// Resolves the local player: the spawned instance in a session, else the offline one.
 public static class LocalPlayer
 {
     public static GameObject Get()
