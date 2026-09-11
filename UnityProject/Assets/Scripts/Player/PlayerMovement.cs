@@ -26,8 +26,7 @@ public class PlayerMovement : NetworkBehaviour
     private float heavyAttackReadyTime;
     private float guardReadyTime;
 
-    // PauseManager lives on its own GameObject in the scene, not the player prefab, so it's resolved
-    // lazily instead of serialized.
+    // Not serialized - PauseManager lives on its own scene GameObject, not the player prefab.
     private PauseManager pauseManager;
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
@@ -46,8 +45,7 @@ public class PlayerMovement : NetworkBehaviour
         animator = GetComponent<Animator>();
     }
 
-    // Only the owner's copy should read local input or render a camera - every other copy is a
-    // remote puppet driven by NetworkTransform/NetworkAnimator.
+    // Only the owner reads local input or renders a camera - other copies are remote puppets.
     public override void OnNetworkSpawn()
     {
         if (IsOwner)
@@ -57,19 +55,12 @@ public class PlayerMovement : NetworkBehaviour
         if (input != null)
             input.enabled = false;
 
-        Transform mainCamera = transform.Find("Main Camera");
-        if (mainCamera != null)
-            mainCamera.gameObject.SetActive(false);
-
-        Transform cinemachineCamera = transform.Find("CinemachineCamera");
-        if (cinemachineCamera != null)
-            cinemachineCamera.gameObject.SetActive(false);
+        PlayerCameraRig.SetActive(transform, active: false);
     }
 
     void Update()
     {
-        // LastInputX is a NetworkAnimator-synced parameter, so this keeps a remote puppet's sprite
-        // mirrored to match its owner's facing too - flipX itself isn't a networked value.
+        // LastInputX is NetworkAnimator-synced, so this mirrors a remote puppet's sprite too - flipX itself isn't.
         FlipTowards(animator.GetFloat(LastInputXHash));
 
         if (!this.IsLocallyControlled())
@@ -179,8 +170,6 @@ public class PlayerMovement : NetworkBehaviour
         facing = direction;
         animator.SetFloat(LastInputXHash, facing.x);
         animator.SetFloat(LastInputYHash, facing.y);
-        // Sprite flip itself is applied uniformly (owner and remote puppets alike) from Update(),
-        // reading this same LastInputX value back off the (NetworkAnimator-synced) Animator.
     }
 
     private void FlipTowards(float directionX)

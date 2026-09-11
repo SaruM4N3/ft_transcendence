@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>Top-left multiplayer lobby roster: one LobbyRosterEntryUI row per connected player
-/// (avatar/name/health), stacked below the personal HUD. This container itself always stays active -
-/// zero rows during solo play is simply nothing to see, not a reason to disable and stop listening.</summary>
+// Top-left lobby roster: one LobbyRosterEntryUI row per connected player, stacked below the personal HUD.
+// Container stays always-active - zero rows during solo play is just nothing to show, not a reason to disable.
 public class LobbyRosterUI : MonoBehaviour
 {
     [SerializeField] private RectTransform rowTemplate;
@@ -24,8 +23,7 @@ public class LobbyRosterUI : MonoBehaviour
         PlayerCustomization.OnPlayerRegistered += HandlePlayerRegistered;
         PlayerCustomization.OnPlayerUnregistered += HandlePlayerUnregistered;
 
-        // Pick up players that spawned before this enabled (e.g. this HUD element re-enabling, or a
-        // late-joining client's own copy already having other players spawned by the time it runs).
+        // Pick up players that spawned before this enabled (re-enable, or a late-joining client).
         foreach (PlayerCustomization existing in PlayerCustomization.AllActiveInstances)
             HandlePlayerRegistered(existing);
     }
@@ -44,8 +42,7 @@ public class LobbyRosterUI : MonoBehaviour
 
     private void HandlePlayerRegistered(PlayerCustomization player)
     {
-        // The local player already has their own dedicated stats in the personal HUD (TopLeft) -
-        // the roster is only for seeing everyone else.
+        // Local player already has their own stats in the personal HUD - roster is for everyone else.
         if (rowTemplate == null || rows.ContainsKey(player) || player.IsOwner)
             return;
 
@@ -71,8 +68,7 @@ public class LobbyRosterUI : MonoBehaviour
         RelayoutRows();
     }
 
-    // Rows are ordered by join order (orderedPlayers), independent of Dictionary iteration order,
-    // so the list doesn't visually reshuffle every time someone joins or leaves.
+    // Ordered by join order, not Dictionary iteration order, so the list doesn't reshuffle on join/leave.
     private void RelayoutRows()
     {
         for (int i = 0; i < orderedPlayers.Count; i++)

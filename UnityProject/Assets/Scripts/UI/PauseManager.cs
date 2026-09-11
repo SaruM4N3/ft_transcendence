@@ -66,8 +66,7 @@ public class PauseManager : MonoBehaviour
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
-    // Used by NPC menu panels: blocks player input via IsPaused but leaves Time.timeScale
-    // alone so the world keeps simulating and the player's idle animation keeps playing.
+    // Used by NPC menu panels: blocks input via IsPaused but leaves Time.timeScale running.
     public static void SetExternalPause(bool paused)
     {
         IsPaused = paused;
@@ -77,9 +76,7 @@ public class PauseManager : MonoBehaviour
     {
         IsPaused = paused;
 
-        // Freezing Time.timeScale is a single-player convenience - in a networked session everyone
-        // else's game keeps running while this client's would not, so multiplayer pause only blocks
-        // local input via IsPaused (same as SetExternalPause) and leaves the world simulating.
+        // Freezing Time.timeScale would desync a networked session, so multiplayer pause only blocks local input.
         bool isMultiplayerSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         if (!isMultiplayerSession)
             Time.timeScale = paused ? 0f : 1f;

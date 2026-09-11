@@ -2,14 +2,10 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>Ground-level ring sprite at the local player's feet that rotates to point at the mouse.
-/// Its own child GameObject (not the player root) so its rotation is independent of the body sprite's
-/// flipX-based facing.
-///
-/// Plain MonoBehaviour rather than NetworkBehaviour: CharacterCustomizationMenu's preview stand-in has
-/// NetworkObject removed as an instance override, but this child (added to the source prefab) still
-/// propagates onto it - so networkObject can legitimately be null here, unlike a real player
-/// instance.</summary>
+// Ground-level ring at the local player's feet that rotates to point at the mouse. Own child GameObject
+// so rotation is independent of the body sprite's flipX facing. Plain MonoBehaviour, not NetworkBehaviour:
+// the customization preview stand-in has NetworkObject removed but still gets this child, so networkObject
+// can legitimately be null there.
 public class MouseDirectionIndicator : MonoBehaviour
 {
     private SpriteRenderer spriteRenderer;
@@ -24,8 +20,7 @@ public class MouseDirectionIndicator : MonoBehaviour
 
     void Update()
     {
-        // No NetworkObject in the hierarchy at all means this is a non-gameplay stand-in (e.g. the
-        // customization preview) - nothing to aim, so leave it as-is rather than animating it.
+        // No NetworkObject means a non-gameplay stand-in (e.g. customization preview) - nothing to aim.
         if (networkObject == null)
             return;
 

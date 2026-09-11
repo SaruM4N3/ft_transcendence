@@ -6,40 +6,31 @@ using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Wires the Lobby's MultiplayerPanel Host/Join buttons to Netcode over Unity Relay, so
-/// players can connect across the internet without port-forwarding. The scene's offline player stays
-/// active by default for solo play - only Host/Join replaces it with a networked, Netcode-spawned one.</summary>
+// Wires the Lobby's Host/Join buttons to Netcode over Unity Relay. The scene's offline player stays
+// active for solo play - only Host/Join replaces it with a networked, Netcode-spawned one.
 public class NetworkBootstrap : MonoBehaviour
 {
     [SerializeField] private MenuPanel multiplayerPanel;
 
-    // Also the relay join-code field: hosting writes the generated code into it (read-only) for the
-    // host to copy; a joining client types a code in before pressing Join. Named ipInputField to match
-    // the existing Inspector wiring.
+    // Doubles as the relay join-code field: hosting writes the code here (read-only) to copy; joining reads it.
     [SerializeField] private TMP_InputField ipInputField;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private int maxPlayers = 4;
 
-    // Join-flow feedback: disabled while a join is in flight (no double-click), plus a status label for
-    // "searching"/error text. Host has no equivalent wait, so no matching fields there.
     [SerializeField] private Button joinButton;
     [SerializeField] private TMP_Text joinStatusText;
 
-    // Top-right HUD readout showing the relay code after hosting, so it's still visible once
-    // MultiplayerPanel closes - separate from ipInputField, which the Join flow also uses.
+    // Persists the relay code in the HUD after MultiplayerPanel closes.
     [SerializeField] private TMP_Text sessionCodeText;
 
-    // Captured pre-Host so ApprovalCheck can spawn the host back where they stood instead of at
-    // spawnPoint (used for actual joining clients, who have no prior position to keep).
+    // Captured pre-Host so ApprovalCheck can spawn the host back where they stood, not at spawnPoint.
     private Vector3? hostSpawnPosition;
     private Quaternion hostSpawnRotation;
 
-    // Holds the offline player's camera while it's reparented off during session setup - see
-    // CaptureOfflinePlayerState. Destroyed once the networked replacement spawns with its own camera.
+    // Holds the offline player's camera while reparented off during session setup - see CaptureOfflinePlayerState.
     private GameObject detachedCameraHolder;
 
-    // NetworkManager.Singleton is only set in its own Awake(), and Awake order across components isn't
-    // guaranteed - Start() runs after every Awake(), so connection approval is wired up here instead.
+    // NetworkManager.Singleton is only set in its own Awake(); Start() runs after every Awake().
     private void Start()
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
@@ -52,15 +43,12 @@ public class NetworkBootstrap : MonoBehaviour
             NetworkManager.Singleton.ConnectionApprovalCallback -= ApprovalCheck;
     }
 
-    // Runs on the server for every connecting client, including the host's own. Setting Position here
-    // spawns the player prefab already in place, which the owner's own NetworkTransform then reports
-    // out to everyone else.
     private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
         response.Approved = true;
         response.CreatePlayerObject = true;
 
-        // The host's own connection is always client id 0 in client-server topology.
+        // Host's own connection is always client id 0 in client-server topology.
         if (request.ClientNetworkId == NetworkManager.ServerClientId && hostSpawnPosition.HasValue)
         {
             response.Position = hostSpawnPosition.Value;
@@ -75,8 +63,7 @@ public class NetworkBootstrap : MonoBehaviour
 
     public async void HostGame()
     {
-        // The code doesn't exist until CreateSessionAsync (relay allocation) returns, which takes a
-        // moment - show a placeholder in the field it will land in rather than leaving it blank.
+        // Relay code doesn't exist until CreateSessionAsync returns - show a placeholder while waiting.
         string originalPlaceholder = null;
         TMP_Text placeholderText = ipInputField != null ? ipInputField.placeholder as TMP_Text : null;
         if (placeholderText != null)
@@ -95,9 +82,7 @@ public class NetworkBootstrap : MonoBehaviour
             hostSpawnPosition = customization.position;
             hostSpawnRotation = customization.rotation;
 
-            // CreateSessionAsync with a relay network allocates the relay, wires the NetworkManager's
-            // UnityTransport with the relay server data, and starts Netcode as host - no manual
-            // NetworkManager.Singleton.StartHost() call needed.
+            // Allocates the relay, wires UnityTransport, and starts Netcode as host - no manual StartHost() needed.
             SessionOptions options = new SessionOptions { MaxPlayers = maxPlayers }.WithRelayNetwork();
             IHostSession session = await MultiplayerService.Instance.CreateSessionAsync(options);
 
@@ -107,8 +92,7 @@ public class NetworkBootstrap : MonoBehaviour
                 ipInputField.interactable = false;
             }
             if (sessionCodeText != null)
-                // Only the code itself switches to Liberation Sans (more legible for a string players
-                // read/type back) - "Code:" stays in the HUD's usual display font.
+                // Liberation Sans is more legible for a code players read/type back; "Code:" keeps the HUD font.
                 sessionCodeText.text = $"Code: <font=\"LiberationSans SDF\">{session.Code}</font>";
 
             StartCoroutine(RestoreLocalCustomizationWhenSpawned(customization.classIndex, customization.colorIndex, customization.playerName));
@@ -139,8 +123,7 @@ public class NetworkBootstrap : MonoBehaviour
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
 
-            // JoinSessionByCodeAsync with the host's relay code wires the UnityTransport and starts
-            // Netcode as client - no manual NetworkManager.Singleton.StartClient() call needed.
+            // Wires UnityTransport and starts Netcode as client - no manual StartClient() needed.
             await MultiplayerService.Instance.JoinSessionByCodeAsync(code);
 
             SetJoinStatus(string.Empty, isError: false);
@@ -155,8 +138,7 @@ public class NetworkBootstrap : MonoBehaviour
         }
         finally
         {
-            // Always re-enable, including on success: the panel is closing anyway, and this is what
-            // leaves the controls usable the next time the panel is opened.
+            // Re-enable even on success so controls are usable next time the panel opens.
             SetJoinControlsInteractable(true);
         }
     }
@@ -189,14 +171,12 @@ public class NetworkBootstrap : MonoBehaviour
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
-    // The offline player carries a live NetworkObject (same prefab NetworkManager spawns), so Netcode
-    // auto-spawns it as a phantom extra "player" the moment the server starts unless it's deactivated
-    // first - synchronously, before any Host/Join call, not once the replacement spawns. Its camera is
-    // detached first so the screen doesn't go dark while session setup is in progress. Returns its
-    // current class/color/name so the caller can carry them over to the replacement.
+    // Deactivate the offline player before Host/Join so Netcode doesn't auto-spawn it as a phantom
+    // extra player; detach its camera first so the screen doesn't go dark. Returns its class/color/name
+    // so the caller can carry them over to the replacement.
     private (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) CaptureOfflinePlayerState()
     {
-        GameObject offlinePlayer = GameObject.FindWithTag("Player");
+        GameObject offlinePlayer = LocalPlayer.Get();
         if (offlinePlayer == null)
             return (0, 0, string.Empty, Vector3.zero, Quaternion.identity);
 
@@ -207,29 +187,18 @@ public class NetworkBootstrap : MonoBehaviour
         Vector3 position = offlinePlayer.transform.position;
         Quaternion rotation = offlinePlayer.transform.rotation;
 
-        Transform mainCamera = offlinePlayer.transform.Find("Main Camera");
-        Transform cinemachineCamera = offlinePlayer.transform.Find("CinemachineCamera");
-        if (mainCamera != null || cinemachineCamera != null)
-        {
-            detachedCameraHolder = new GameObject("TemporaryCameraHolder");
-            if (mainCamera != null)
-                mainCamera.SetParent(detachedCameraHolder.transform, worldPositionStays: true);
-            if (cinemachineCamera != null)
-                cinemachineCamera.SetParent(detachedCameraHolder.transform, worldPositionStays: true);
-        }
+        detachedCameraHolder = PlayerCameraRig.Detach(offlinePlayer.transform);
 
         offlinePlayer.SetActive(false);
         return (current.classIndex, current.colorIndex, current.playerName, position, rotation);
     }
 
-    // Netcode's auto-spawned player always starts at PlayerCustomization's defaults - reapply whatever
-    // the offline player was wearing/named before Host/Join replaced it.
+    // Netcode's auto-spawned player starts at PlayerCustomization defaults - reapply what the offline player had.
     private System.Collections.IEnumerator RestoreLocalCustomizationWhenSpawned(int classIndex, int colorIndex, string playerName)
     {
         while (NetworkManager.Singleton.LocalClient == null || NetworkManager.Singleton.LocalClient.PlayerObject == null)
             yield return null;
 
-        // The replacement brings its own camera pair - the detached one has served its purpose.
         if (detachedCameraHolder != null)
         {
             Destroy(detachedCameraHolder);

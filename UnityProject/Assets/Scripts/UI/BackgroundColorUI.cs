@@ -15,11 +15,8 @@ public class BackgroundColorUI : MonoBehaviour
     {
         CharacterCustomizationMenu.OnBackgroundChanged += SetBackground;
 
-        // Initial sync in case the Customize menu hasn't been opened yet this session, same reasoning
-        // as AvatarUI's initial portrait sync.
-        CharacterCustomizationMenu menu = FindAnyObjectByType<CharacterCustomizationMenu>(FindObjectsInactive.Include);
-        if (menu != null)
-            SetBackground(menu.GetCurrentBackground());
+        // Initial sync in case the Customize menu hasn't been opened yet this session.
+        SetBackground(CharacterCustomizationMenu.Instance?.GetCurrentBackground());
     }
 
     void OnDisable()

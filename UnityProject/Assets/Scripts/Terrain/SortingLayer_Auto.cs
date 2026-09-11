@@ -5,10 +5,9 @@ public class SortingLayer_Auto : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private int sortingOffset = 0;
 
-    [Tooltip("Local-space offset from this transform used as the Y-sort reference point instead of the transform's own origin. Drag the handle in the Scene view (SortingLayer_AutoEditor) to align it with the sprite's visual base - e.g. a tall tree's trunk - when the sprite pivot doesn't already sit there. Zero (default) keeps the old behavior of sorting on the transform's own position.")]
+    [Tooltip("Local-space Y-sort reference point offset from the transform origin. Drag the Scene view handle to align it with the sprite's visual base. Zero = sort on the transform's own position.")]
     [SerializeField] private Vector3 sortPivotOffset = Vector3.zero;
 
-    /// <summary>Local-space Y-sort reference point, exposed for the Scene view handle.</summary>
     public Vector3 SortPivotOffset
     {
         get => sortPivotOffset;
@@ -17,7 +16,7 @@ public class SortingLayer_Auto : MonoBehaviour
 
     public Vector3 SortPivotWorldPosition => transform.TransformPoint(sortPivotOffset);
 
-    /// <summary>Breaks ties between objects landing on the same Y (e.g. grid-aligned decor).</summary>
+    // Breaks ties between objects landing on the same Y (e.g. grid-aligned decor).
     public void AddSortingOffset(int extra)
     {
         sortingOffset += extra;

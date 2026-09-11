@@ -1,13 +1,10 @@
 using System.Collections.Generic;
 using TMPro;
-using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>Mode-select ready check controller: opens ReadyCheckPanel on every client's screen when
-/// anyone proposes a mode (see ModeReadyCheck/GameModeLoader), lists each player's ready status, and
-/// lets the local player toggle their own. Lives on an always-active object separate from the panel it
-/// controls - MenuPanel.Close() deactivates its own GameObject, which would otherwise kill this
-/// script's subscriptions and prevent it from ever reopening.</summary>
+// Ready check controller: opens ReadyCheckPanel when anyone proposes a mode (ModeReadyCheck/GameModeLoader),
+// lists ready status, lets the local player toggle theirs. Lives on an always-active object separate from
+// the panel, since MenuPanel.Close() deactivates its own GameObject and would kill these subscriptions.
 public class ReadyCheckUI : MonoBehaviour
 {
     [SerializeField] private MenuPanel menuPanel;
@@ -16,10 +13,7 @@ public class ReadyCheckUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI modeNameText;
     [SerializeField] private TextMeshProUGUI readyButtonLabel;
 
-    // GameModeLoader only ever has the raw scene name to pass along (that's what the mode buttons are
-    // wired with) - this maps it to the friendly label the buttons themselves show, for modeNameText.
-    // Falls back to the raw scene name for anything not listed here yet (e.g. once 2v2/3v1 get real
-    // scenes wired up).
+    // Maps GameModeLoader's raw scene name to a friendly label; falls back to the raw name if unlisted.
     private static readonly Dictionary<string, string> ModeDisplayNames = new Dictionary<string, string>
     {
         { "Coop", "4-Player Co-op" },
@@ -88,8 +82,7 @@ public class ReadyCheckUI : MonoBehaviour
         orderedPlayers.Clear();
     }
 
-    // Handles a player joining/leaving while a check is already showing - RebuildRows above covers the
-    // "check just started" case.
+    // Handles a player joining while a check is already showing (RebuildRows covers the "check just started" case).
     private void HandlePlayerRegistered(PlayerCustomization player)
     {
         if (!isOpen || rows.ContainsKey(player))
@@ -137,10 +130,9 @@ public class ReadyCheckUI : MonoBehaviour
         }
     }
 
-    /// <summary>Wired to the panel's Ready button - toggles the local player's own readiness.</summary>
     public void ToggleReady()
     {
-        PlayerCustomization customization = GetLocalPlayerCustomization();
+        PlayerCustomization customization = LocalPlayer.GetCustomization();
         if (customization == null)
             return;
 
@@ -153,15 +145,7 @@ public class ReadyCheckUI : MonoBehaviour
         if (readyButtonLabel == null)
             return;
 
-        PlayerCustomization customization = GetLocalPlayerCustomization();
+        PlayerCustomization customization = LocalPlayer.GetCustomization();
         readyButtonLabel.text = customization != null && customization.IsReady ? "Cancel" : "Ready";
-    }
-
-    private static PlayerCustomization GetLocalPlayerCustomization()
-    {
-        GameObject player = NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null
-            ? NetworkManager.Singleton.LocalClient.PlayerObject?.gameObject
-            : null;
-        return player != null ? player.GetComponent<PlayerCustomization>() : null;
     }
 }
