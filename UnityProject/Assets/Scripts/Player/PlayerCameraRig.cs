@@ -1,8 +1,6 @@
 using UnityEngine;
 
-// The player prefab's camera children are looked up by name in more than one place (disabling them on
-// a remote puppet, detaching them while the offline player is deactivated for Host/Join) - centralized
-// here so a prefab rename only needs to update one place.
+// Centralizes camera-child lookups by name, used in multiple places, so a prefab rename only touches one spot.
 public static class PlayerCameraRig
 {
     private const string MainCameraName = "Main Camera";
@@ -19,8 +17,7 @@ public static class PlayerCameraRig
             cinemachineCamera.gameObject.SetActive(active);
     }
 
-    // Reparents the player's camera(s) under a new holder object, e.g. so they survive the player being
-    // deactivated. Returns the holder, or null if the player had no camera children.
+    // Reparents the player's camera(s) so they survive the player being deactivated.
     public static GameObject Detach(Transform player)
     {
         Transform mainCamera = player.Find(MainCameraName);
