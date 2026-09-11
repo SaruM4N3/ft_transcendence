@@ -7,9 +7,8 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float maxMana = 50f;
 
-    // Health is replicated (Owner-writable, read by Everyone) so the multiplayer lobby roster can show
-    // every player's health bar, not just the local one - Mana stays purely local since nothing outside
-    // this client needs to see it.
+    // Replicated so the lobby roster can show every player's health bar, not just the local one - Mana
+    // stays purely local since nothing outside this client needs to see it.
     private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -22,8 +21,8 @@ public class PlayerStats : NetworkBehaviour
     public static event Action<float, float> OnManaChanged;
 
     /// <summary>Fires for THIS instance specifically (any player, not just the local one) - the lobby
-    /// roster binds to a specific player's PlayerStats through this instead of the static
-    /// OnHealthChanged above, which only ever reflects the local player's own health.</summary>
+    /// roster binds to a specific player's health through this instead of the static OnHealthChanged,
+    /// which only ever reflects the local player.</summary>
     public event Action<float, float> OnHealthReplicated;
 
     void Awake()
@@ -40,8 +39,7 @@ public class PlayerStats : NetworkBehaviour
 
     void Start()
     {
-        // Every connected player's stats live on their own machine too (one instance per client),
-        // but only the local/owned instance should drive this client's HUD.
+        // Only the local/owned instance should drive this client's HUD.
         if (!this.IsLocallyControlled())
             return;
 
@@ -49,9 +47,8 @@ public class PlayerStats : NetworkBehaviour
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
-    // Owner-only, same restriction as PlayerCustomization's setters - currentHealth is Owner-writable,
-    // so a non-owner call would be silently dropped by Netcode anyway; this just avoids doing that
-    // (and the warning it logs) in the first place.
+    // currentHealth is Owner-writable, so a non-owner call would be silently dropped by Netcode anyway
+    // - this just avoids the warning it logs for that.
     public void TakeDamage(float amount)
     {
         if (!this.IsLocallyControlled())

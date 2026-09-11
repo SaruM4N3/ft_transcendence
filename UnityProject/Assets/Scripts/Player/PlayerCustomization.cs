@@ -3,36 +3,29 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>Replicates the local player's class/color/name choice (made through
-/// CharacterCustomizationMenu) to every connected client, so a change is visible on this player's
-/// networked puppet everywhere - not just on the owner's own screen. Subscribed in Awake rather than
-/// OnNetworkSpawn so the same code path also drives the scene's offline, never-spawned player instance
-/// (see NetworkBehaviourExtensions.IsLocallyControlled).</summary>
+/// <summary>Replicates the local player's class/color/name choice (from CharacterCustomizationMenu) to
+/// every connected client. Subscribed in Awake rather than OnNetworkSpawn so the same code path also
+/// drives the scene's offline, never-spawned player instance (see IsLocallyControlled).</summary>
 public class PlayerCustomization : NetworkBehaviour
 {
     // Every spawned (networked) instance, used to detect and disambiguate duplicate names - see
     // RefreshAllDisplayNames. Never includes the offline, never-spawned player.
     private static readonly List<PlayerCustomization> ActiveInstances = new List<PlayerCustomization>();
 
-    /// <summary>Read-only view of every currently spawned player - lets the lobby roster UI pick up
-    /// players that registered before it started listening (e.g. it enables after they've already
-    /// spawned), in addition to the OnPlayerRegistered/OnPlayerUnregistered events below.</summary>
+    /// <summary>Read-only view of every currently spawned player - lets late-binding UI (e.g. the lobby
+    /// roster) pick up players that registered before it started listening.</summary>
     public static IReadOnlyList<PlayerCustomization> AllActiveInstances => ActiveInstances;
 
-    /// <summary>Fired once a player's NetworkObject has spawned (and its raw state is already synced -
-    /// see OnNetworkSpawn) / right before it despawns. The lobby roster UI uses these to add/remove a
-    /// row per player instead of polling.</summary>
+    /// <summary>Fired when a player's NetworkObject spawns/despawns - lets the lobby roster add/remove
+    /// a row per player instead of polling.</summary>
     public static event System.Action<PlayerCustomization> OnPlayerRegistered;
     public static event System.Action<PlayerCustomization> OnPlayerUnregistered;
 
-    /// <summary>Fired whenever this player's class or color changes, for anything (like a roster row)
-    /// that needs to react to a specific player's visuals without going through the local-only
-    /// CharacterCustomizationMenu.OnPortraitChanged static event.</summary>
+    /// <summary>Fired whenever this player's class or color changes.</summary>
     public event System.Action<int, int> OnClassOrColorChanged;
 
     /// <summary>Fired with this player's already-disambiguated display name (see
-    /// RefreshAllDisplayNames) whenever it changes - mirrors what's shown on the world nametag, for
-    /// anything else (like a roster row) that needs the same text.</summary>
+    /// RefreshAllDisplayNames) whenever it changes.</summary>
     public event System.Action<string> OnDisplayNameChanged;
 
     /// <summary>The last computed disambiguated name (e.g. "Bob (2)") - lets a newly bound roster row
@@ -46,11 +39,10 @@ public class PlayerCustomization : NetworkBehaviour
     private readonly NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
-    // Mode-select ready check (see ModeReadyCheck) - Server-writable, not Owner like the others above.
-    // A NetworkVariable's write permission is enforced even for a direct server-side .Value set when
-    // the declared writer isn't the server - ServerResetReady() needs to clear every player's
-    // readiness (including remote clients who own their own instance), so the server has to be the
-    // actual writer here; SetReady() below goes through a ServerRpc rather than writing directly.
+    // Server-writable, not Owner like the others above: ServerResetReady() needs to clear every
+    // player's readiness, including remote clients who own their own instance. A NetworkVariable's
+    // write permission is enforced even for a direct server-side .Value set, so SetReady() below goes
+    // through a ServerRpc instead of writing directly.
     private readonly NetworkVariable<bool> isReady = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -90,11 +82,9 @@ public class PlayerCustomization : NetworkBehaviour
         RefreshAllDisplayNames();
     }
 
-    // Two players who picked the same raw name get " (1)"/" (2)"/... appended to what's shown above
-    // their heads, ordered by NetworkObjectId so every client - there's no server-authoritative
-    // "display name" - independently computes the exact same result from state it already has (raw
-    // names are NetworkVariableReadPermission.Everyone, so every client already sees every player's
-    // chosen name).
+    // Two players who picked the same raw name get " (1)"/" (2)"/... appended, ordered by
+    // NetworkObjectId so every client independently computes the same result - there's no
+    // server-authoritative "display name".
     private static void RefreshAllDisplayNames()
     {
         var groups = new Dictionary<string, List<PlayerCustomization>>();
@@ -120,10 +110,9 @@ public class PlayerCustomization : NetworkBehaviour
         }
     }
 
-    // Runs for every instance (offline scene-placed or networked spawn) regardless of Netcode state,
-    // unlike OnNetworkSpawn which never fires offline - see IsLocallyControlled. Loads the local save
-    // file and applies it through the same owner-only setters the customization menu uses, so a
-    // returning player keeps their class/color/name without having to reopen the menu.
+    // Runs for every instance regardless of Netcode state, unlike OnNetworkSpawn which never fires
+    // offline - see IsLocallyControlled. Loads the local save file so a returning player keeps their
+    // class/color/name without reopening the menu.
     private void Start()
     {
         if (!this.IsLocallyControlled())
@@ -144,8 +133,7 @@ public class PlayerCustomization : NetworkBehaviour
     }
 
     /// <summary>Called by CharacterCustomizationMenu when this player picks a class/color. Ignored on a
-    /// spawned instance that isn't locally owned - only the real owner is allowed to write these
-    /// NetworkVariables.</summary>
+    /// spawned instance that isn't locally owned.</summary>
     public void SetSelection(int newClassIndex, int newColorIndex)
     {
         if (!this.IsLocallyControlled())
@@ -168,24 +156,23 @@ public class PlayerCustomization : NetworkBehaviour
     }
 
     /// <summary>Called by the ready-check UI when this (local) player toggles their own readiness.
-    /// Same owner-only restriction as SetSelection/SetName, but goes through a ServerRpc rather than
-    /// writing isReady directly, since it's Server-writable, not Owner-writable - see isReady.</summary>
+    /// Goes through a ServerRpc rather than writing isReady directly, since it's Server-writable, not
+    /// Owner-writable - see isReady.</summary>
     public void SetReady(bool ready)
     {
         if (!this.IsLocallyControlled())
             return;
 
-        // The ready check only ever exists in a networked session - if this instance somehow isn't
-        // spawned (e.g. called on the offline solo player), there's no RPC channel to send on.
+        // The ready check only exists in a networked session - the offline solo player has no RPC
+        // channel to send on.
         if (!NetworkObject.IsSpawned)
             return;
 
         SetReadyServerRpc(ready);
     }
 
-    // Default RequireOwnership (true) is exactly what's wanted here, unlike ModeReadyCheck's own RPC -
-    // this one lives on a specific player's own NetworkObject, so only that player's owning client is
-    // allowed to invoke it, which already prevents one player from toggling another's readiness.
+    // Default RequireOwnership (true) is what's wanted here, unlike ModeReadyCheck's own RPC: this one
+    // lives on a specific player's own NetworkObject, so only that player's owning client can invoke it.
     [ServerRpc]
     private void SetReadyServerRpc(bool ready)
     {

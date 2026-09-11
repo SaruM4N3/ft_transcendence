@@ -1,6 +1,5 @@
 using UnityEngine;
 
-/// <summary>Automatically sets sprite sorting order based on Y position.</summary>
 public class SortingLayer_Auto : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -16,17 +15,15 @@ public class SortingLayer_Auto : MonoBehaviour
         set => sortPivotOffset = value;
     }
 
-    /// <summary>World-space position the sort order is sampled from.</summary>
     public Vector3 SortPivotWorldPosition => transform.TransformPoint(sortPivotOffset);
 
-    /// <summary>Adds to the sorting offset - used to break ties between objects that land on the exact same Y (e.g. grid-aligned decor on the same row).</summary>
+    /// <summary>Breaks ties between objects landing on the same Y (e.g. grid-aligned decor).</summary>
     public void AddSortingOffset(int extra)
     {
         sortingOffset += extra;
     }
 
-    /// <summary>Sets the sorting offset to an absolute value - use this (not AddSortingOffset) for
-    /// pooled/reused objects, since Add would keep compounding on top of a previous reuse's offset.</summary>
+    // Use over AddSortingOffset for pooled/reused objects - Add would keep compounding on a stale offset.
     public void SetSortingOffset(int value)
     {
         sortingOffset = value;

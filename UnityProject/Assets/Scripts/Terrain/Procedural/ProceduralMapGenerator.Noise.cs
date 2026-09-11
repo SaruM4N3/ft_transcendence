@@ -3,7 +3,6 @@ using UnityEngine.Tilemaps;
 
 public partial class ProceduralMapGenerator
 {
-    /// <summary>Is water.</summary>
     private bool IsWater(int worldX, int worldY)
     {
         bool withinSpawnSafeZone = Vector2Int.Distance(new Vector2Int(worldX, worldY), spawnCell) <= spawnSafeRadius;
@@ -18,7 +17,6 @@ public partial class ProceduralMapGenerator
         return waterNoise < waterThreshold;
     }
 
-    /// <summary>Is adjacent to water.</summary>
     private bool IsAdjacentToWater(int worldX, int worldY)
     {
         for (int y = -1; y <= 1; y++)
@@ -33,7 +31,6 @@ public partial class ProceduralMapGenerator
         return false;
     }
 
-    /// <summary>Picks a land tile.</summary>
     private TileBase PickLandTile(int worldX, int worldY)
     {
         float biomeNoise = Mathf.PerlinNoise(
@@ -44,8 +41,7 @@ public partial class ProceduralMapGenerator
         return biomeTiles[biomeIndex];
     }
 
-    /// <summary>Looks up water state from a precomputed chunk-local mask, falling back to a fresh
-    /// noise sample if the requested cell falls outside the mask's coverage.</summary>
+    // Falls back to a fresh noise sample if the cell is outside the mask's precomputed coverage.
     private bool MaskIsWater(bool[,] waterMask, int maskOriginX, int maskOriginY, int worldX, int worldY)
     {
         int mx = worldX - maskOriginX;
@@ -58,7 +54,6 @@ public partial class ProceduralMapGenerator
         return waterMask[mx, my];
     }
 
-    /// <summary>Adjacent-to-water check backed by a precomputed chunk-local water mask.</summary>
     private bool MaskIsAdjacentToWater(bool[,] waterMask, int maskOriginX, int maskOriginY, int worldX, int worldY)
     {
         for (int y = -1; y <= 1; y++)

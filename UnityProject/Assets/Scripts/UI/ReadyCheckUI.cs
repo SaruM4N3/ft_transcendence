@@ -3,13 +3,11 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>Mode-select ready check controller: opens ReadyCheckPanel on every connected client's
-/// screen the moment anyone proposes a mode (see ModeReadyCheck/GameModeLoader), lists every connected
-/// player with a ready/not-ready status, and lets the local player toggle their own readiness. Lives on
-/// an always-active object separate from the panel it controls - same reasoning as NetworkBootstrap
-/// holding a reference to multiplayerPanel rather than being on it: MenuPanel.Close() deactivates its
-/// own GameObject, which would otherwise kill this script's event subscriptions the moment the panel
-/// closes, along with any chance of it ever reopening.</summary>
+/// <summary>Mode-select ready check controller: opens ReadyCheckPanel on every client's screen when
+/// anyone proposes a mode (see ModeReadyCheck/GameModeLoader), lists each player's ready status, and
+/// lets the local player toggle their own. Lives on an always-active object separate from the panel it
+/// controls - MenuPanel.Close() deactivates its own GameObject, which would otherwise kill this
+/// script's subscriptions and prevent it from ever reopening.</summary>
 public class ReadyCheckUI : MonoBehaviour
 {
     [SerializeField] private MenuPanel menuPanel;

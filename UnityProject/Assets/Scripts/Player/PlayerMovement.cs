@@ -26,9 +26,8 @@ public class PlayerMovement : NetworkBehaviour
     private float heavyAttackReadyTime;
     private float guardReadyTime;
 
-    // PauseManager lives on its own GameObject in the scene, not on the player prefab - a prefab
-    // asset can't hold a direct reference to it, so it's resolved lazily instead (same fallback
-    // pattern as CharacterCustomizationMenu.Instance).
+    // PauseManager lives on its own GameObject in the scene, not the player prefab, so it's resolved
+    // lazily instead of serialized.
     private PauseManager pauseManager;
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
@@ -47,9 +46,8 @@ public class PlayerMovement : NetworkBehaviour
         animator = GetComponent<Animator>();
     }
 
-    // A player prefab is spawned once per connected client on every machine (so everyone can see
-    // everyone). Only the owner's copy should read local input or render a camera - every other
-    // copy is a remote puppet whose transform/animator are driven by NetworkTransform/NetworkAnimator.
+    // Only the owner's copy should read local input or render a camera - every other copy is a
+    // remote puppet driven by NetworkTransform/NetworkAnimator.
     public override void OnNetworkSpawn()
     {
         if (IsOwner)

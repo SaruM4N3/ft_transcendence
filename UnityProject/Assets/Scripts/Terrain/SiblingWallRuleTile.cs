@@ -15,7 +15,6 @@ public class SiblingWallRuleTile : RuleTile<SiblingWallRuleTile.Neighbor>
     [Tooltip("Other wall tiles that should count as connected neighbors (e.g. the water variant of this wall).")]
     public List<TileBase> siblingTiles = new();
 
-    /// <summary>Returns true when the neighbor matches this tile or its siblings.</summary>
     public override bool RuleMatch(int neighbor, TileBase other)
     {
         switch (neighbor)

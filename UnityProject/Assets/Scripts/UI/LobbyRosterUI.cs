@@ -2,10 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Top-left multiplayer lobby roster: one LobbyRosterEntryUI row per connected player
-/// (avatar/name/health), stacked vertically below the personal HUD. Rows only ever exist for spawned
-/// (networked) players - see PlayerCustomization.OnPlayerRegistered, which never fires during solo
-/// play - so with zero rows there's simply nothing to see; this container itself always stays active
-/// so it never stops listening for the first player to join.</summary>
+/// (avatar/name/health), stacked below the personal HUD. This container itself always stays active -
+/// zero rows during solo play is simply nothing to see, not a reason to disable and stop listening.</summary>
 public class LobbyRosterUI : MonoBehaviour
 {
     [SerializeField] private RectTransform rowTemplate;
