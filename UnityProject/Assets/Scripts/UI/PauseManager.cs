@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -76,10 +77,12 @@ public class PauseManager : MonoBehaviour
     {
         IsPaused = paused;
 
-        if (paused)
-            Time.timeScale = 0f;
-        else
-            Time.timeScale = 1f;
+        // Freezing Time.timeScale is a single-player convenience - in a networked session everyone
+        // else's game keeps running while this client's would not, so multiplayer pause only blocks
+        // local input via IsPaused (same as SetExternalPause) and leaves the world simulating.
+        bool isMultiplayerSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (!isMultiplayerSession)
+            Time.timeScale = paused ? 0f : 1f;
 
         if (pausePanel != null)
             pausePanel.SetActive(paused);

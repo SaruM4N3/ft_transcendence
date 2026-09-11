@@ -159,6 +159,14 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: -12
       objectReference: {fileID: 0}
+    - target: {fileID: 4414951797551109567, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4414951797551109567, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2758423420
+      objectReference: {fileID: 0}
     - target: {fileID: 5244544881717188477, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
       propertyPath: Lens.OrthographicSize
       value: 7
@@ -290,8 +298,16 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1635566535792072546, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1641080656}
   m_SourcePrefab: {fileID: 100100000, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
+--- !u!1 &234471985 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1635566535792072546, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
+  m_PrefabInstance: {fileID: 234471984}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1200440568 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 709100743730889603, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
@@ -313,12 +329,24 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2201204286648064290, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
   m_PrefabInstance: {fileID: 234471984}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 234471985}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9212d8435fdf74b9e9db29fd6cb04178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+--- !u!114 &1641080656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 234471985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6665816485382720b894d0a19061c5b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OfflinePlayerGate
 --- !u!50 &116902524505461006
 Rigidbody2D:
   serializedVersion: 5
@@ -1035,6 +1063,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: UI
       objectReference: {fileID: 0}
+    - target: {fileID: 1463972439916247901, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 772891792533613119, guid: c4bd213f5ffca3709985146d0af26b5c, type: 2}
+    - target: {fileID: 5024724419936861103, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -8743282723004961706, guid: d0de5c54d8cc2dc57a1343559a17ed30, type: 2}
+    - target: {fileID: 5389824322626554147, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -8743282723004961706, guid: d0de5c54d8cc2dc57a1343559a17ed30, type: 2}
+    - target: {fileID: 8379061326760006282, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 4013812617392462940, guid: ef344888509892f60b728aca5a53791e, type: 2}
     - target: {fileID: 8664170753771352480, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1096,9 +1140,6 @@ MonoBehaviour:
   waterTilemap: {fileID: 657834880292265992}
   waterBackgroundTilemap: {fileID: 3116289660912037479}
   coastFoamTilemap: {fileID: 6630250672137080087}
-  platformTilemap: {fileID: 0}
-  wallTilemap: {fileID: 0}
-  shadowTilemap: {fileID: 0}
   player: {fileID: 1641080654}
   chunkSize: 2
   viewDistanceInChunks: 1
@@ -1117,32 +1158,6 @@ MonoBehaviour:
   waterTile: {fileID: 11400000, guid: da1f07ab417c38a8fbaf4b560b7cebc8, type: 2}
   waterBackgroundTile: {fileID: 11400000, guid: f02d7af0d5b224b25b5e1980817b96b6, type: 2}
   coastFoamTile: {fileID: 11400000, guid: d2462fe4b13543caa3c538201f70cebe, type: 2}
-  generatePlatforms: 0
-  structureChance: 0.134
-  roomSizeRange: {x: 12, y: 20}
-  platformNoiseScale: 0.15
-  platformFillThreshold: 0.45
-  platformEdgeFalloff: 2
-  minPlatformFloorTiles: 8
-  interiorFloorTile: {fileID: 11400000, guid: 38f416d074ad411679670b2a57e18e52, type: 2}
-  wallTilesByShape:
-  - {fileID: 11400000, guid: 09359f5bbd4a50c9f95fec9fe8be7d84, type: 2}
-  - {fileID: 11400000, guid: ec9542ed95ea6abf7b3215242ee8b9b8, type: 2}
-  - {fileID: 11400000, guid: b3601b373374af445b10c682018b8a03, type: 2}
-  - {fileID: 11400000, guid: 73a1d4e71ff61e68ba3e36f1aebd8328, type: 2}
-  waterWallTilesByShape:
-  - {fileID: 11400000, guid: 22c4540d2d2d7a458858b8864c4085d8, type: 2}
-  - {fileID: 11400000, guid: 624899c80e92eb2829e4b2cf3a36637a, type: 2}
-  - {fileID: 11400000, guid: f1a21a417537cfec1badae49760bd3b4, type: 2}
-  - {fileID: 11400000, guid: 6a331d9eded4cb8e8b0b6fc83ee3027b, type: 2}
-  shadowTile: {fileID: 11400000, guid: e122243d7aca4f38b3ae61ffe7c19240, type: 2}
-  cornerStairsPrefab: {fileID: 3023057241612116870, guid: e136607cafb219439b4fea0c3e7dce65, type: 3}
-  cornerStairsWidth: 1
-  edgeStairsPrefab: {fileID: 3023057241612116870, guid: aa1728f6b458a1568b107f31886290dc, type: 3}
-  edgeStairsWidth: 3
-  edgeStairsPrefabHeight: 4
-  stairsPrefabWidth: 1
-  minStairsPerPlatform: 2
   decorEntries:
   - prefab: {fileID: 1598588655992799798, guid: a907899a7ecfb906d99ebfb5729ae1e7, type: 3}
     surface: 0
