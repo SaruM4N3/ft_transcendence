@@ -2,9 +2,8 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 
-/// <summary>One NPC's own "press E" prompt - a World Space Canvas sitting at a fixed local position
-/// above that specific NPC, so it moves with it for free via the Transform hierarchy and never needs
-/// runtime screen-position math (unlike the old single roaming Screen Space prompt).</summary>
+// One NPC's own "press E" prompt - a World Space Canvas at a fixed local position above it, so it
+// moves for free via the Transform hierarchy instead of needing runtime screen-position math.
 public class InteractPromptUI : MonoBehaviour
 {
     [SerializeField] private RectTransform promptRoot;
@@ -38,8 +37,7 @@ public class InteractPromptUI : MonoBehaviour
             canvasGroup.alpha = 0f;
             promptRoot.gameObject.SetActive(false);
 
-            // The keycap badge (background + key glyph) blinks on its own while shown, so it fades/
-            // scales as one unit regardless of what's drawn inside it.
+            // Keycap badge blinks on its own while shown, fading/scaling as one unit.
             keyCap = promptRoot.Find("KeyCap") as RectTransform;
             if (keyCap != null)
             {
@@ -85,8 +83,7 @@ public class InteractPromptUI : MonoBehaviour
         activeAnimation = StartCoroutine(Animate(opening: false));
     }
 
-    // Same unscaled-time scale+alpha tween as MenuPanel's Open/Close, so prompts and menus animate
-    // consistently; unscaled so a prompt can still fade out the instant the game pauses.
+    // Same unscaled-time scale+alpha tween as MenuPanel's Open/Close, so a prompt can fade out even while paused.
     private IEnumerator Animate(bool opening)
     {
         float fromScale = opening ? closedScale : 1f;
@@ -113,8 +110,7 @@ public class InteractPromptUI : MonoBehaviour
         activeAnimation = null;
     }
 
-    // Continuous alpha+scale pulse on the keycap while the prompt is shown, to draw the eye to the
-    // actual key to press. Unscaled time, same reasoning as Animate above.
+    // Continuous alpha+scale pulse on the keycap to draw the eye to the key to press.
     private IEnumerator BlinkKeyCap()
     {
         while (true)

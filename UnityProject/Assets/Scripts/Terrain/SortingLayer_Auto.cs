@@ -1,32 +1,28 @@
 using UnityEngine;
 
-/// <summary>Automatically sets sprite sorting order based on Y position.</summary>
 public class SortingLayer_Auto : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private int sortingOffset = 0;
 
-    [Tooltip("Local-space offset from this transform used as the Y-sort reference point instead of the transform's own origin. Drag the handle in the Scene view (SortingLayer_AutoEditor) to align it with the sprite's visual base - e.g. a tall tree's trunk - when the sprite pivot doesn't already sit there. Zero (default) keeps the old behavior of sorting on the transform's own position.")]
+    [Tooltip("Local-space Y-sort reference point offset from the transform origin. Drag the Scene view handle to align it with the sprite's visual base. Zero = sort on the transform's own position.")]
     [SerializeField] private Vector3 sortPivotOffset = Vector3.zero;
 
-    /// <summary>Local-space Y-sort reference point, exposed for the Scene view handle.</summary>
     public Vector3 SortPivotOffset
     {
         get => sortPivotOffset;
         set => sortPivotOffset = value;
     }
 
-    /// <summary>World-space position the sort order is sampled from.</summary>
     public Vector3 SortPivotWorldPosition => transform.TransformPoint(sortPivotOffset);
 
-    /// <summary>Adds to the sorting offset - used to break ties between objects that land on the exact same Y (e.g. grid-aligned decor on the same row).</summary>
+    // Breaks ties between objects landing on the same Y (e.g. grid-aligned decor).
     public void AddSortingOffset(int extra)
     {
         sortingOffset += extra;
     }
 
-    /// <summary>Sets the sorting offset to an absolute value - use this (not AddSortingOffset) for
-    /// pooled/reused objects, since Add would keep compounding on top of a previous reuse's offset.</summary>
+    // Use over AddSortingOffset for pooled/reused objects - Add would keep compounding on a stale offset.
     public void SetSortingOffset(int value)
     {
         sortingOffset = value;

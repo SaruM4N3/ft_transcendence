@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -65,8 +66,7 @@ public class PauseManager : MonoBehaviour
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
-    // Used by NPC menu panels: blocks player input via IsPaused but leaves Time.timeScale
-    // alone so the world keeps simulating and the player's idle animation keeps playing.
+    // Used by NPC menu panels: blocks input via IsPaused but leaves Time.timeScale running.
     public static void SetExternalPause(bool paused)
     {
         IsPaused = paused;
@@ -76,10 +76,10 @@ public class PauseManager : MonoBehaviour
     {
         IsPaused = paused;
 
-        if (paused)
-            Time.timeScale = 0f;
-        else
-            Time.timeScale = 1f;
+        // Freezing Time.timeScale would desync a networked session, so multiplayer pause only blocks local input.
+        bool isMultiplayerSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (!isMultiplayerSession)
+            Time.timeScale = paused ? 0f : 1f;
 
         if (pausePanel != null)
             pausePanel.SetActive(paused);

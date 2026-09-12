@@ -1,8 +1,7 @@
 using UnityEngine;
 
-/// <summary>Lightweight looping sprite-sheet animation for ambient decor (trees, bushes, ...).
-/// Cycles through a fixed frame array on a timer instead of using an Animator/Mecanim state
-/// machine, which is unnecessary overhead at the hundreds-of-instances scale decor runs at.</summary>
+// Lightweight looping sprite animation for ambient decor - cycles a frame array on a timer instead
+// of an Animator, which is unnecessary overhead at decor's hundreds-of-instances scale.
 public class DecorFlipbook : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;

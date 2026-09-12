@@ -2,29 +2,41 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerStats : NetworkBehaviour
+public class PlayerStats : NetworkBehaviour, IDamageable
 {
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float maxMana = 50f;
 
+    // Replicated so the lobby roster can show every player's health; mana stays purely local.
+    private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     public float MaxHealth => maxHealth;
     public float MaxMana => maxMana;
-    public float CurrentHealth { get; private set; }
+    public float CurrentHealth => currentHealth.Value;
     public float CurrentMana { get; private set; }
 
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
 
+    // Fires for this instance specifically - lets the lobby roster bind to a non-local player's health.
+    public event Action<float, float> OnHealthReplicated;
+
     void Awake()
     {
-        CurrentHealth = maxHealth;
         CurrentMana = maxMana;
+        currentHealth.OnValueChanged += (_, newValue) =>
+        {
+            OnHealthReplicated?.Invoke(newValue, maxHealth);
+            if (this.IsLocallyControlled())
+                OnHealthChanged?.Invoke(newValue, maxHealth);
+        };
+        currentHealth.Value = maxHealth;
     }
 
     void Start()
     {
-        // Every connected player's stats live on their own machine too (one instance per client),
-        // but only the local/owned instance should drive this client's HUD.
+        // Only the local/owned instance should drive this client's HUD.
         if (!this.IsLocallyControlled())
             return;
 
@@ -32,18 +44,48 @@ public class PlayerStats : NetworkBehaviour
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
+    // Avoids the warning Netcode logs when a non-owner writes an Owner-writable NetworkVariable.
     public void TakeDamage(float amount)
     {
-        CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0f, maxHealth);
-        if (this.IsLocallyControlled())
-            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (!this.IsLocallyControlled())
+            return;
+
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, 0f, maxHealth);
+    }
+
+    // Callable from any client (e.g. an attacker's hit detection); routes to the target's own
+    // owner so the Owner-permission currentHealth write above stays valid.
+    public void RequestDamage(float amount)
+    {
+        if (!NetworkObject.IsSpawned)
+        {
+            TakeDamage(amount);
+            return;
+        }
+        RequestDamageServerRpc(amount);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestDamageServerRpc(float amount)
+    {
+        ApplyDamageClientRpc(amount, new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
+        });
+    }
+
+    [ClientRpc]
+    private void ApplyDamageClientRpc(float amount, ClientRpcParams rpcParams = default)
+    {
+        TakeDamage(amount);
     }
 
     public void Heal(float amount)
     {
-        CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0f, maxHealth);
-        if (this.IsLocallyControlled())
-            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (!this.IsLocallyControlled())
+            return;
+
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value + amount, 0f, maxHealth);
     }
 
     public bool TrySpendMana(float amount)
