@@ -13,8 +13,19 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float heavyAttackCooldown = 1f;
     [SerializeField] private float guardCooldown = 0.5f;
 
+    [SerializeField] private GameObject lightAttackFxPrefab;
+    [SerializeField] private float lightAttackFxDistance = 1f;
+
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
+    private Camera cam;
+
+    // Synced so remote clients can orient the direction indicator and this player's attack FX
+    // the same way the owner sees them, not just replicate position/animation.
+    private readonly NetworkVariable<float> aimAngle = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    public float AimAngleDegrees => aimAngle.Value;
 
     private Animator animator;
     private Vector2 moveInput;
@@ -73,6 +84,9 @@ public class PlayerMovement : NetworkBehaviour
             animator.SetBool(IsWalkingHash, false);
             return;
         }
+
+        Vector2 aimDir = GetMouseAimDirection();
+        aimAngle.Value = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
 
         if (isGuarding)
         {
@@ -169,6 +183,60 @@ public class PlayerMovement : NetworkBehaviour
         animator.SetTrigger(LightAttackHash);
         lightAttackReadyTime = Time.time + lightAttackCooldown;
         OnAbilityUsed?.Invoke(AbilityType.LightAttack, lightAttackCooldown);
+        SpawnLightAttackFx();
+    }
+
+    private void SpawnLightAttackFx()
+    {
+        if (lightAttackFxPrefab == null)
+            return;
+
+        float angle = aimAngle.Value;
+        Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        Vector3 spawnPos = transform.position + (Vector3)(dir * lightAttackFxDistance);
+
+        if (NetworkObject.IsSpawned)
+            SpawnLightAttackFxServerRpc(spawnPos, angle);
+        else
+            SpawnLocalFx(spawnPos, angle, hasHitbox: true);
+    }
+
+    [ServerRpc]
+    private void SpawnLightAttackFxServerRpc(Vector3 position, float angle)
+    {
+        SpawnLightAttackFxClientRpc(position, angle, OwnerClientId);
+    }
+
+    // Every client spawns the same cosmetic flipbook so an attack is visible to everyone, but only
+    // the attacker's own copy keeps its hitbox - otherwise every client would independently deal damage.
+    [ClientRpc]
+    private void SpawnLightAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
+    {
+        bool hasHitbox = NetworkManager.Singleton.LocalClientId == attackerClientId;
+        SpawnLocalFx(position, angle, hasHitbox);
+    }
+
+    private void SpawnLocalFx(Vector3 position, float angle, bool hasHitbox)
+    {
+        GameObject fx = Instantiate(lightAttackFxPrefab, position, Quaternion.Euler(0f, 0f, angle));
+        fx.GetComponent<SlashAttackFX>()?.Init(gameObject, hasHitbox);
+    }
+
+    // Same mouse-to-world math as MouseDirectionIndicator, kept local since the FX's rotation
+    // needs it at the moment of attack rather than every frame.
+    private Vector2 GetMouseAimDirection()
+    {
+        if (cam == null)
+            cam = Camera.main;
+        if (cam == null || Mouse.current == null)
+            return facing;
+
+        Vector3 mouseScreen = Mouse.current.position.ReadValue();
+        mouseScreen.z = -cam.transform.position.z;
+        Vector3 mouseWorld = cam.ScreenToWorldPoint(mouseScreen);
+
+        Vector2 dir = (Vector2)mouseWorld - (Vector2)transform.position;
+        return dir.sqrMagnitude > 0.0001f ? dir.normalized : facing;
     }
 
     public void HeavyAttack(InputAction.CallbackContext ctx)

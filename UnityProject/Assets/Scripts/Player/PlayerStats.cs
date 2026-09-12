@@ -2,7 +2,7 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerStats : NetworkBehaviour
+public class PlayerStats : NetworkBehaviour, IDamageable
 {
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float maxMana = 50f;
@@ -51,6 +51,33 @@ public class PlayerStats : NetworkBehaviour
             return;
 
         currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, 0f, maxHealth);
+    }
+
+    // Callable from any client (e.g. an attacker's hit detection); routes to the target's own
+    // owner so the Owner-permission currentHealth write above stays valid.
+    public void RequestDamage(float amount)
+    {
+        if (!NetworkObject.IsSpawned)
+        {
+            TakeDamage(amount);
+            return;
+        }
+        RequestDamageServerRpc(amount);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestDamageServerRpc(float amount)
+    {
+        ApplyDamageClientRpc(amount, new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
+        });
+    }
+
+    [ClientRpc]
+    private void ApplyDamageClientRpc(float amount, ClientRpcParams rpcParams = default)
+    {
+        TakeDamage(amount);
     }
 
     public void Heal(float amount)
