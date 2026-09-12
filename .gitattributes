@@ -23,3 +23,8 @@
 *.fbx binary
 *.ttf binary
 *.otf binary
+
+*.wasm binary
+*.gz binary
+*.data binary
+web/public/game/Build/*.js binary
