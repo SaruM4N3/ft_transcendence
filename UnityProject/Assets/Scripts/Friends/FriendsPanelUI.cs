@@ -20,6 +20,7 @@ public class FriendsPanelUI : MonoBehaviour
     private static readonly Color ErrorColor = new Color(0.75f, 0.15f, 0.15f);
     private static readonly Color InfoColor = new Color(0.2f, 0.12f, 0.08f);
     private readonly List<GameObject> rows = new List<GameObject>();
+    private bool isInviteBusy;
 
     private void Awake()
     {
@@ -79,8 +80,12 @@ public class FriendsPanelUI : MonoBehaviour
                 "Decline", () => Run(FriendsManager.DeclineAsync(request.Member.Id)));
 
         foreach (Relationship friend in FriendsManager.Friends)
-            AddRow(friend, PresenceTag(friend), "Invite", () => Invite(friend.Member.Id),
-                "Remove", () => Run(FriendsManager.RemoveAsync(friend.Member.Id)));
+        {
+            bool inSession = FriendsManager.IsMemberOfCurrentSession(friend.Member.Id);
+            string tag = inSession ? "In session" : PresenceTag(friend);
+            Action invite = inSession ? null : () => Invite(friend.Member.Id);
+            AddRow(friend, tag, "Invite", invite, "Remove", () => Run(FriendsManager.RemoveAsync(friend.Member.Id)));
+        }
 
         foreach (Relationship request in FriendsManager.Outgoing)
             AddRow(request, "Request", "Cancel", () => Run(FriendsManager.CancelRequestAsync(request.Member.Id)));
@@ -126,31 +131,50 @@ public class FriendsPanelUI : MonoBehaviour
         addButton.interactable = FriendsManager.IsReady;
     }
 
-    // Hosts first if not in a session, then sends the invite.
+    // Hosts first if not in a session, then sends the invite. Guarded against repeat clicks while that's in flight.
     private async void Invite(string memberId)
     {
-        if (string.IsNullOrEmpty(FriendsManager.CurrentSessionCode))
+        if (isInviteBusy)
+            return;
+
+        isInviteBusy = true;
+        SetRowsInteractable(false);
+        try
         {
-            NetworkBootstrap bootstrap = FindAnyObjectByType<NetworkBootstrap>(FindObjectsInactive.Include);
-            if (bootstrap == null)
+            if (string.IsNullOrEmpty(FriendsManager.CurrentSessionCode))
             {
-                SetStatus("Can't host from here.", isError: true);
-                return;
+                NetworkBootstrap bootstrap = FindAnyObjectByType<NetworkBootstrap>(FindObjectsInactive.Include);
+                if (bootstrap == null)
+                {
+                    SetStatus("Can't host from here.", isError: true);
+                    return;
+                }
+
+                SetStatus("Creating your game...", isError: false);
+                if (!await bootstrap.HostGameAsync())
+                {
+                    SetStatus("Couldn't start hosting, try again.", isError: true);
+                    return;
+                }
             }
 
-            SetStatus("Creating your game...", isError: false);
-            if (!await bootstrap.HostGameAsync())
-            {
-                SetStatus("Couldn't start hosting, try again.", isError: true);
-                return;
-            }
+            await Run(FriendsManager.InviteAsync(memberId), "Invite sent.");
         }
+        finally
+        {
+            isInviteBusy = false;
+            SetRowsInteractable(true);
+        }
+    }
 
-        Run(FriendsManager.InviteAsync(memberId), "Invite sent.");
+    private void SetRowsInteractable(bool interactable)
+    {
+        foreach (GameObject row in rows)
+            row.GetComponent<FriendRowUI>().SetInteractable(interactable);
     }
 
     // Runs a row action and shows failures in the status line.
-    private async void Run(Task action, string successMessage = "")
+    private async Task Run(Task action, string successMessage = "")
     {
         try
         {

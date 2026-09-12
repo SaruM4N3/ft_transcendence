@@ -21,11 +21,21 @@ public class NetworkBootstrap : MonoBehaviour
     private Quaternion hostSpawnRotation;
     private GameObject detachedCameraHolder;
 
+    // Set by InviteToastUI before reloading Lobby, so the fresh scene picks up the join automatically.
+    public static string PendingJoinCode;
+
     // Start runs after every Awake, so NetworkManager.Singleton is set.
     private void Start()
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
         NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+
+        if (!string.IsNullOrEmpty(PendingJoinCode))
+        {
+            string code = PendingJoinCode;
+            PendingJoinCode = null;
+            _ = JoinWithCodeAsync(code);
+        }
     }
 
     private void OnDestroy()
