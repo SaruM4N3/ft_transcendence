@@ -11,7 +11,9 @@ using UnityEngine.UI;
 // active for solo play - only Host/Join replaces it with a networked, Netcode-spawned one.
 public class NetworkBootstrap : MonoBehaviour
 {
+#if UNITY_EDITOR
     // Suppresses Netcode's harmless "written before spawn" warning - the offline player writes early on purpose.
+    // Editor-only: touching this type via reflection at startup crashes IL2CPP/WebGL builds ("indirect call to null").
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void SuppressPreSpawnNetworkVariableWarning()
     {
@@ -19,6 +21,7 @@ public class NetworkBootstrap : MonoBehaviour
             .GetField("IgnoreInitializeWarning", BindingFlags.NonPublic | BindingFlags.Static)
             ?.SetValue(null, true);
     }
+#endif
 
 
     [SerializeField] private MenuPanel multiplayerPanel;
