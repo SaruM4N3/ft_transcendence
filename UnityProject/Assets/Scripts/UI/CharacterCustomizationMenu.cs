@@ -73,6 +73,8 @@ public class CharacterCustomizationMenu : MonoBehaviour
     public static event System.Action<string> OnNameChanged;
 
     [SerializeField] private GameObject[] classPresets;
+    // Indexed the same as classPresets - each class is a tuned ClassStats instance.
+    [SerializeField] private ClassStats[] statsByClass;
     [SerializeField] private ColorVariant[] colorVariants;
     // HUD background sword sprite per color, indexed the same as colorVariants.
     [SerializeField] private Sprite[] backgroundSpritesByColor;
@@ -105,6 +107,14 @@ public class CharacterCustomizationMenu : MonoBehaviour
             return null;
 
         return colorVariants[colorIndex].portraitSpritesByClass[classIndex];
+    }
+
+    public ClassStats GetStats(int classIndex)
+    {
+        if (classIndex < 0 || classIndex >= statsByClass.Length)
+            return null;
+
+        return statsByClass[classIndex];
     }
 
     public Sprite GetCurrentBackground()

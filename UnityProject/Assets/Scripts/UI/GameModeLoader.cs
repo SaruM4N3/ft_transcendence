@@ -1,6 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameModeLoader : MonoBehaviour
 {
@@ -16,6 +15,6 @@ public class GameModeLoader : MonoBehaviour
 
         Time.timeScale = 1f;
         PauseManager.SetExternalPause(false);
-        SceneManager.LoadScene(sceneName);
+        LoadingScreenManager.LoadScene(sceneName);
     }
 }
