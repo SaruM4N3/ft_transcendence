@@ -582,7 +582,7 @@
                 {
                     "name": "",
                     "id": "f02c751f-f209-40a7-b597-a1631bed82cc",
-                    "path": "<Keyboard>/escape",
+                    "path": "<Keyboard>/tab",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
