@@ -5,6 +5,8 @@ public class PigForm : MonoBehaviour
 {
     private const int StartupGraceFrames = 2;
     private const float TransformFxLifetime = 1f;
+    private const float FacingSampleInterval = 0.15f;
+    private const float MinFacingDistance = 0.05f;
 
     [SerializeField] private GameObject pigPrefab;
     [SerializeField] private float pigScale = 1.5f;
@@ -27,10 +29,12 @@ public class PigForm : MonoBehaviour
     private bool isPig;
     private bool hasCheckedState;
 
-    private Vector2 lastPosition;
-    private float lastMovedTime;
     private int currentAnimationHash;
     private int startFrame;
+    private bool isMoving;
+
+    private Vector2 facingSamplePosition;
+    private float nextFacingSampleTime;
 
     void Awake()
     {
@@ -100,7 +104,9 @@ public class PigForm : MonoBehaviour
             rb.excludeLayers = active ? rb.excludeLayers | enemyMask : rb.excludeLayers & ~enemyMask;
 
         currentAnimationHash = 0;
-        lastPosition = transform.position;
+        isMoving = false;
+        facingSamplePosition = transform.position;
+        nextFacingSampleTime = 0f;
     }
 
     private void CreatePig()
@@ -115,21 +121,23 @@ public class PigForm : MonoBehaviour
         pig.transform.position += bodyCenter - pigRenderer.bounds.center;
     }
 
-    // Faces and animates from real movement, like the enemies, so every peer sees the same thing.
+    // Faces and animates off net movement sampled over a real time window, not a single frame, so remote
+    // NetworkTransform interpolation jitter (which can exceed a per-frame threshold) can't flicker either while idle.
     private void UpdatePigVisuals()
     {
-        Vector2 position = transform.position;
-        Vector2 delta = position - lastPosition;
-        lastPosition = position;
+        if (Time.time >= nextFacingSampleTime)
+        {
+            Vector2 position = transform.position;
+            Vector2 sampledDelta = position - facingSamplePosition;
+            facingSamplePosition = position;
+            nextFacingSampleTime = Time.time + FacingSampleInterval;
 
-        if (Mathf.Abs(delta.x) > 0.001f)
-            pigRenderer.flipX = delta.x < 0f;
+            isMoving = sampledDelta.sqrMagnitude > MinFacingDistance * MinFacingDistance;
+            if (Mathf.Abs(sampledDelta.x) > MinFacingDistance)
+                pigRenderer.flipX = sampledDelta.x < 0f;
+        }
 
-        float minStep = 0.3f * Time.deltaTime;
-        if (delta.sqrMagnitude > minStep * minStep)
-            lastMovedTime = Time.time;
-
-        int desired = Time.time - lastMovedTime < 0.15f ? RunHash : IdleHash;
+        int desired = isMoving ? RunHash : IdleHash;
         if (desired != currentAnimationHash)
         {
             currentAnimationHash = desired;
