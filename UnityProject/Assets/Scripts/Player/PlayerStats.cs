@@ -31,6 +31,14 @@ public class PlayerStats : NetworkBehaviour, IDamageable
             if (this.IsLocallyControlled())
                 OnHealthChanged?.Invoke(newValue, maxHealth);
         };
+        // Deferred a frame: writing a NetworkVariable directly from Awake() crashes IL2CPP/WebGL
+        // builds ("indirect call to null" in NetworkVariable's generic-shared setter).
+        StartCoroutine(InitializeHealthNextFrame());
+    }
+
+    private System.Collections.IEnumerator InitializeHealthNextFrame()
+    {
+        yield return null;
         currentHealth.Value = maxHealth;
     }
 
@@ -65,7 +73,7 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         RequestDamageServerRpc(amount);
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestDamageServerRpc(float amount)
     {
         ApplyDamageClientRpc(amount, new ClientRpcParams
