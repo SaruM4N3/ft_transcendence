@@ -18,6 +18,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
     private float nextPlayerRefreshTime;
 
     public int PlayersVersion { get; private set; }
+    public IReadOnlyList<PlayerStats> LivingPlayers => livingPlayers;
 
     public static Vector2 BodyOffset { get; set; }
 
@@ -91,7 +92,8 @@ public class EnemyFlowFieldManager : MonoBehaviour
     }
 
     // Bumps PlayersVersion when the living set changes; solo falls back to the local player.
-    private void RefreshPlayers()
+    // Public so callers needing an up-to-date list (e.g. spawn placement) aren't stuck waiting on the next FixedUpdate.
+    public void RefreshPlayers()
     {
         nextPlayerRefreshTime = Time.time + PlayerRefreshInterval;
         scratchPlayers.Clear();

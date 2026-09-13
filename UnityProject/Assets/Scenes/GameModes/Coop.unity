@@ -195,6 +195,7 @@ MonoBehaviour:
   enemyPrefab: {fileID: 8760497899193580633, guid: 80684958157020e5b9d23c35045e0a68, type: 3}
   baseEnemiesPerWave: 3
   extraEnemiesPerWave: 2
+  extraEnemiesPerPlayer: 2
   spawnRadius: 12
   timeBetweenWaves: 5
   maxSpawnPointAttempts: 10
@@ -1157,8 +1158,8 @@ MonoBehaviour:
   waterBackgroundTilemap: {fileID: 3116289660912037479}
   coastFoamTilemap: {fileID: 6630250672137080087}
   player: {fileID: 8664487228250979934, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
-  chunkSize: 2
-  viewDistanceInChunks: 1
+  chunkSize: 4
+  viewDistanceInChunks: 2
   maxChunkGenerationsPerFrame: 2
   seed: 15
   spawnSafeRadius: 5
