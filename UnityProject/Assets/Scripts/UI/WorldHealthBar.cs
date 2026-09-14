@@ -11,16 +11,20 @@ public class WorldHealthBar : MonoBehaviour
     [SerializeField] private MonoBehaviour statsSource;
 
     private IHealthStats stats;
+    private Canvas canvas;
 
     void Awake()
     {
         stats = statsSource as IHealthStats;
+        canvas = GetComponent<Canvas>();
     }
 
     void OnEnable()
     {
         if (stats != null)
             stats.OnHealthChanged += SetFill;
+        GameSettings.OnChanged += ApplyVisibility;
+        ApplyVisibility();
     }
 
     // Initial sync happens here, after every Awake has set initial health.
@@ -34,6 +38,13 @@ public class WorldHealthBar : MonoBehaviour
     {
         if (stats != null)
             stats.OnHealthChanged -= SetFill;
+        GameSettings.OnChanged -= ApplyVisibility;
+    }
+
+    private void ApplyVisibility()
+    {
+        if (canvas != null)
+            canvas.enabled = GameSettings.ShowEnemyHealthBars;
     }
 
     private void SetFill(float current, float max)

@@ -96,7 +96,7 @@ public class PlayerFeedback : NetworkBehaviour
 
     private void Shake(float force)
     {
-        if (impulseSource != null)
+        if (impulseSource != null && GameSettings.ScreenShakeEnabled)
             impulseSource.GenerateImpulse(Random.insideUnitCircle.normalized * force);
     }
 }
