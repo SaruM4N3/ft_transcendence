@@ -58,7 +58,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 34
-    OrthographicSize: 5
+    OrthographicSize: 7.5
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -502,8 +502,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 675691631
+  GlobalObjectIdHash: 2315175371
   InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -534,6 +535,8 @@ MonoBehaviour:
   lightAttackCooldown: 0.5
   heavyAttackCooldown: 2
   guardCooldown: 5
+  lightAttackFxPrefab: {fileID: 0}
+  lightAttackFxDistance: 1
 --- !u!114 &3618725718313327464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -547,8 +550,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
-  maxMana: 50
+  defaultStats: {fileID: 0}
+  customization: {fileID: 0}
 --- !u!114 &8005166703726710935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -681,6 +684,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad27a6c88070c6459516eeb743e10a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseDirectionIndicator
+  colorsByColorIndex:
+  - {r: 0.15, g: 0.15, b: 0.15, a: 1}
+  - {r: 0.25, g: 0.45, b: 0.95, a: 1}
+  - {r: 0.6, g: 0.3, b: 0.85, a: 1}
+  - {r: 0.85, g: 0.25, b: 0.25, a: 1}
+  - {r: 0.95, g: 0.8, b: 0.2, a: 1}
 --- !u!1 &8161917205163886775
 GameObject:
   m_ObjectHideFlags: 0
@@ -710,7 +719,7 @@ Transform:
   m_GameObject: {fileID: 8161917205163886775}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -4, z: -12}
+  m_LocalPosition: {x: 0, y: 0, z: -12}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -751,7 +760,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 7.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
