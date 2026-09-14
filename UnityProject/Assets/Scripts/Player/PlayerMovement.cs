@@ -64,6 +64,11 @@ public class PlayerMovement : NetworkBehaviour
         animator = GetComponent<Animator>();
 
         stats = GetComponent<PlayerStats>();
+
+        // Covers the offline player, which never goes through OnNetworkSpawn.
+        PlayerInput input = GetComponent<PlayerInput>();
+        if (input != null)
+            KeybindOverrides.Apply(input.actions);
     }
 
     // Only the owner reads input and renders a camera.
@@ -78,6 +83,10 @@ public class PlayerMovement : NetworkBehaviour
             PlayerCameraRig.SetActive(transform, active: false);
             return;
         }
+
+        PlayerInput ownerInput = GetComponent<PlayerInput>();
+        if (ownerInput != null)
+            KeybindOverrides.Apply(ownerInput.actions);
 
         if (NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
