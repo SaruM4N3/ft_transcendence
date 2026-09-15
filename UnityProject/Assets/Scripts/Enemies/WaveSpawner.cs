@@ -110,8 +110,9 @@ public class WaveSpawner : NetworkBehaviour
         }
     }
 
-    // Falls back to the spawner's own position if no valid point is found.
-    private Vector3 FindSpawnPosition()
+    // Falls back to the spawner's own position if no valid point is found. Public so EnemyAI can
+    // reuse it to recycle enemies that end up too far from every player.
+    public Vector3 FindSpawnPosition()
     {
         ProceduralMapGenerator mapGenerator = FindAnyObjectByType<ProceduralMapGenerator>();
         Vector3 center = GetSpawnCenter();

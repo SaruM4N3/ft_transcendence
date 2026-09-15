@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 // Server-authoritative chase-and-melee AI driven by shared flow fields.
@@ -15,13 +16,18 @@ public class EnemyAI : NetworkBehaviour
     [SerializeField] private float steerInterval = 0.1f;
     [SerializeField] private float directChaseRange = 8f;
     [SerializeField] private float lineOfSightInterval = 0.3f;
+    [SerializeField] private float maxDistanceFromPlayers = 40f;
+    [SerializeField] private float leashCheckInterval = 2f;
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
     private Animator animator;
+    private NetworkTransform networkTransform;
+    private WaveSpawner waveSpawner;
     private float bodyRadius;
     private Vector2 bodyOffset;
     private float nextAttackTime;
+    private float nextLeashCheckTime;
 
     private PlayerStats target;
     private int seenPlayersVersion = -1;
@@ -54,6 +60,7 @@ public class EnemyAI : NetworkBehaviour
         rb.sharedMaterial = GetSlipperyMaterial();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
+        networkTransform = GetComponent<NetworkTransform>();
 
         CircleCollider2D circle = GetComponent<CircleCollider2D>();
         float scale = Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
@@ -69,6 +76,8 @@ public class EnemyAI : NetworkBehaviour
         nextRetargetTime = Time.time + Random.value * retargetInterval;
         nextSteerTime = Time.time + Random.value * steerInterval;
         nextLineOfSightTime = Time.time + Random.value * lineOfSightInterval;
+        nextLeashCheckTime = Time.time + Random.value * leashCheckInterval;
+        waveSpawner = FindAnyObjectByType<WaveSpawner>();
     }
 
     public override void OnNetworkSpawn()
@@ -112,6 +121,13 @@ public class EnemyAI : NetworkBehaviour
             return;
         }
 
+        if (Time.time >= nextLeashCheckTime)
+        {
+            nextLeashCheckTime = Time.time + leashCheckInterval;
+            if (CheckLeash())
+                return;
+        }
+
         Vector2 toTarget = TargetCenter(target) - BodyCenter;
         if (toTarget.sqrMagnitude <= attackRange * attackRange)
         {
@@ -145,6 +161,24 @@ public class EnemyAI : NetworkBehaviour
         nextRetargetTime = Time.time + retargetInterval;
         seenPlayersVersion = manager.PlayersVersion;
         target = manager.FindNearestLivingPlayer(rb.position);
+    }
+
+    // Recycles enemies that end up far from every player (e.g. players regrouped elsewhere) back near the action.
+    private bool CheckLeash()
+    {
+        if (waveSpawner == null || (TargetCenter(target) - BodyCenter).sqrMagnitude <= maxDistanceFromPlayers * maxDistanceFromPlayers)
+            return false;
+
+        Vector3 teleportPos = waveSpawner.FindSpawnPosition();
+        rb.position = teleportPos;
+        rb.linearVelocity = Vector2.zero;
+        // Teleport() requires real Netcode authority; offline enemies are never actually spawned.
+        if (networkTransform != null && IsSpawned)
+            networkTransform.Teleport(teleportPos, transform.rotation, transform.localScale);
+        else
+            transform.position = teleportPos;
+
+        return true;
     }
 
     // Straight at the player with a clear line, otherwise along the flow field.
