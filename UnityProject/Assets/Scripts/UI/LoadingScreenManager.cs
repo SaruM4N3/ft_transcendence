@@ -15,6 +15,8 @@ public class LoadingScreenManager : MonoBehaviour
     private static LoadingScreenManager instance;
 
     private CanvasGroup canvasGroup;
+    private TextMeshProUGUI loadingLabel;
+    private GameObject progressBarRoot;
     private Image progressFill;
     private Coroutine fadeRoutine;
     private NetworkManager subscribedNetworkManager;
@@ -53,9 +55,28 @@ public class LoadingScreenManager : MonoBehaviour
             SceneManager.LoadScene(sceneName);
     }
 
+    // Manual show/hide for async work with no scene load, e.g. creating/joining a session.
+    public static void Show(string label = "Loading...")
+    {
+        if (instance == null)
+            return;
+        instance.loadingLabel.text = label;
+        instance.progressBarRoot.SetActive(false);
+        instance.Fade(1f);
+    }
+
+    public static void Hide()
+    {
+        if (instance == null)
+            return;
+        instance.progressBarRoot.SetActive(true);
+        instance.loadingLabel.text = "Loading...";
+        instance.Fade(0f);
+    }
+
     private IEnumerator LoadSceneRoutine(string sceneName)
     {
-        Show();
+        ShowSceneProgress();
         float shownAt = Time.unscaledTime;
 
         AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
@@ -79,21 +100,18 @@ public class LoadingScreenManager : MonoBehaviour
     private void HandleNetworkSceneEvent(SceneEvent sceneEvent)
     {
         if (sceneEvent.SceneEventType == SceneEventType.Load)
-            Show();
+            ShowSceneProgress();
         else if (sceneEvent.SceneEventType == SceneEventType.LoadComplete
             && sceneEvent.ClientId == NetworkManager.Singleton.LocalClientId)
             Hide();
     }
 
-    private void Show()
+    private void ShowSceneProgress()
     {
+        progressBarRoot.SetActive(true);
+        loadingLabel.text = "Loading...";
         SetProgress(0f);
         Fade(1f);
-    }
-
-    private void Hide()
-    {
-        Fade(0f);
     }
 
     private void SetProgress(float value)
@@ -155,7 +173,7 @@ public class LoadingScreenManager : MonoBehaviour
         labelRect.anchorMin = labelRect.anchorMax = new Vector2(0.5f, 0.5f);
         labelRect.anchoredPosition = new Vector2(0f, 40f);
         labelRect.sizeDelta = new Vector2(400f, 60f);
-        TextMeshProUGUI loadingLabel = labelGO.GetComponent<TextMeshProUGUI>();
+        loadingLabel = labelGO.GetComponent<TextMeshProUGUI>();
         loadingLabel.text = "Loading...";
         loadingLabel.fontSize = 36f;
         loadingLabel.alignment = TextAlignmentOptions.Center;
@@ -168,6 +186,7 @@ public class LoadingScreenManager : MonoBehaviour
         barBackgroundRect.anchoredPosition = new Vector2(0f, -20f);
         barBackgroundRect.sizeDelta = new Vector2(400f, 24f);
         barBackgroundGO.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.15f);
+        progressBarRoot = barBackgroundGO;
 
         var barFillGO = new GameObject("ProgressBarFill", typeof(RectTransform), typeof(Image));
         barFillGO.transform.SetParent(barBackgroundGO.transform, false);

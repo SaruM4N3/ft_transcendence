@@ -85,6 +85,7 @@ public class NetworkBootstrap : MonoBehaviour
         if (hostButton != null)
             hostButton.interactable = false;
         SetJoinControlsInteractable(false);
+        LoadingScreenManager.Show("Creating session...");
 
         try
         {
@@ -123,6 +124,10 @@ public class NetworkBootstrap : MonoBehaviour
                 hostButton.interactable = true;
             SetJoinControlsInteractable(true);
             return false;
+        }
+        finally
+        {
+            LoadingScreenManager.Hide();
         }
     }
 
