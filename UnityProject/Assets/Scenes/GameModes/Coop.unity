@@ -193,11 +193,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveSpawner
   ShowTopMostFoldoutHeaderGroup: 1
   enemyPrefab: {fileID: 8760497899193580633, guid: 80684958157020e5b9d23c35045e0a68, type: 3}
-  baseEnemiesPerWave: 3
-  extraEnemiesPerWave: 2
-  extraEnemiesPerPlayer: 2
-  spawnRadius: 12
-  timeBetweenWaves: 5
+  baseEnemiesPerWave: 5
+  extraEnemiesPerWave: 5
+  extraEnemiesPerPlayer: 5
+  spawnRadius: 15
+  timeBetweenWaves: 20
   maxSpawnPointAttempts: 10
   spawnClearance: 1
 --- !u!1 &806263490
@@ -1060,6 +1060,10 @@ PrefabInstance:
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 772891792533613119, guid: c4bd213f5ffca3709985146d0af26b5c, type: 2}
+    - target: {fileID: 3191399807049263265, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3302347315360888540, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -7.2
