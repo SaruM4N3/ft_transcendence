@@ -39,19 +39,21 @@ public class GameOverUI : MonoBehaviour
     }
 
     // Waits a beat after the wipe so the last death is visible before the screen appears.
+    // Polled (not event-driven) so a restart's fresh GameOverCheck is picked up automatically.
     void Update()
     {
-        if (shown)
-            return;
-
         if (check == null)
-        {
             check = FindAnyObjectByType<GameOverCheck>();
-            if (check == null)
-                return;
+
+        bool isOver = check != null && check.IsGameOver;
+        if (!isOver)
+        {
+            if (shown || triggerTime >= 0f)
+                Reset();
+            return;
         }
 
-        if (!check.IsGameOver)
+        if (shown)
             return;
 
         if (triggerTime < 0f)
@@ -59,6 +61,18 @@ public class GameOverUI : MonoBehaviour
 
         if (Time.unscaledTime - triggerTime >= showDelay)
             Show();
+    }
+
+    // Restart/ReturnToLobby spawn a fresh GameOverCheck with gameOver back at false; close and re-arm for it.
+    private void Reset()
+    {
+        shown = false;
+        IsShowing = false;
+        triggerTime = -1f;
+        panel.SetActive(false);
+        PauseManager.SetExternalPause(false);
+        restartButton.interactable = true;
+        lobbyButton.interactable = true;
     }
 
     private void Show()

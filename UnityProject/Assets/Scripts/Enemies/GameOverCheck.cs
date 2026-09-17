@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -13,20 +14,46 @@ public class GameOverCheck : NetworkBehaviour
 
     private bool offlineGameOver;
     private bool isLoading;
+    private bool sceneReady;
     private float readyTime;
 
     public bool IsGameOver => IsSpawned ? gameOver.Value : offlineGameOver;
 
     public bool CanChoose => this.HasServerAuthority();
 
+    // Networked: wait for every client's scene load (and the PlayerStats reset it triggers) to finish
+    // before evaluating wipes, so a still-loading player's stale zero health can't re-trigger game over.
     void Start()
     {
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isNetworked && NetworkManager.Singleton.SceneManager != null)
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += HandleLoadEventCompleted;
+        else
+            ArmReadiness();
+    }
+
+    public override void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
+        base.OnDestroy();
+    }
+
+    private void HandleLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
+        ArmReadiness();
+    }
+
+    private void ArmReadiness()
+    {
+        sceneReady = true;
         readyTime = Time.time + startupGracePeriod;
     }
 
     void Update()
     {
-        if (!this.HasServerAuthority() || IsGameOver || Time.time < readyTime)
+        if (!this.HasServerAuthority() || IsGameOver || !sceneReady || Time.time < readyTime)
             return;
 
         if (!AllPlayersDead())
