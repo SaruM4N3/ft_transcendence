@@ -8,7 +8,7 @@ public class InteractPromptUI : MonoBehaviour
     [SerializeField] private RectTransform promptRoot;
     [SerializeField] private TextMeshProUGUI keyLabel;
     [SerializeField] private TextMeshProUGUI actionLabel;
-    [SerializeField] private string keyGlyph = "E";
+    [SerializeField] private string keyGlyph = "E"; // fallback shown until a live Interact keybind is resolved
     [SerializeField] private float animationDuration = 0.15f;
     [SerializeField] private float closedScale = 0.85f;
     [SerializeField] private float keyCapBlinkSpeed = 3f;
@@ -23,8 +23,7 @@ public class InteractPromptUI : MonoBehaviour
 
     private void Awake()
     {
-        if (keyLabel != null)
-            keyLabel.text = keyGlyph;
+        RefreshKeyLabel();
 
         if (promptRoot != null)
         {
@@ -48,6 +47,8 @@ public class InteractPromptUI : MonoBehaviour
 
     public void Show(string text)
     {
+        RefreshKeyLabel();
+
         if (actionLabel != null)
             actionLabel.text = text;
 
@@ -61,6 +62,13 @@ public class InteractPromptUI : MonoBehaviour
 
         if (keyCap != null && blinkAnimation == null)
             blinkAnimation = StartCoroutine(BlinkKeyCap());
+    }
+
+    // Reflects the player's current Interact keybind, including rebinds; falls back to keyGlyph if unresolved.
+    private void RefreshKeyLabel()
+    {
+        if (keyLabel != null)
+            keyLabel.text = KeybindOverrides.GetKeyboardDisplay("Interact") ?? keyGlyph;
     }
 
     public void Hide()
