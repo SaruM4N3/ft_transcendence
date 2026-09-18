@@ -6,6 +6,7 @@ public class SettingsPanelUI : MonoBehaviour
 {
     [SerializeField] private Toggle enemyHealthBarsToggle;
     [SerializeField] private Toggle screenShakeToggle;
+    [SerializeField] private Toggle damageNumbersToggle;
     [SerializeField] private Button keybindsButton;
     [SerializeField] private GameObject keybindsPanel;
 
@@ -13,6 +14,7 @@ public class SettingsPanelUI : MonoBehaviour
     {
         enemyHealthBarsToggle.onValueChanged.AddListener(value => GameSettings.ShowEnemyHealthBars = value);
         screenShakeToggle.onValueChanged.AddListener(value => GameSettings.ScreenShakeEnabled = value);
+        damageNumbersToggle.onValueChanged.AddListener(value => GameSettings.ShowDamageNumbers = value);
 
         if (keybindsButton != null && keybindsPanel != null)
             keybindsButton.onClick.AddListener(() =>
@@ -26,5 +28,6 @@ public class SettingsPanelUI : MonoBehaviour
     {
         enemyHealthBarsToggle.SetIsOnWithoutNotify(GameSettings.ShowEnemyHealthBars);
         screenShakeToggle.SetIsOnWithoutNotify(GameSettings.ScreenShakeEnabled);
+        damageNumbersToggle.SetIsOnWithoutNotify(GameSettings.ShowDamageNumbers);
     }
 }
