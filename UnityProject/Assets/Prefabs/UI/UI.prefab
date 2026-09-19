@@ -1078,7 +1078,7 @@ MonoBehaviour:
   restartButton: {fileID: 318508448458683183}
   lobbyButton: {fileID: 5130836574905306026}
   waitingText: {fileID: 8540546910950335665}
-  showDelay: 1.5
+  showDelay: 0.3
   fadeDuration: 0.25
 --- !u!1 &6043571389931125906
 GameObject:

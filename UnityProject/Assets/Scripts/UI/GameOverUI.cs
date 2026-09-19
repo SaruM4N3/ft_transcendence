@@ -13,7 +13,7 @@ public class GameOverUI : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button lobbyButton;
     [SerializeField] private TMP_Text waitingText;
-    [SerializeField] private float showDelay = 1.5f;
+    [SerializeField] private float showDelay = 0.3f;
     [SerializeField] private float fadeDuration = 0.25f;
 
     private GameOverCheck check;
