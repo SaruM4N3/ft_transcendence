@@ -20,6 +20,7 @@ public class LoadingScreenManager : MonoBehaviour
     private Image progressFill;
     private Coroutine fadeRoutine;
     private NetworkManager subscribedNetworkManager;
+    private NetworkSceneManager subscribedSceneManager;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
@@ -34,17 +35,25 @@ public class LoadingScreenManager : MonoBehaviour
         BuildUI();
     }
 
+    // NetworkManager.SceneManager stays null until hosting/joining actually starts (it's created inside
+    // StartHost/StartClient, not Awake), so re-check it every frame rather than gating on the
+    // NetworkManager reference alone - that reference doesn't change between "in the Lobby, not yet
+    // connected" and "now hosting", so a Singleton-only guard can miss the moment SceneManager appears.
     private void Update()
     {
-        if (subscribedNetworkManager == NetworkManager.Singleton)
+        NetworkManager currentManager = NetworkManager.Singleton;
+        NetworkSceneManager currentSceneManager = currentManager != null ? currentManager.SceneManager : null;
+
+        if (subscribedNetworkManager == currentManager && subscribedSceneManager == currentSceneManager)
             return;
 
-        if (subscribedNetworkManager != null && subscribedNetworkManager.SceneManager != null)
-            subscribedNetworkManager.SceneManager.OnSceneEvent -= HandleNetworkSceneEvent;
+        if (subscribedSceneManager != null)
+            subscribedSceneManager.OnSceneEvent -= HandleNetworkSceneEvent;
 
-        subscribedNetworkManager = NetworkManager.Singleton;
-        if (subscribedNetworkManager != null && subscribedNetworkManager.SceneManager != null)
-            subscribedNetworkManager.SceneManager.OnSceneEvent += HandleNetworkSceneEvent;
+        subscribedNetworkManager = currentManager;
+        subscribedSceneManager = currentSceneManager;
+        if (subscribedSceneManager != null)
+            subscribedSceneManager.OnSceneEvent += HandleNetworkSceneEvent;
     }
 
     public static void LoadScene(string sceneName)
