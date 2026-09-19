@@ -101,9 +101,25 @@ public class LoadingScreenManager : MonoBehaviour
     {
         if (sceneEvent.SceneEventType == SceneEventType.Load)
             ShowSceneProgress();
-        else if (sceneEvent.SceneEventType == SceneEventType.LoadComplete
-            && sceneEvent.ClientId == NetworkManager.Singleton.LocalClientId)
-            Hide();
+        else if (sceneEvent.SceneEventType == SceneEventType.LoadEventCompleted)
+            StartCoroutine(HideOnceLocalPlayerReady());
+    }
+
+    // LoadComplete only means this client's own scene finished loading; the local player isn't
+    // repositioned and un-pigged until PlayerMovement/PlayerStats react to the later LoadEventCompleted,
+    // so wait for that to actually resolve before dropping the curtain.
+    private IEnumerator HideOnceLocalPlayerReady()
+    {
+        float deadline = Time.unscaledTime + 3f;
+        while (Time.unscaledTime < deadline)
+        {
+            GameObject localPlayer = LocalPlayer.Get();
+            PlayerStats stats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
+            if (stats == null || !stats.IsDead)
+                break;
+            yield return null;
+        }
+        Hide();
     }
 
     private void ShowSceneProgress()
