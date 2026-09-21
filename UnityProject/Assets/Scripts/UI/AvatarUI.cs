@@ -14,8 +14,6 @@ public class AvatarUI : MonoBehaviour
     void OnEnable()
     {
         CharacterCustomizationMenu.OnPortraitChanged += SetAvatar;
-
-        // Initial sync in case the Customize menu hasn't been opened yet this session (never fired OnPortraitChanged).
         SetAvatar(CharacterCustomizationMenu.Instance?.GetCurrentPortrait());
     }
 

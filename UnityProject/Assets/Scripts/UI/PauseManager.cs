@@ -1,7 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
 {
@@ -63,7 +62,7 @@ public class PauseManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         IsPaused = false;
-        SceneManager.LoadScene(mainMenuSceneName);
+        LoadingScreenManager.LoadScene(mainMenuSceneName);
     }
 
     // Used by NPC menu panels: blocks input via IsPaused but leaves Time.timeScale running.

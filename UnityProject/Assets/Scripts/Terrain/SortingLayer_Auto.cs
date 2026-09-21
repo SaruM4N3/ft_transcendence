@@ -16,13 +16,11 @@ public class SortingLayer_Auto : MonoBehaviour
 
     public Vector3 SortPivotWorldPosition => transform.TransformPoint(sortPivotOffset);
 
-    // Breaks ties between objects landing on the same Y (e.g. grid-aligned decor).
     public void AddSortingOffset(int extra)
     {
         sortingOffset += extra;
     }
 
-    // Use over AddSortingOffset for pooled/reused objects - Add would keep compounding on a stale offset.
     public void SetSortingOffset(int value)
     {
         sortingOffset = value;

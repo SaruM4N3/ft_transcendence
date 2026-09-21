@@ -39,6 +39,7 @@ public class ReadyCheckUI : MonoBehaviour
     };
 
     private bool isOpen;
+    private ModeReadyCheck subscribedInstance;
     private readonly List<PlayerCustomization> orderedPlayers = new List<PlayerCustomization>();
     private readonly Dictionary<PlayerCustomization, ReadyCheckEntryUI> rows =
         new Dictionary<PlayerCustomization, ReadyCheckEntryUI>();
@@ -55,21 +56,36 @@ public class ReadyCheckUI : MonoBehaviour
 
     private void OnEnable()
     {
-        if (ModeReadyCheck.Instance != null)
-            ModeReadyCheck.Instance.OnPendingSceneChanged += HandlePendingSceneChanged;
         PlayerCustomization.OnPlayerRegistered += HandlePlayerRegistered;
         PlayerCustomization.OnPlayerUnregistered += HandlePlayerUnregistered;
     }
 
     private void OnDisable()
     {
-        if (ModeReadyCheck.Instance != null)
-            ModeReadyCheck.Instance.OnPendingSceneChanged -= HandlePendingSceneChanged;
+        if (subscribedInstance != null)
+            subscribedInstance.OnPendingSceneChanged -= HandlePendingSceneChanged;
+        subscribedInstance = null;
         PlayerCustomization.OnPlayerRegistered -= HandlePlayerRegistered;
         PlayerCustomization.OnPlayerUnregistered -= HandlePlayerUnregistered;
 
         ClearRows();
         RebuildTeamButtons(null);
+    }
+
+    // ModeReadyCheck is now spawned dynamically by NetworkBootstrap.HostGame() (see
+    // project_coop_scene_transition_bugs_fixed) rather than scene-placed, so its Instance is
+    // guaranteed null when this always-active object's OnEnable runs - poll until it exists instead.
+    private void Update()
+    {
+        if (subscribedInstance == ModeReadyCheck.Instance)
+            return;
+
+        if (subscribedInstance != null)
+            subscribedInstance.OnPendingSceneChanged -= HandlePendingSceneChanged;
+
+        subscribedInstance = ModeReadyCheck.Instance;
+        if (subscribedInstance != null)
+            subscribedInstance.OnPendingSceneChanged += HandlePendingSceneChanged;
     }
 
     private void HandlePendingSceneChanged(string sceneName)

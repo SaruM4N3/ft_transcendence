@@ -14,8 +14,6 @@ public class BackgroundColorUI : MonoBehaviour
     void OnEnable()
     {
         CharacterCustomizationMenu.OnBackgroundChanged += SetBackground;
-
-        // Initial sync in case the Customize menu hasn't been opened yet this session.
         SetBackground(CharacterCustomizationMenu.Instance?.GetCurrentBackground());
     }
 

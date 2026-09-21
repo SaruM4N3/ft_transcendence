@@ -1,13 +1,17 @@
 using System;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerStats : NetworkBehaviour, IDamageable
 {
-    [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float maxMana = 50f;
+    [SerializeField] private ClassStats defaultStats;
+    [SerializeField] private PlayerCustomization customization;
 
-    // Replicated so the lobby roster can show every player's health; mana stays purely local.
+    private ClassStats activeStats;
+    private float maxHealth;
+    private float maxMana;
+
     private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
@@ -15,15 +19,19 @@ public class PlayerStats : NetworkBehaviour, IDamageable
     public float MaxMana => maxMana;
     public float CurrentHealth => currentHealth.Value;
     public float CurrentMana { get; private set; }
+    public bool IsDead => currentHealth.Value <= 0f;
 
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
 
-    // Fires for this instance specifically - lets the lobby roster bind to a non-local player's health.
     public event Action<float, float> OnHealthReplicated;
 
     void Awake()
     {
+        if (customization == null)
+            customization = GetComponent<PlayerCustomization>();
+
+        RefreshActiveStats();
         CurrentMana = maxMana;
         currentHealth.OnValueChanged += (_, newValue) =>
         {
@@ -31,20 +39,20 @@ public class PlayerStats : NetworkBehaviour, IDamageable
             if (this.IsLocallyControlled())
                 OnHealthChanged?.Invoke(newValue, maxHealth);
         };
-        // Deferred a frame: writing a NetworkVariable directly from Awake() crashes IL2CPP/WebGL
-        // builds ("indirect call to null" in NetworkVariable's generic-shared setter).
+        if (customization != null)
+            customization.OnClassOrColorChanged += (_, _) => HandleClassChanged();
         StartCoroutine(InitializeHealthNextFrame());
     }
 
     private System.Collections.IEnumerator InitializeHealthNextFrame()
     {
         yield return null;
-        currentHealth.Value = maxHealth;
+        if (this.IsLocallyControlled())
+            currentHealth.Value = maxHealth;
     }
 
     void Start()
     {
-        // Only the local/owned instance should drive this client's HUD.
         if (!this.IsLocallyControlled())
             return;
 
@@ -52,7 +60,63 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
-    // Avoids the warning Netcode logs when a non-owner writes an Owner-writable NetworkVariable.
+    public override void OnNetworkSpawn()
+    {
+        if (NetworkManager != null && NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted += HandleSceneLoadEventCompleted;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (NetworkManager != null && NetworkManager.SceneManager != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted -= HandleSceneLoadEventCompleted;
+    }
+
+    private void HandleSceneLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, System.Collections.Generic.List<ulong> clientsCompleted, System.Collections.Generic.List<ulong> clientsTimedOut)
+    {
+        ResetToFull();
+    }
+
+    public void ResetToFull()
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        currentHealth.Value = maxHealth;
+        CurrentMana = maxMana;
+        OnManaChanged?.Invoke(CurrentMana, maxMana);
+    }
+
+    void Update()
+    {
+        if (!this.IsLocallyControlled() || activeStats == null || IsDead)
+            return;
+
+        if (CurrentHealth < maxHealth)
+            Heal(activeStats.HealthRegenPerSecond * Time.deltaTime);
+        if (CurrentMana < maxMana)
+            RestoreMana(activeStats.ManaRegenPerSecond * Time.deltaTime);
+    }
+
+    private void HandleClassChanged()
+    {
+        RefreshActiveStats();
+        CurrentMana = Mathf.Min(CurrentMana, maxMana);
+        if (this.IsLocallyControlled())
+            currentHealth.Value = Mathf.Min(currentHealth.Value, maxHealth);
+    }
+
+    private void RefreshActiveStats()
+    {
+        ClassStats stats = null;
+        if (customization != null && CharacterCustomizationMenu.Instance != null)
+            stats = CharacterCustomizationMenu.Instance.GetStats(customization.ClassIndex);
+        activeStats = stats != null ? stats : defaultStats;
+
+        maxHealth = activeStats != null ? activeStats.MaxHealth : 100f;
+        maxMana = activeStats != null ? activeStats.MaxMana : 50f;
+    }
+
     public void TakeDamage(float amount)
     {
         if (!this.IsLocallyControlled())
@@ -61,8 +125,6 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, 0f, maxHealth);
     }
 
-    // Callable from any client (e.g. an attacker's hit detection); routes to the target's own
-    // owner so the Owner-permission currentHealth write above stays valid.
     public void RequestDamage(float amount)
     {
         if (!NetworkObject.IsSpawned)
