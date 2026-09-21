@@ -7,6 +7,7 @@ public class EnemyAI : NetworkBehaviour
 {
     [SerializeField] private float moveSpeed = 2.5f;
     [SerializeField] private float attackRange = 0.8f;
+    [SerializeField] private float attackAngle = 100f;
     [SerializeField] private float damage = 10f;
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float attackHitDelay = 0.3f;
@@ -53,6 +54,11 @@ public class EnemyAI : NetworkBehaviour
 
     private readonly NetworkVariable<byte> swingCount = new NetworkVariable<byte>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    // Direction the current/last swing faced, in degrees - replicated so remote clients (who never run
+    // StartAttack themselves) can reproduce the same telegraph the server is resolving against.
+    private readonly NetworkVariable<float> swingAngleDegrees = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     void Awake()
     {
@@ -219,24 +225,44 @@ public class EnemyAI : NetworkBehaviour
         swingTarget = target;
         pendingHitTime = Time.time + attackHitDelay;
 
+        Vector2 direction = (TargetCenter(target) - BodyCenter).normalized;
         if (IsSpawned)
+        {
+            swingAngleDegrees.Value = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             swingCount.Value = (byte)(swingCount.Value + 1);
-        PlayAttackAnimation();
+        }
+        PlayAttackAnimation(direction);
     }
 
-    // Connects only if the victim is alive and still in reach.
+    // Connects only if the victim is alive, still in reach, and still within the swing's facing cone.
     private void ResolveHit()
     {
         pendingHitTime = 0f;
         if (swingTarget == null || swingTarget.IsDead)
             return;
 
+        Vector2 toVictim = TargetCenter(swingTarget) - BodyCenter;
         float reach = attackRange * hitRangeTolerance;
-        if ((TargetCenter(swingTarget) - BodyCenter).sqrMagnitude <= reach * reach)
-            swingTarget.RequestDamage(damage);
+        if (toVictim.sqrMagnitude > reach * reach)
+            return;
+
+        Vector2 swingDirection = SwingDirection();
+        if (Vector2.Angle(swingDirection, toVictim) > attackAngle * 0.5f)
+            return;
+
+        swingTarget.RequestDamage(damage);
     }
 
-    private void PlayAttackAnimation()
+    private Vector2 SwingDirection()
+    {
+        float radians = swingAngleDegrees.Value * Mathf.Deg2Rad;
+        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+    }
+
+    // Remote clients reach this via HandleSwingCountChanged, with no local direction of their own to use.
+    private void PlayAttackAnimation() => PlayAttackAnimation(SwingDirection());
+
+    private void PlayAttackAnimation(Vector2 direction)
     {
         if (animator != null)
         {
@@ -245,7 +271,7 @@ public class EnemyAI : NetworkBehaviour
             animator.Play(AttackHash, 0, 0f);
         }
 
-        AttackTelegraph.Show(BodyCenter, attackRange * hitRangeTolerance, attackHitDelay);
+        AttackTelegraph.Show(BodyCenter, direction, attackAngle, attackRange * hitRangeTolerance, attackHitDelay);
     }
 
     // Faces movement and picks Attack/Run/Idle, playing only on state change.
