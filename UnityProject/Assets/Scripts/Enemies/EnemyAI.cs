@@ -31,7 +31,7 @@ public class EnemyAI : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (!IsServer)
+        if (!this.HasServerAuthority())
             return;
 
         Transform target = FindNearestPlayer();
@@ -63,6 +63,14 @@ public class EnemyAI : NetworkBehaviour
 
     private Transform FindNearestPlayer()
     {
+        // Solo play never spawns PlayerCustomization (no session), so the registry stays empty -
+        // fall back to the one local player, same resolution ProceduralMapGenerator uses.
+        if (PlayerCustomization.AllActiveInstances.Count == 0)
+        {
+            GameObject localPlayer = LocalPlayer.Get();
+            return localPlayer != null ? localPlayer.transform : null;
+        }
+
         Transform nearest = null;
         float nearestDistSq = float.MaxValue;
         foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)

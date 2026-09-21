@@ -5,14 +5,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Persistent loading screen shown across scene transitions - both plain SceneManager loads (menu
-// navigation, offline mode-select) and Netcode's networked scene loads (ModeReadyCheck), which are
-// driven by NetworkSceneManager itself so this only reflects that progress, never loads a second time.
+// Persistent loading screen shown across scene transitions
 public class LoadingScreenManager : MonoBehaviour
 {
     private const int SortingOrder = 9000;
     private const float FadeDuration = 0.15f;
-    // Keeps a fast local load from flashing the screen for a single frame.
     private const float MinimumVisibleTime = 0.3f;
 
     private static LoadingScreenManager instance;
@@ -37,8 +34,6 @@ public class LoadingScreenManager : MonoBehaviour
 
     private void Update()
     {
-        // NetworkManager only exists once the Lobby scene loads, then persists via Netcode's own
-        // DontDestroyOnLoad - pick it up lazily instead of assuming it's there at bootstrap time.
         if (subscribedNetworkManager == NetworkManager.Singleton)
             return;
 
@@ -50,7 +45,6 @@ public class LoadingScreenManager : MonoBehaviour
             subscribedNetworkManager.SceneManager.OnSceneEvent += HandleNetworkSceneEvent;
     }
 
-    // Plain (non-networked) scene load with a loading screen - used by menu navigation and offline mode-select.
     public static void LoadScene(string sceneName)
     {
         if (instance != null)
@@ -66,7 +60,6 @@ public class LoadingScreenManager : MonoBehaviour
 
         AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
         op.allowSceneActivation = false;
-        // AsyncOperation caps progress at 0.9 until activation is allowed.
         while (op.progress < 0.9f)
         {
             SetProgress(op.progress / 0.9f);
@@ -83,7 +76,6 @@ public class LoadingScreenManager : MonoBehaviour
         Hide();
     }
 
-    // Netcode drives the actual scene load on a networked transition; just mirror its progress here.
     private void HandleNetworkSceneEvent(SceneEvent sceneEvent)
     {
         if (sceneEvent.SceneEventType == SceneEventType.Load)

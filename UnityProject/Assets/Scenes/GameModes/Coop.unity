@@ -461,6 +461,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameOverCheck
   ShowTopMostFoldoutHeaderGroup: 1
   lobbySceneName: Lobby
+  startupGracePeriod: 0.5
 --- !u!114 &1200440568 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 709100743730889603, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
@@ -500,6 +501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6665816485382720b894d0a19061c5b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OfflinePlayerGate
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &1838368279
 GameObject:
   m_ObjectHideFlags: 0

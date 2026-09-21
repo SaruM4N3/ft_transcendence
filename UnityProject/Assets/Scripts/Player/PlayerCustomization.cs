@@ -52,7 +52,6 @@ public class PlayerCustomization : NetworkBehaviour
     {
         classIndex.OnValueChanged += (_, _) => { ApplyVisuals(); OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value); };
         colorIndex.OnValueChanged += (_, _) => { ApplyVisuals(); OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value); };
-        // A rename can create/resolve a collision with another player, so re-derive every name, not just this one.
         playerName.OnValueChanged += (_, _) => RefreshAllDisplayNames();
         teamIndex.OnValueChanged += (_, newValue) => OnTeamChanged?.Invoke(newValue);
         isReady.OnValueChanged += (_, newValue) => OnReadyChanged?.Invoke(newValue);
@@ -61,9 +60,6 @@ public class PlayerCustomization : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         ApplyVisuals();
-        // OnValueChanged doesn't fire for the initial value a late-joining/observing client
-        // receives, so any listener that read a not-yet-synced default in its own OnEnable
-        // (e.g. MouseDirectionIndicator) needs this explicit nudge once spawn data has landed.
         OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value);
         ActiveInstances.Add(this);
         RefreshAllDisplayNames();
@@ -77,7 +73,6 @@ public class PlayerCustomization : NetworkBehaviour
         RefreshAllDisplayNames();
     }
 
-    // Duplicate raw names get " (1)"/" (2)" appended, ordered by NetworkObjectId so every client agrees.
     private static void RefreshAllDisplayNames()
     {
         var groups = new Dictionary<string, List<PlayerCustomization>>();
@@ -103,8 +98,6 @@ public class PlayerCustomization : NetworkBehaviour
         }
     }
 
-    // Unlike OnNetworkSpawn (never fires offline), Start always runs - loads the save file so a
-    // returning player keeps their class/color/name.
     private void Start()
     {
         if (!this.IsLocallyControlled())

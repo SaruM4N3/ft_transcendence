@@ -5,12 +5,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Replaces the OS cursor with a UI-rendered one (spawned once at startup, kept alive across scenes) so
-// click feedback can scale a RectTransform and hover can swap sprites - the hardware cursor can't do either.
+// Replaces the OS cursor
 public class CursorManager : MonoBehaviour
 {
-    // Hotspots are the tip's position within the full untrimmed 64x64 source texture (the .meta crop
-    // isn't actually applied by Resources.Load), converted to a pivot at runtime in ApplySprite.
     private static readonly Vector2 DefaultHotspot = new Vector2(21, 16);
     private static readonly Vector2 HoverHotspot = new Vector2(19, 16);
     private const string DefaultCursorResourcePath = "Tiny Swords/UI Elements/Cursors/Cursor_01";
@@ -71,8 +68,6 @@ public class CursorManager : MonoBehaviour
         ApplySprite(defaultSprite, DefaultHotspot);
     }
 
-    // Swaps the displayed sprite and recomputes the pivot for its hotspot, since the two cursor arts
-    // don't share the same tip position within their source texture.
     private void ApplySprite(Sprite sprite, Vector2 hotspot)
     {
         cursorImage.sprite = sprite;
@@ -97,8 +92,6 @@ public class CursorManager : MonoBehaviour
             return;
 
         Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
-        // Outside the game window (or the app isn't focused), let the real OS cursor take back over
-        // instead of leaving our UI cursor frozen at the last in-bounds position.
         bool insideWindow = Application.isFocused
             && mouseScreenPosition.x >= 0f && mouseScreenPosition.x <= Screen.width
             && mouseScreenPosition.y >= 0f && mouseScreenPosition.y <= Screen.height;
@@ -128,8 +121,6 @@ public class CursorManager : MonoBehaviour
         }
     }
 
-    // True if the topmost UI element under the pointer is an interactable Selectable (Button,
-    // Toggle, etc.) - covers menu buttons without hardcoding to the Button type specifically.
     private bool IsPointerOverClickable(Vector2 screenPosition)
     {
         if (EventSystem.current == null)
@@ -148,7 +139,6 @@ public class CursorManager : MonoBehaviour
         return false;
     }
 
-    // Quick shrink-and-recover pulse on unscaled time so it still plays while the game is paused.
     private IEnumerator AnimateClick()
     {
         float t = 0f;

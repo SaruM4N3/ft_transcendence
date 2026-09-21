@@ -2,9 +2,7 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-// Networked health for a wave enemy. Unlike PlayerStats, the "owner" is always the server (enemies
-// are server-spawned by WaveSpawner), so the server can write currentHealth directly - no need to
-// bounce damage back to a specific owning client the way player damage does.
+// Networked health for a wave enemy. Unlike PlayerStats, the "owner" is always the server so the server can write currentHealth directly.
 public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
 {
     [SerializeField] private float maxHealth = 40f;
@@ -20,11 +18,13 @@ public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
     void Awake()
     {
         currentHealth.OnValueChanged += (_, newValue) => OnHealthChanged?.Invoke(newValue, maxHealth);
+        StartCoroutine(InitializeHealthNextFrame());
     }
 
-    public override void OnNetworkSpawn()
+    private System.Collections.IEnumerator InitializeHealthNextFrame()
     {
-        if (IsServer)
+        yield return null;
+        if (this.HasServerAuthority())
             currentHealth.Value = maxHealth;
     }
 
@@ -32,7 +32,10 @@ public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
     public void RequestDamage(float amount)
     {
         if (!NetworkObject.IsSpawned)
+        {
+            ApplyDamage(amount);
             return;
+        }
 
         RequestDamageServerRpc(amount);
     }
@@ -40,8 +43,18 @@ public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestDamageServerRpc(float amount)
     {
+        ApplyDamage(amount);
+    }
+
+    private void ApplyDamage(float amount)
+    {
         currentHealth.Value = Mathf.Max(0f, currentHealth.Value - amount);
-        if (currentHealth.Value <= 0f)
+        if (currentHealth.Value > 0f)
+            return;
+
+        if (NetworkObject.IsSpawned)
             NetworkObject.Despawn(true);
+        else
+            Destroy(gameObject);
     }
 }
