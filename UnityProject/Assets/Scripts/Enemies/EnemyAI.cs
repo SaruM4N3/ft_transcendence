@@ -238,12 +238,14 @@ public class EnemyAI : NetworkBehaviour
 
     private void PlayAttackAnimation()
     {
-        if (animator == null)
-            return;
+        if (animator != null)
+        {
+            attackAnimationEndTime = Time.time + attackAnimationDuration;
+            currentAnimationHash = AttackHash;
+            animator.Play(AttackHash, 0, 0f);
+        }
 
-        attackAnimationEndTime = Time.time + attackAnimationDuration;
-        currentAnimationHash = AttackHash;
-        animator.Play(AttackHash, 0, 0f);
+        AttackTelegraph.Show(BodyCenter, attackRange * hitRangeTolerance, attackHitDelay);
     }
 
     // Faces movement and picks Attack/Run/Idle, playing only on state change.
