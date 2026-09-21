@@ -123,11 +123,8 @@ public class NetworkBootstrap : MonoBehaviour
             if (hostButton != null)
                 hostButton.interactable = true;
             SetJoinControlsInteractable(true);
-            return false;
-        }
-        finally
-        {
             LoadingScreenManager.Hide();
+            return false;
         }
     }
 
@@ -151,6 +148,7 @@ public class NetworkBootstrap : MonoBehaviour
 
         SetJoinControlsInteractable(false);
         SetJoinStatus("Searching for the lobby...", isError: false);
+        LoadingScreenManager.Show("Joining session...");
 
         if (hostButton != null)
             hostButton.interactable = false;
@@ -167,6 +165,7 @@ public class NetworkBootstrap : MonoBehaviour
             if (multiplayerPanel.gameObject.activeInHierarchy)
                 multiplayerPanel.Close();
 
+            // Loading screen is hidden once RestoreLocalCustomizationWhenSpawned confirms the player object exists.
             StartCoroutine(RestoreLocalCustomizationWhenSpawned(customization.classIndex, customization.colorIndex, customization.playerName));
             return true;
         }
@@ -176,6 +175,7 @@ public class NetworkBootstrap : MonoBehaviour
             SetJoinStatus("Couldn't find that lobby - check the code and try again.", isError: true);
             if (hostButton != null)
                 hostButton.interactable = true;
+            LoadingScreenManager.Hide();
             return false;
         }
         finally
@@ -223,10 +223,14 @@ public class NetworkBootstrap : MonoBehaviour
         return (current.classIndex, current.colorIndex, current.playerName, position, rotation);
     }
 
-    // Reapplies the offline player's customization to the auto-spawned player.
+    // Reapplies the offline player's customization to the auto-spawned player, and hides the loading
+    // screen once it's actually there. Timed out rather than an unconditional wait, so a spawn that
+    // never arrives (dropped connection, etc.) doesn't leave the loading screen up forever.
     private System.Collections.IEnumerator RestoreLocalCustomizationWhenSpawned(int classIndex, int colorIndex, string playerName)
     {
-        while (NetworkManager.Singleton.LocalClient == null || NetworkManager.Singleton.LocalClient.PlayerObject == null)
+        float deadline = Time.unscaledTime + 15f;
+        while ((NetworkManager.Singleton.LocalClient == null || NetworkManager.Singleton.LocalClient.PlayerObject == null)
+            && Time.unscaledTime < deadline)
             yield return null;
 
         if (detachedCameraHolder != null)
@@ -235,12 +239,15 @@ public class NetworkBootstrap : MonoBehaviour
             detachedCameraHolder = null;
         }
 
-        PlayerCustomization customization = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerCustomization>();
+        NetworkObject playerObject = NetworkManager.Singleton.LocalClient?.PlayerObject;
+        PlayerCustomization customization = playerObject != null ? playerObject.GetComponent<PlayerCustomization>() : null;
         if (customization != null)
         {
             customization.SetSelection(classIndex, colorIndex);
             if (!string.IsNullOrEmpty(playerName))
                 customization.SetName(playerName);
         }
+
+        LoadingScreenManager.Hide();
     }
 }
