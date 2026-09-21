@@ -3,6 +3,7 @@ using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // Shows a friend's invite with Join/Dismiss; stays on an always-active object.
@@ -89,7 +90,13 @@ public class InviteToastUI : MonoBehaviour
         {
             await SessionDisconnectHandler.LeaveSessionsAsync();
             NetworkBootstrap.PendingJoinCode = code;
-            LoadingScreenManager.LoadScene("Lobby");
+
+            // LoadingScreenManager.LoadScene() hides itself as soon as the Lobby reload finishes, which
+            // raced against and clobbered the "Joining session..." screen NetworkBootstrap.Start() shows
+            // right after (PendingJoinCode auto-join) - that join is still in flight at that point, so
+            // show it manually here instead and let JoinWithCodeAsync's own spawn-gated Hide() own it.
+            LoadingScreenManager.Show("Joining session...");
+            SceneManager.LoadSceneAsync("Lobby");
             return;
         }
 
