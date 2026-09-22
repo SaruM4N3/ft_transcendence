@@ -12,7 +12,8 @@ public class EnemyAI : NetworkBehaviour
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float attackHitDelay = 0.3f;
     [SerializeField] private float attackAnimationDuration = 0.7f;
-    [SerializeField] private float hitRangeTolerance = 1.25f;
+    [SerializeField] private float attackMoveSpeedMultiplier = 0.25f;
+    [SerializeField] private float hitRangeTolerance = 1.5f;
     [SerializeField] private float retargetInterval = 0.25f;
     [SerializeField] private float steerInterval = 0.1f;
     [SerializeField] private float directChaseRange = 8f;
@@ -59,6 +60,12 @@ public class EnemyAI : NetworkBehaviour
     // StartAttack themselves) can reproduce the same telegraph the server is resolving against.
     private readonly NetworkVariable<float> swingAngleDegrees = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    // BodyCenter frozen at the moment the windup started. The enemy can still drift a little during the
+    // windup (attackMoveSpeedMultiplier), so resolving the hit against its live position would check a
+    // different spot than the telegraph, which is drawn once at this same origin - anchor both to it.
+    private readonly NetworkVariable<Vector2> swingOrigin = new NetworkVariable<Vector2>(
+        Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     void Awake()
     {
@@ -132,6 +139,14 @@ public class EnemyAI : NetworkBehaviour
             nextLeashCheckTime = Time.time + leashCheckInterval;
             if (CheckLeash())
                 return;
+        }
+
+        // Committed to a swing: barely move regardless of where the target goes, so the telegraph
+        // (frozen at the enemy's position when the windup started) stays an accurate warning.
+        if (pendingHitTime > 0f)
+        {
+            rb.linearVelocity = steerDirection * moveSpeed * attackMoveSpeedMultiplier;
+            return;
         }
 
         Vector2 toTarget = TargetCenter(target) - BodyCenter;
@@ -225,23 +240,27 @@ public class EnemyAI : NetworkBehaviour
         swingTarget = target;
         pendingHitTime = Time.time + attackHitDelay;
 
-        Vector2 direction = (TargetCenter(target) - BodyCenter).normalized;
+        Vector2 origin = BodyCenter;
+        Vector2 direction = (TargetCenter(target) - origin).normalized;
+        // Written unconditionally (not just IsSpawned): ResolveHit/PlayAttackAnimation read these back
+        // through .Value in every case, including fully offline solo play with no NetworkObject at all.
+        swingOrigin.Value = origin;
+        swingAngleDegrees.Value = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         if (IsSpawned)
-        {
-            swingAngleDegrees.Value = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             swingCount.Value = (byte)(swingCount.Value + 1);
-        }
-        PlayAttackAnimation(direction);
+        PlayAttackAnimation(origin, direction);
     }
 
     // Connects only if the victim is alive, still in reach, and still within the swing's facing cone.
+    // Checked against swingOrigin/swingAngle (frozen at windup start), not the enemy's current position,
+    // so this always agrees with the telegraph that was actually shown to players.
     private void ResolveHit()
     {
         pendingHitTime = 0f;
         if (swingTarget == null || swingTarget.IsDead)
             return;
 
-        Vector2 toVictim = TargetCenter(swingTarget) - BodyCenter;
+        Vector2 toVictim = TargetCenter(swingTarget) - swingOrigin.Value;
         float reach = attackRange * hitRangeTolerance;
         if (toVictim.sqrMagnitude > reach * reach)
             return;
@@ -259,10 +278,10 @@ public class EnemyAI : NetworkBehaviour
         return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
     }
 
-    // Remote clients reach this via HandleSwingCountChanged, with no local direction of their own to use.
-    private void PlayAttackAnimation() => PlayAttackAnimation(SwingDirection());
+    // Remote clients reach this via HandleSwingCountChanged, with no local windup state of their own to use.
+    private void PlayAttackAnimation() => PlayAttackAnimation(swingOrigin.Value, SwingDirection());
 
-    private void PlayAttackAnimation(Vector2 direction)
+    private void PlayAttackAnimation(Vector2 origin, Vector2 direction)
     {
         if (animator != null)
         {
@@ -271,7 +290,7 @@ public class EnemyAI : NetworkBehaviour
             animator.Play(AttackHash, 0, 0f);
         }
 
-        AttackTelegraph.Show(BodyCenter, direction, attackAngle, attackRange * hitRangeTolerance, attackHitDelay);
+        AttackTelegraph.Show(origin, direction, attackAngle, attackRange * hitRangeTolerance, attackHitDelay);
     }
 
     // Faces movement and picks Attack/Run/Idle, playing only on state change.
