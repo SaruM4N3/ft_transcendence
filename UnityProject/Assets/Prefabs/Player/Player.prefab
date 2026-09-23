@@ -274,7 +274,7 @@ GameObject:
   - component: {fileID: 8990027266730438623}
   - component: {fileID: 8213982752947477093}
   m_Layer: 0
-  m_Name: Warrior
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493,7 +493,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2201204286648064290}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
-        m_MethodName: LightAttack
+        m_MethodName: Attack
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -573,7 +573,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2201204286648064290}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
-        m_MethodName: HeavyAttack
+        m_MethodName: Special
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -589,7 +589,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2201204286648064290}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
-        m_MethodName: Guard
+        m_MethodName: Ultimate
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -656,7 +656,7 @@ MonoBehaviour:
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -679,11 +679,11 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 5
   runSpeed: 10
-  lightAttackCooldown: 0.5
-  heavyAttackCooldown: 2
-  guardCooldown: 5
-  lightAttackFxPrefab: {fileID: 7559628715613984797, guid: 0211bf62865831f9b90567f260708fee, type: 3}
-  lightAttackFxDistance: 1
+  attackCooldown: 0.5
+  specialCooldown: 2
+  ultimateCooldown: 5
+  attackFxPrefab: {fileID: 7559628715613984797, guid: 0211bf62865831f9b90567f260708fee, type: 3}
+  attackFxDistance: 1
 --- !u!114 &3618725718313327464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -740,13 +740,13 @@ MonoBehaviour:
   UseUnreliableDeltas: 0
   SyncPositionX: 1
   SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
+  SyncPositionZ: 0
+  SyncRotAngleX: 0
+  SyncRotAngleY: 0
+  SyncRotAngleZ: 0
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
   PositionThreshold: 0.1
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
@@ -905,8 +905,8 @@ MonoBehaviour:
   hurtShake: 0.35
   hurtVignetteStrength: 0.6
   hurtVignetteDuration: 0.45
-  lightAttackShake: 0.06
-  heavyAttackShake: 0.15
+  attackShake: 0.06
+  specialShake: 0.15
   hitLandedShake: 0.12
 --- !u!114 &8990027266730438623
 MonoBehaviour:

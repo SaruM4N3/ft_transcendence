@@ -8350,11 +8350,11 @@ MonoBehaviour:
   maxNameLength: 20
   previewCharacter: {fileID: 3696569066487453671}
   classPresets:
-  - {fileID: 1635566535792072546, guid: 992de77b4e7be9911bfe2adfec5bcc2c, type: 3}
-  - {fileID: 1635566535792072546, guid: adff649b969f79227a6d0dd082363c0e, type: 3}
-  - {fileID: 1635566535792072546, guid: dd38aea0b1594e2208cfbea541e644f4, type: 3}
-  - {fileID: 1635566535792072546, guid: bd1fb3299cb2c6ef7b84faf7816ff0cd, type: 3}
-  - {fileID: 1635566535792072546, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
+  - {fileID: 8797388691817472227, guid: 2a0b54a9c23c4d9e1b37a6fa01ce0ae1, type: 3}
+  - {fileID: 1000972858259126940, guid: 9b6b03afd2dd453d49d8e0019d1d5ae7, type: 3}
+  - {fileID: 4704464084712509984, guid: 618d6b9ef80565a13bb519c7345dcedf, type: 3}
+  - {fileID: 66526592010826819, guid: 71e18be221bd18558bc2d7f92a305570, type: 3}
+  - {fileID: 6884931764455069154, guid: 5aa9ad4e7cbd53b7cb2df40e62594f54, type: 3}
   statsByClass:
   - {fileID: 11400000, guid: 7d6f5932762fb63018814409aea91380, type: 2}
   - {fileID: 11400000, guid: 224265acc5a47a17ab2c8b248dd7a1e6, type: 2}
