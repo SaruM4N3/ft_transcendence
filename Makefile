@@ -7,7 +7,7 @@ all: up
 
 up:
 	$(COMPOSE) up --build -d
-	@echo "Transcendence is up: https://localhost"
+	@echo "Transcendence is up: https://localhost:4443"
 
 down:
 	$(COMPOSE) down

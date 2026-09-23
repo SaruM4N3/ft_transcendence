@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 
 const PUBLIC_DIR = join(import.meta.dirname, 'public');
-const PORT = 80;
+const PORT = 8080;
 
 const MIME_TYPES = {
 	'.html': 'text/html',
