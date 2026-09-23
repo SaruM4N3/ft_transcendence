@@ -1,6 +1,6 @@
 public enum AbilityType
 {
-    LightAttack,
-    HeavyAttack,
-    Guard
+    Attack,
+    Special,
+    Ultimate
 }

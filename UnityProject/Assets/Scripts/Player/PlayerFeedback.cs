@@ -1,6 +1,7 @@
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // Hurt and attack game-feel: flash, shake, red edges.
 [RequireComponent(typeof(PlayerStats))]
@@ -12,8 +13,10 @@ public class PlayerFeedback : NetworkBehaviour
     [SerializeField] private float hurtShake = 0.35f;
     [SerializeField] private float hurtVignetteStrength = 0.6f;
     [SerializeField] private float hurtVignetteDuration = 0.45f;
-    [SerializeField] private float lightAttackShake = 0.06f;
-    [SerializeField] private float heavyAttackShake = 0.15f;
+    [FormerlySerializedAs("lightAttackShake")]
+    [SerializeField] private float attackShake = 0.06f;
+    [FormerlySerializedAs("heavyAttackShake")]
+    [SerializeField] private float specialShake = 0.15f;
     [SerializeField] private float hitLandedShake = 0.12f;
 
     private PlayerStats stats;
@@ -81,10 +84,10 @@ public class PlayerFeedback : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        if (ability == AbilityType.LightAttack)
-            Shake(lightAttackShake);
-        else if (ability == AbilityType.HeavyAttack)
-            Shake(heavyAttackShake);
+        if (ability == AbilityType.Attack)
+            Shake(attackShake);
+        else if (ability == AbilityType.Special)
+            Shake(specialShake);
     }
 
     // Raised only by the attacker's own hitbox.

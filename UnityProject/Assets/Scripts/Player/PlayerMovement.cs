@@ -3,6 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -10,12 +11,17 @@ public class PlayerMovement : NetworkBehaviour
 
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float runSpeed = 10f;
-    [SerializeField] private float lightAttackCooldown = 0.5f;
-    [SerializeField] private float heavyAttackCooldown = 1f;
-    [SerializeField] private float guardCooldown = 0.5f;
+    [FormerlySerializedAs("lightAttackCooldown")]
+    [SerializeField] private float attackCooldown = 0.5f;
+    [FormerlySerializedAs("heavyAttackCooldown")]
+    [SerializeField] private float specialCooldown = 1f;
+    [FormerlySerializedAs("guardCooldown")]
+    [SerializeField] private float ultimateCooldown = 0.5f;
 
-    [SerializeField] private GameObject lightAttackFxPrefab;
-    [SerializeField] private float lightAttackFxDistance = 1f;
+    [FormerlySerializedAs("lightAttackFxPrefab")]
+    [SerializeField] private GameObject attackFxPrefab;
+    [FormerlySerializedAs("lightAttackFxDistance")]
+    [SerializeField] private float attackFxDistance = 1f;
 
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
@@ -34,9 +40,9 @@ public class PlayerMovement : NetworkBehaviour
     private bool isGuarding;
     private bool isRunning;
 
-    private float lightAttackReadyTime;
-    private float heavyAttackReadyTime;
-    private float guardReadyTime;
+    private float attackReadyTime;
+    private float specialReadyTime;
+    private float ultimateReadyTime;
 
     private PauseManager pauseManager;
     private PlayerStats stats;
@@ -54,8 +60,9 @@ public class PlayerMovement : NetworkBehaviour
     private static readonly int MoveSpeedMultHash = Animator.StringToHash("MoveSpeedMult");
     private static readonly int LastInputXHash = Animator.StringToHash("LastInputX");
     private static readonly int LastInputYHash = Animator.StringToHash("LastInputY");
-    private static readonly int LightAttackHash = Animator.StringToHash("LightAttack");
-    private static readonly int HeavyAttackHash = Animator.StringToHash("HeavyAttack");
+    // Animator parameter strings stay as-is (LightAttack/HeavyAttack) - only the C#-facing names change.
+    private static readonly int AttackHash = Animator.StringToHash("LightAttack");
+    private static readonly int SpecialHash = Animator.StringToHash("HeavyAttack");
 
     void Start()
     {
@@ -187,14 +194,14 @@ public class PlayerMovement : NetworkBehaviour
         pauseManager?.Pause(ctx);
     }
 
-    public void Guard(InputAction.CallbackContext ctx)
+    public void Ultimate(InputAction.CallbackContext ctx)
     {
         if (!this.IsLocallyControlled())
             return;
 
         bool wantsGuard = !ctx.canceled;
 
-        if (wantsGuard && (!CanFight || Time.time < guardReadyTime))
+        if (wantsGuard && (!CanFight || Time.time < ultimateReadyTime))
             return;
 
         if (ctx.canceled && !isGuarding)
@@ -207,46 +214,46 @@ public class PlayerMovement : NetworkBehaviour
 
         if (ctx.canceled)
         {
-            guardReadyTime = Time.time + guardCooldown;
-            OnAbilityUsed?.Invoke(AbilityType.Guard, guardCooldown);
+            ultimateReadyTime = Time.time + ultimateCooldown;
+            OnAbilityUsed?.Invoke(AbilityType.Ultimate, ultimateCooldown);
         }
     }
 
-    public void LightAttack(InputAction.CallbackContext ctx)
+    public void Attack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < lightAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < attackReadyTime)
             return;
 
-        animator.SetTrigger(LightAttackHash);
-        lightAttackReadyTime = Time.time + lightAttackCooldown;
-        OnAbilityUsed?.Invoke(AbilityType.LightAttack, lightAttackCooldown);
-        SpawnLightAttackFx();
+        animator.SetTrigger(AttackHash);
+        attackReadyTime = Time.time + attackCooldown;
+        OnAbilityUsed?.Invoke(AbilityType.Attack, attackCooldown);
+        SpawnAttackFx();
     }
 
-    private void SpawnLightAttackFx()
+    private void SpawnAttackFx()
     {
-        if (lightAttackFxPrefab == null)
+        if (attackFxPrefab == null)
             return;
 
         float angle = aimAngle.Value;
         Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
-        Vector3 spawnPos = transform.position + (Vector3)(dir * lightAttackFxDistance);
+        Vector3 spawnPos = transform.position + (Vector3)(dir * attackFxDistance);
 
         if (NetworkObject.IsSpawned)
-            SpawnLightAttackFxServerRpc(spawnPos, angle);
+            SpawnAttackFxServerRpc(spawnPos, angle);
         else
             SpawnLocalFx(spawnPos, angle, hasHitbox: true);
     }
 
     [ServerRpc]
-    private void SpawnLightAttackFxServerRpc(Vector3 position, float angle)
+    private void SpawnAttackFxServerRpc(Vector3 position, float angle)
     {
-        SpawnLightAttackFxClientRpc(position, angle, OwnerClientId);
+        SpawnAttackFxClientRpc(position, angle, OwnerClientId);
     }
 
     // Spawns the slash FX on every client; only the attacker's copy deals damage.
     [ClientRpc]
-    private void SpawnLightAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
+    private void SpawnAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
     {
         bool hasHitbox = NetworkManager.Singleton.LocalClientId == attackerClientId;
         SpawnLocalFx(position, angle, hasHitbox);
@@ -254,7 +261,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void SpawnLocalFx(Vector3 position, float angle, bool hasHitbox)
     {
-        GameObject fx = Instantiate(lightAttackFxPrefab, position, Quaternion.Euler(0f, 0f, angle));
+        GameObject fx = Instantiate(attackFxPrefab, position, Quaternion.Euler(0f, 0f, angle));
         fx.GetComponent<SlashAttackFX>()?.Init(gameObject, hasHitbox);
     }
 
@@ -274,14 +281,14 @@ public class PlayerMovement : NetworkBehaviour
         return dir.sqrMagnitude > 0.0001f ? dir.normalized : facing;
     }
 
-    public void HeavyAttack(InputAction.CallbackContext ctx)
+    public void Special(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < heavyAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < specialReadyTime)
             return;
 
-        animator.SetTrigger(HeavyAttackHash);
-        heavyAttackReadyTime = Time.time + heavyAttackCooldown;
-        OnAbilityUsed?.Invoke(AbilityType.HeavyAttack, heavyAttackCooldown);
+        animator.SetTrigger(SpecialHash);
+        specialReadyTime = Time.time + specialCooldown;
+        OnAbilityUsed?.Invoke(AbilityType.Special, specialCooldown);
     }
 
     // Drops the guard when it can no longer be held, e.g. on death.
