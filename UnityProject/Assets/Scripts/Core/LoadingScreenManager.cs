@@ -35,10 +35,7 @@ public class LoadingScreenManager : MonoBehaviour
         BuildUI();
     }
 
-    // NetworkManager.SceneManager stays null until hosting/joining actually starts (it's created inside
-    // StartHost/StartClient, not Awake), so re-check it every frame rather than gating on the
-    // NetworkManager reference alone - that reference doesn't change between "in the Lobby, not yet
-    // connected" and "now hosting", so a Singleton-only guard can miss the moment SceneManager appears.
+    // NetworkManager.SceneManager only exists once hosting/joining starts, so re-check it every frame instead of gating on the NetworkManager reference alone.
     private void Update()
     {
         NetworkManager currentManager = NetworkManager.Singleton;
@@ -114,9 +111,7 @@ public class LoadingScreenManager : MonoBehaviour
             StartCoroutine(HideOnceLocalPlayerReady());
     }
 
-    // LoadComplete only means this client's own scene finished loading; the local player isn't
-    // repositioned and un-pigged until PlayerMovement/PlayerStats react to the later LoadEventCompleted,
-    // so wait for that to actually resolve before dropping the curtain.
+    // Waits for the local player to finish reviving/repositioning before dropping the curtain.
     private IEnumerator HideOnceLocalPlayerReady()
     {
         float deadline = Time.unscaledTime + 3f;

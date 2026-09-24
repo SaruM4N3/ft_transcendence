@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Local keyboard rebind overrides, persisted via PlayerPrefs. PlayerInput clones its InputActionAsset
-// at runtime, so overrides must be (re)applied to each player's own actions instance, not the project asset.
+// Local keyboard rebind overrides, persisted via PlayerPrefs and reapplied to each player's cloned InputActionAsset.
 public static class KeybindOverrides
 {
     private const string OverridesKey = "Settings.KeyBindingOverrides";
@@ -20,7 +19,7 @@ public static class KeybindOverrides
         PlayerPrefs.Save();
     }
 
-    // Current display string for an action's keyboard binding (e.g. "E"), or null if unbound/unavailable.
+    // Display string for an action's keyboard binding, falling back to the raw path for keys Unity can't render as text.
     public static string GetKeyboardDisplay(string actionName)
     {
         GameObject player = LocalPlayer.Get();
@@ -35,8 +34,6 @@ public static class KeybindOverrides
             if (binding.isComposite || binding.isPartOfComposite || binding.path == null || !binding.path.StartsWith("<Keyboard>"))
                 continue;
 
-            // Unity's display string for control-character keys (Tab, Enter, ...) is the literal control
-            // character, not a readable name; fall back to the binding path's last segment for those.
             string display = action.GetBindingDisplayString(i);
             if (!string.IsNullOrEmpty(display) && display.Trim().Length > 0)
                 return display;

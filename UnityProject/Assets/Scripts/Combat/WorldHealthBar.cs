@@ -6,13 +6,13 @@ using UnityEngine.UI;
 public class WorldHealthBar : MonoBehaviour
 {
     [SerializeField] private Image fillImage;
-    // A MonoBehaviour, since Unity can't serialize interface references.
     [FormerlySerializedAs("stats")]
     [SerializeField] private MonoBehaviour statsSource;
 
     private IHealthStats stats;
     private Canvas canvas;
 
+    // statsSource is a MonoBehaviour since Unity can't serialize interface references directly.
     void Awake()
     {
         stats = statsSource as IHealthStats;
