@@ -248,7 +248,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.multiplayer.tools": {
-      "version": "2.2.10",
+      "version": "2.2.12",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -263,7 +263,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.netcode.gameobjects": {
-      "version": "2.13.2",
+      "version": "2.13.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -321,6 +321,15 @@
       "dependencies": {
         "com.unity.render-pipelines.core": "17.5.0"
       }
+    },
+    "com.unity.sdk.linux-x86_64": {
+      "version": "1.1.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.sysroot.base": "1.1.0"
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.searcher": {
       "version": "4.9.4",
@@ -387,7 +396,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.multiplayer": {
-      "version": "2.3.1",
+      "version": "2.3.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -395,7 +404,7 @@
         "com.unity.collections": "2.6.7",
         "com.unity.services.qos": "1.4.1",
         "com.unity.services.core": "1.18.0",
-        "com.unity.services.wire": "1.4.4",
+        "com.unity.services.wire": "1.5.1",
         "com.unity.services.deployment": "1.7.2",
         "com.unity.nuget.newtonsoft-json": "3.2.2",
         "com.unity.modules.unitywebrequest": "1.0.0",
@@ -417,7 +426,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.vivox": {
-      "version": "16.11.0",
+      "version": "16.12.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -429,7 +438,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.wire": {
-      "version": "1.4.4",
+      "version": "1.5.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -466,6 +475,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.sysroot.base": {
+      "version": "1.1.0",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.test-framework": {
       "version": "1.7.0",
       "depth": 0,
@@ -495,6 +511,15 @@
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.toolchain.linux-x86_64-linux": {
+      "version": "1.1.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.sysroot.base": "1.1.0"
       },
       "url": "https://packages.unity.com"
     },
