@@ -1,76 +1,49 @@
-using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
 public class PlayerMovement : NetworkBehaviour
 {
-    public static event Action<AbilityType, float> OnAbilityUsed;
-
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float runSpeed = 10f;
-    [FormerlySerializedAs("lightAttackCooldown")]
-    [SerializeField] private float attackCooldown = 0.5f;
-    [FormerlySerializedAs("heavyAttackCooldown")]
-    [SerializeField] private float specialCooldown = 1f;
-    [FormerlySerializedAs("guardCooldown")]
-    [SerializeField] private float ultimateCooldown = 0.5f;
-
-    [FormerlySerializedAs("lightAttackFxPrefab")]
-    [SerializeField] private GameObject attackFxPrefab;
-    [FormerlySerializedAs("lightAttackFxDistance")]
-    [SerializeField] private float attackFxDistance = 1f;
 
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
     private Camera cam;
+    private PlayerActions actions;
 
     private readonly NetworkVariable<float> aimAngle = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     public float AimAngleDegrees => aimAngle.Value;
+    public bool HasMoveInput => moveInput.sqrMagnitude > 0.01f;
 
     private Animator animator;
     private Vector2 moveInput;
     private Vector2 facing = Vector2.down;
     private bool facingApplied;
     private float moveSpeedMult = 1f;
-    private bool isGuarding;
     private bool isRunning;
 
-    private float attackReadyTime;
-    private float specialReadyTime;
-    private float ultimateReadyTime;
-
     private PauseManager pauseManager;
-    private PlayerStats stats;
 
     private bool IsBlocked => PauseManager.IsPaused;
-
-    // Dead players (pigs) can still move but not fight.
-    private bool CanFight => !IsBlocked && (stats == null || !stats.IsDead);
 
     private const float FacingHysteresis = 1.15f;
     private const float BackwardDotThreshold = -0.1f;
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
-    private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
     private static readonly int MoveSpeedMultHash = Animator.StringToHash("MoveSpeedMult");
     private static readonly int LastInputXHash = Animator.StringToHash("LastInputX");
     private static readonly int LastInputYHash = Animator.StringToHash("LastInputY");
-    // Animator parameter strings stay as-is (LightAttack/HeavyAttack) - only the C#-facing names change.
-    private static readonly int AttackHash = Animator.StringToHash("LightAttack");
-    private static readonly int SpecialHash = Animator.StringToHash("HeavyAttack");
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
-
-        stats = GetComponent<PlayerStats>();
+        actions = GetComponent<PlayerActions>();
 
         // Covers the offline player, which never goes through OnNetworkSpawn.
         PlayerInput input = GetComponent<PlayerInput>();
@@ -139,19 +112,16 @@ public class PlayerMovement : NetworkBehaviour
         UpdateFacing(aimDir);
         UpdateMoveSpeedMult();
 
-        if (isGuarding && !CanFight)
-            StopGuarding();
+        actions?.StopGuardingIfCannotFight();
 
-        if (isGuarding)
+        float speedMult = actions != null ? actions.MovementSpeedMultiplier : 1f;
+        if (speedMult <= 0f)
         {
             rb.linearVelocity = Vector2.zero;
             return;
         }
 
-        if (isRunning)
-            rb.linearVelocity = moveInput * runSpeed;
-        else
-            rb.linearVelocity = moveInput * moveSpeed;
+        rb.linearVelocity = moveInput * (isRunning ? runSpeed : moveSpeed) * speedMult;
     }
 
     public void Move(InputAction.CallbackContext ctx)
@@ -165,6 +135,7 @@ public class PlayerMovement : NetworkBehaviour
         if (IsBlocked)
             return;
 
+        bool isGuarding = actions != null && actions.IsGuarding;
         animator.SetBool(IsWalkingHash, !isGuarding && hasDirection);
     }
 
@@ -194,78 +165,7 @@ public class PlayerMovement : NetworkBehaviour
         pauseManager?.Pause(ctx);
     }
 
-    public void Ultimate(InputAction.CallbackContext ctx)
-    {
-        if (!this.IsLocallyControlled())
-            return;
-
-        bool wantsGuard = !ctx.canceled;
-
-        if (wantsGuard && (!CanFight || Time.time < ultimateReadyTime))
-            return;
-
-        if (ctx.canceled && !isGuarding)
-            return;
-
-        isGuarding = wantsGuard;
-
-        animator.SetBool(IsGuardingHash, isGuarding);
-        animator.SetBool(IsWalkingHash, !isGuarding && moveInput.sqrMagnitude > 0.01f);
-
-        if (ctx.canceled)
-        {
-            ultimateReadyTime = Time.time + ultimateCooldown;
-            OnAbilityUsed?.Invoke(AbilityType.Ultimate, ultimateCooldown);
-        }
-    }
-
-    public void Attack(InputAction.CallbackContext ctx)
-    {
-        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < attackReadyTime)
-            return;
-
-        animator.SetTrigger(AttackHash);
-        attackReadyTime = Time.time + attackCooldown;
-        OnAbilityUsed?.Invoke(AbilityType.Attack, attackCooldown);
-        SpawnAttackFx();
-    }
-
-    private void SpawnAttackFx()
-    {
-        if (attackFxPrefab == null)
-            return;
-
-        float angle = aimAngle.Value;
-        Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
-        Vector3 spawnPos = transform.position + (Vector3)(dir * attackFxDistance);
-
-        if (NetworkObject.IsSpawned)
-            SpawnAttackFxServerRpc(spawnPos, angle);
-        else
-            SpawnLocalFx(spawnPos, angle, hasHitbox: true);
-    }
-
-    [ServerRpc]
-    private void SpawnAttackFxServerRpc(Vector3 position, float angle)
-    {
-        SpawnAttackFxClientRpc(position, angle, OwnerClientId);
-    }
-
-    // Spawns the slash FX on every client; only the attacker's copy deals damage.
-    [ClientRpc]
-    private void SpawnAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
-    {
-        bool hasHitbox = NetworkManager.Singleton.LocalClientId == attackerClientId;
-        SpawnLocalFx(position, angle, hasHitbox);
-    }
-
-    private void SpawnLocalFx(Vector3 position, float angle, bool hasHitbox)
-    {
-        GameObject fx = Instantiate(attackFxPrefab, position, Quaternion.Euler(0f, 0f, angle));
-        fx.GetComponent<SlashAttackFX>()?.Init(gameObject, hasHitbox);
-    }
-
-    // Mouse-to-world aim, evaluated at the moment of attack.
+    // Mouse-to-world aim, evaluated every frame.
     private Vector2 GetMouseAimDirection()
     {
         if (cam == null)
@@ -279,24 +179,6 @@ public class PlayerMovement : NetworkBehaviour
 
         Vector2 dir = (Vector2)mouseWorld - (Vector2)transform.position;
         return dir.sqrMagnitude > 0.0001f ? dir.normalized : facing;
-    }
-
-    public void Special(InputAction.CallbackContext ctx)
-    {
-        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < specialReadyTime)
-            return;
-
-        animator.SetTrigger(SpecialHash);
-        specialReadyTime = Time.time + specialCooldown;
-        OnAbilityUsed?.Invoke(AbilityType.Special, specialCooldown);
-    }
-
-    // Drops the guard when it can no longer be held, e.g. on death.
-    private void StopGuarding()
-    {
-        isGuarding = false;
-        animator.SetBool(IsGuardingHash, false);
-        animator.SetBool(IsWalkingHash, moveInput.sqrMagnitude > 0.01f);
     }
 
     // Snaps the aim to a cardinal facing, with hysteresis so diagonals don't flicker.

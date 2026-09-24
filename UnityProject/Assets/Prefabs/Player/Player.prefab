@@ -273,6 +273,7 @@ GameObject:
   - component: {fileID: 493192744301220450}
   - component: {fileID: 8990027266730438623}
   - component: {fileID: 8213982752947477093}
+  - component: {fileID: 1036998845797424076}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -491,7 +492,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Look[/Mouse/delta]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2201204286648064290}
+      - m_Target: {fileID: 1036998845797424076}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
         m_MethodName: Attack
         m_Mode: 0
@@ -571,7 +572,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2201204286648064290}
+      - m_Target: {fileID: 1036998845797424076}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
         m_MethodName: Special
         m_Mode: 0
@@ -587,7 +588,7 @@ MonoBehaviour:
     m_ActionName: 'Player/HeavyAttack[/Mouse/middleButton,/Keyboard/quote]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2201204286648064290}
+      - m_Target: {fileID: 1036998845797424076}
         m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
         m_MethodName: Ultimate
         m_Mode: 0
@@ -679,11 +680,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 5
   runSpeed: 10
-  attackCooldown: 0.5
-  specialCooldown: 2
-  ultimateCooldown: 5
-  attackFxPrefab: {fileID: 7559628715613984797, guid: 0211bf62865831f9b90567f260708fee, type: 3}
-  attackFxDistance: 1
 --- !u!114 &3618725718313327464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -977,6 +973,20 @@ MonoBehaviour:
   pigScale: 1.5
   transformFxPrefab: {fileID: -2253911629886400664, guid: 9ab4d137f132008c899723fb836e3080, type: 3}
   transformFxOffset: {x: 0, y: -1.1}
+--- !u!114 &1036998845797424076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635566535792072546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10578118188f2566d83c7a1f4af6eeca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerActions
+  ShowTopMostFoldoutHeaderGroup: 1
+  defaultKit: {fileID: 11400000, guid: 00237731cda6cbfddb916172676af3c1, type: 2}
 --- !u!1 &4646007241080426997
 GameObject:
   m_ObjectHideFlags: 0

@@ -71,6 +71,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     [SerializeField] private GameObject[] classPresets;
     [SerializeField] private ClassStats[] statsByClass;
+    [SerializeField] private ClassKit[] kitsByClass;
     [SerializeField] private ColorVariant[] colorVariants;
     [SerializeField] private Sprite[] backgroundSpritesByColor;
 
@@ -107,6 +108,14 @@ public class CharacterCustomizationMenu : MonoBehaviour
             return null;
 
         return statsByClass[classIndex];
+    }
+
+    public ClassKit GetKit(int classIndex)
+    {
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
+            return null;
+
+        return kitsByClass[classIndex];
     }
 
     public Sprite GetCurrentBackground()

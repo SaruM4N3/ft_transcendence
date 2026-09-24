@@ -8361,6 +8361,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7902610d99765caa4b118fb4486aaeab, type: 2}
   - {fileID: 11400000, guid: ae86ca027181d161e833d571de669138, type: 2}
   - {fileID: 11400000, guid: b16f51070ed99a08ebeceb54cb20dca8, type: 2}
+  kitsByClass:
+  - {fileID: 11400000, guid: 590f376c4c7a40e0aa6b4132f95723bd, type: 2}
+  - {fileID: 11400000, guid: a38b611367056637c94bebaeecc70c3f, type: 2}
+  - {fileID: 11400000, guid: 0d86892a8195ecf7ab8b93be4efed0c1, type: 2}
+  - {fileID: 11400000, guid: 49574ade77c849a3abac3cee811ce363, type: 2}
+  - {fileID: 11400000, guid: 00237731cda6cbfddb916172676af3c1, type: 2}
   colorVariants:
   - controllersByClass:
     - {fileID: 9100000, guid: f49f01a915ff21ff79b6f0948e6b3357, type: 2}

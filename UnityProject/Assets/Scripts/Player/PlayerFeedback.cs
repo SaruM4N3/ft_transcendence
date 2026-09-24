@@ -42,7 +42,7 @@ public class PlayerFeedback : NetworkBehaviour
     void OnEnable()
     {
         stats.OnHealthReplicated += HandleHealthReplicated;
-        PlayerMovement.OnAbilityUsed += HandleAbilityUsed;
+        PlayerActions.OnAbilityUsed += HandleAbilityUsed;
         SlashAttackFX.OnHitLanded += HandleHitLanded;
     }
 
@@ -50,7 +50,7 @@ public class PlayerFeedback : NetworkBehaviour
     {
         if (stats != null)
             stats.OnHealthReplicated -= HandleHealthReplicated;
-        PlayerMovement.OnAbilityUsed -= HandleAbilityUsed;
+        PlayerActions.OnAbilityUsed -= HandleAbilityUsed;
         SlashAttackFX.OnHitLanded -= HandleHitLanded;
     }
 
