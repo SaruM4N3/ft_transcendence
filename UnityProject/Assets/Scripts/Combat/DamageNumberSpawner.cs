@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 // Spawns a floating damage number FX each time this actor's health drops.
@@ -7,7 +8,7 @@ public class DamageNumberSpawner : MonoBehaviour
     [SerializeField] private Vector3 spawnOffset = new Vector3(0f, 0.5f, 0f);
 
     private IHealthStats stats;
-    private float lastHealth = -1f;
+    private float lastHealth;
 
     void Awake()
     {
@@ -17,8 +18,17 @@ public class DamageNumberSpawner : MonoBehaviour
     void OnEnable()
     {
         if (stats != null)
+        {
             stats.OnHealthChanged += HandleHealthChanged;
-        lastHealth = -1f;
+            StartCoroutine(CaptureBaselineNextFrame());
+        }
+    }
+
+    // Deferred a frame: OnEnable can run before a sibling component's Awake sets the real starting health.
+    private IEnumerator CaptureBaselineNextFrame()
+    {
+        yield return null;
+        lastHealth = stats.CurrentHealth;
     }
 
     void OnDisable()
@@ -29,7 +39,7 @@ public class DamageNumberSpawner : MonoBehaviour
 
     private void HandleHealthChanged(float current, float max)
     {
-        if (lastHealth >= 0f && current < lastHealth && GameSettings.ShowDamageNumbers)
+        if (current < lastHealth && GameSettings.ShowDamageNumbers)
             Spawn(lastHealth - current);
         lastHealth = current;
     }
