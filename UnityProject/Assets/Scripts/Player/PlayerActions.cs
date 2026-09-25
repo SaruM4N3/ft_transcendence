@@ -17,6 +17,7 @@ public class PlayerActions : NetworkBehaviour
     private ClassKit activeKit;
 
     private bool isGuarding;
+    private bool isAttackHeld;
     private float attackReadyTime;
     private float specialReadyTime;
     private float ultimateReadyTime;
@@ -44,6 +45,8 @@ public class PlayerActions : NetworkBehaviour
     // Animator parameter strings stay as-is (LightAttack/HeavyAttack) - only the C#-facing names change.
     private static readonly int AttackHash = Animator.StringToHash("LightAttack");
     private static readonly int SpecialHash = Animator.StringToHash("HeavyAttack");
+    private static readonly int AttackAnimSpeedHash = Animator.StringToHash("AttackAnimSpeed");
+    private static readonly int SpecialAnimSpeedHash = Animator.StringToHash("SpecialAnimSpeed");
 
     void Awake()
     {
@@ -65,11 +68,27 @@ public class PlayerActions : NetworkBehaviour
         activeKit = kit != null ? kit : defaultKit;
     }
 
+    // Held down: keeps firing on its own once each cooldown ends, instead of requiring repeated clicks.
     public void Attack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < attackReadyTime)
+        if (!this.IsLocallyControlled())
             return;
 
+        if (ctx.canceled)
+            isAttackHeld = false;
+        else if (ctx.performed)
+            isAttackHeld = true;
+    }
+
+    void Update()
+    {
+        if (isAttackHeld && this.IsLocallyControlled() && CanFight && Time.time >= attackReadyTime)
+            FireAttack();
+    }
+
+    private void FireAttack()
+    {
+        animator.SetFloat(AttackAnimSpeedHash, activeKit.AttackAnimSpeed);
         animator.SetTrigger(AttackHash);
         attackReadyTime = Time.time + activeKit.AttackCooldown;
         attackMoveLockEndTime = Time.time + activeKit.AttackMoveLockDuration;
@@ -82,6 +101,7 @@ public class PlayerActions : NetworkBehaviour
         if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < specialReadyTime)
             return;
 
+        animator.SetFloat(SpecialAnimSpeedHash, activeKit.SpecialAnimSpeed);
         animator.SetTrigger(SpecialHash);
         specialReadyTime = Time.time + activeKit.SpecialCooldown;
         attackMoveLockEndTime = Time.time + activeKit.AttackMoveLockDuration;
