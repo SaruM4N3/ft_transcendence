@@ -1,10 +1,6 @@
 using UnityEngine;
 
-// Local one-shot ranged FX; travels independently (never parented to the attacker) and stops at
-// the first thing it hits. Only the attacker's copy keeps a live hitbox.
-// Moved via a kinematic Rigidbody2D (continuous collision) rather than raw Transform translation -
-// at this speed, a plain transform.position += per-Update step is fast enough to tunnel clean
-// through a small collider between physics steps.
+// Local one-shot ranged FX, travels independently; kinematic Rigidbody2D avoids tunneling through small colliders at speed.
 [RequireComponent(typeof(Rigidbody2D))]
 public class ArrowProjectile : MonoBehaviour, IAttackFX
 {

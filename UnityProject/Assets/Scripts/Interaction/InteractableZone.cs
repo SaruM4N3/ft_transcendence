@@ -17,8 +17,7 @@ public class InteractableZone : MonoBehaviour
         GetComponent<Collider2D>().isTrigger = true;
     }
 
-    // ActiveZones is one shared registry: registering any remote player's collider would let
-    // one player's movement add/remove zones out from under every other player's nearest-zone check.
+    // Filters out remote players - the zone registry is shared, so their movement must not affect it.
     private static bool IsLocalPlayer(Collider2D other)
     {
         if (!other.CompareTag("Player"))

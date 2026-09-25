@@ -91,8 +91,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
         RefreshPlayers();
     }
 
-    // Bumps PlayersVersion when the living set changes; solo falls back to the local player.
-    // Public so callers needing an up-to-date list (e.g. spawn placement) aren't stuck waiting on the next FixedUpdate.
+    // Bumps PlayersVersion when the living set changes; public so spawn placement can force a refresh early.
     public void RefreshPlayers()
     {
         nextPlayerRefreshTime = Time.time + PlayerRefreshInterval;

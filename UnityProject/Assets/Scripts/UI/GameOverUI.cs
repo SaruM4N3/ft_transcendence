@@ -38,8 +38,7 @@ public class GameOverUI : MonoBehaviour
         IsShowing = false;
     }
 
-    // Waits a beat after the wipe so the last death is visible before the screen appears.
-    // Polled (not event-driven) so a restart's fresh GameOverCheck is picked up automatically.
+    // Waits a beat after the wipe, then shows; polled so a restart's fresh GameOverCheck is picked up automatically.
     void Update()
     {
         if (check == null)

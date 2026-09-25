@@ -86,6 +86,7 @@ public class PigForm : MonoBehaviour
         Destroy(fx, TransformFxLifetime);
     }
 
+    // Dead players walk through enemies instead of blocking or being shoved by them.
     private void SetPig(bool active)
     {
         isPig = active;
@@ -99,7 +100,6 @@ public class PigForm : MonoBehaviour
         if (pig != null)
             pig.SetActive(active);
 
-        // Dead players walk through enemies instead of blocking or being shoved by them.
         if (rb != null)
             rb.excludeLayers = active ? rb.excludeLayers | enemyMask : rb.excludeLayers & ~enemyMask;
 
@@ -121,8 +121,7 @@ public class PigForm : MonoBehaviour
         pig.transform.position += bodyCenter - pigRenderer.bounds.center;
     }
 
-    // Faces and animates off net movement sampled over a real time window, not a single frame, so remote
-    // NetworkTransform interpolation jitter (which can exceed a per-frame threshold) can't flicker either while idle.
+    // Faces and animates off movement sampled over a real time window, so NetworkTransform interpolation jitter can't flicker it.
     private void UpdatePigVisuals()
     {
         if (Time.time >= nextFacingSampleTime)

@@ -165,7 +165,6 @@ public class NetworkBootstrap : MonoBehaviour
             if (multiplayerPanel.gameObject.activeInHierarchy)
                 multiplayerPanel.Close();
 
-            // Loading screen is hidden once RestoreLocalCustomizationWhenSpawned confirms the player object exists.
             StartCoroutine(RestoreLocalCustomizationWhenSpawned(customization.classIndex, customization.colorIndex, customization.playerName));
             return true;
         }
@@ -223,9 +222,7 @@ public class NetworkBootstrap : MonoBehaviour
         return (current.classIndex, current.colorIndex, current.playerName, position, rotation);
     }
 
-    // Reapplies the offline player's customization to the auto-spawned player, and hides the loading
-    // screen once it's actually there. Timed out rather than an unconditional wait, so a spawn that
-    // never arrives (dropped connection, etc.) doesn't leave the loading screen up forever.
+    // Reapplies the offline player's customization once spawned and hides the loading screen; timed out so a dropped connection doesn't strand it.
     private System.Collections.IEnumerator RestoreLocalCustomizationWhenSpawned(int classIndex, int colorIndex, string playerName)
     {
         float deadline = Time.unscaledTime + 15f;

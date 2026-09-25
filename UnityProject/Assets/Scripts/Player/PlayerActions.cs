@@ -3,8 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Attack/Special/Ultimate: cooldowns, FX spawning, guard state. Timing/FX are per-class data
-// (ClassKit), resolved off PlayerCustomization the same way PlayerStats resolves ClassStats.
+// Attack/Special/Ultimate: cooldowns, FX spawning, guard state, all driven by the active ClassKit.
 public class PlayerActions : NetworkBehaviour
 {
     public static event Action<AbilityType, float> OnAbilityUsed;
@@ -154,8 +153,7 @@ public class PlayerActions : NetworkBehaviour
         SpawnLocalFx(position, angle, hasHitbox);
     }
 
-    // Not parented here - a melee slash tracks the attacker (see SlashAttackFX.Init), but a
-    // projectile needs to travel independently, so each FX type decides that for itself.
+    // Not parented here - each FX type decides that for itself (a slash tracks the attacker, a projectile doesn't).
     private void SpawnLocalFx(Vector3 position, float angle, bool hasHitbox)
     {
         GameObject prefab = activeKit.AttackFxPrefab;

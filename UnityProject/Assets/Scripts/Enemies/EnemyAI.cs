@@ -56,14 +56,11 @@ public class EnemyAI : NetworkBehaviour
     private readonly NetworkVariable<byte> swingCount = new NetworkVariable<byte>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    // Direction the current/last swing faced, in degrees - replicated so remote clients (who never run
-    // StartAttack themselves) can reproduce the same telegraph the server is resolving against.
+    // Swing direction in degrees, replicated so remote clients can reproduce the same telegraph the server resolves against.
     private readonly NetworkVariable<float> swingAngleDegrees = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    // BodyCenter frozen at the moment the windup started. The enemy can still drift a little during the
-    // windup (attackMoveSpeedMultiplier), so resolving the hit against its live position would check a
-    // different spot than the telegraph, which is drawn once at this same origin - anchor both to it.
+    // BodyCenter frozen at windup start, so ResolveHit checks the same spot the telegraph was drawn at.
     private readonly NetworkVariable<Vector2> swingOrigin = new NetworkVariable<Vector2>(
         Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -116,6 +113,7 @@ public class EnemyAI : NetworkBehaviour
         UpdateVisuals();
     }
 
+    // Server-only per-tick loop: retarget, leash-check, attack, or steer toward the target.
     void FixedUpdate()
     {
         if (!this.HasServerAuthority())
@@ -141,8 +139,6 @@ public class EnemyAI : NetworkBehaviour
                 return;
         }
 
-        // Committed to a swing: barely move regardless of where the target goes, so the telegraph
-        // (frozen at the enemy's position when the windup started) stays an accurate warning.
         if (pendingHitTime > 0f)
         {
             rb.linearVelocity = steerDirection * moveSpeed * attackMoveSpeedMultiplier;
@@ -193,7 +189,6 @@ public class EnemyAI : NetworkBehaviour
         Vector3 teleportPos = waveSpawner.FindSpawnPosition();
         rb.position = teleportPos;
         rb.linearVelocity = Vector2.zero;
-        // Teleport() requires real Netcode authority; offline enemies are never actually spawned.
         if (networkTransform != null && IsSpawned)
             networkTransform.Teleport(teleportPos, transform.rotation, transform.localScale);
         else
@@ -233,7 +228,7 @@ public class EnemyAI : NetworkBehaviour
         return slipperyMaterial;
     }
 
-    // Damage lands attackHitDelay after the windup starts.
+    // Damage lands attackHitDelay later; swing state is always written (not gated on IsSpawned) so offline solo play works too.
     private void StartAttack()
     {
         nextAttackTime = Time.time + attackCooldown;
@@ -242,8 +237,6 @@ public class EnemyAI : NetworkBehaviour
 
         Vector2 origin = BodyCenter;
         Vector2 direction = (TargetCenter(target) - origin).normalized;
-        // Written unconditionally (not just IsSpawned): ResolveHit/PlayAttackAnimation read these back
-        // through .Value in every case, including fully offline solo play with no NetworkObject at all.
         swingOrigin.Value = origin;
         swingAngleDegrees.Value = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         if (IsSpawned)
@@ -251,9 +244,7 @@ public class EnemyAI : NetworkBehaviour
         PlayAttackAnimation(origin, direction);
     }
 
-    // Connects only if the victim is alive, still in reach, and still within the swing's facing cone.
-    // Checked against swingOrigin/swingAngle (frozen at windup start), not the enemy's current position,
-    // so this always agrees with the telegraph that was actually shown to players.
+    // Connects only if the victim is alive, in reach, and within the swing's frozen facing cone - matches the telegraph shown.
     private void ResolveHit()
     {
         pendingHitTime = 0f;

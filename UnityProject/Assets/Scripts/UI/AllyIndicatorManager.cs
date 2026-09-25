@@ -9,13 +9,14 @@ public class AllyIndicatorManager : MonoBehaviour
     private const int ArrowTextureSize = 32;
     private const float DirectionSmoothing = 8f;
 
+    // Indexed by ColorIndex: Black, Blue, Purple, Red, Yellow.
     private static readonly Color[] ColorsByColorIndex =
     {
-        new Color(0.15f, 0.15f, 0.15f), //Black
-        new Color(0.25f, 0.45f, 0.95f), //Blue
-        new Color(0.6f, 0.3f, 0.85f), //Purple
-        new Color(0.85f, 0.25f, 0.25f), //Red
-        new Color(0.95f, 0.8f, 0.2f), //Yellow
+        new Color(0.15f, 0.15f, 0.15f),
+        new Color(0.25f, 0.45f, 0.95f),
+        new Color(0.6f, 0.3f, 0.85f),
+        new Color(0.85f, 0.25f, 0.25f),
+        new Color(0.95f, 0.8f, 0.2f),
     };
 
     private class IndicatorState
@@ -104,9 +105,7 @@ public class AllyIndicatorManager : MonoBehaviour
         }
     }
 
-    // The raw direction to an off-screen ally is noisy frame to frame (NetworkTransform interpolation
-    // jitter), and near an edge/corner that noise flips which axis the clamp binds to - smoothing the
-    // direction itself (not just the final position) keeps the arrow from vibrating along the edge.
+    // Smooths the direction itself (not just the final position), since raw per-frame jitter near an edge flips which axis the clamp binds to.
     private static void UpdateIndicator(Camera cam, Transform ally, IndicatorState indicator, Vector2 halfSize)
     {
         RectTransform rect = indicator.Rect;

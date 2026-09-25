@@ -8,7 +8,7 @@ public class InteractPromptUI : MonoBehaviour
     [SerializeField] private RectTransform promptRoot;
     [SerializeField] private TextMeshProUGUI keyLabel;
     [SerializeField] private TextMeshProUGUI actionLabel;
-    [SerializeField] private string keyGlyph = "E"; // fallback shown until a live Interact keybind is resolved
+    [SerializeField] private string keyGlyph = "E";
     [SerializeField] private float animationDuration = 0.15f;
     [SerializeField] private float closedScale = 0.85f;
     [SerializeField] private float keyCapBlinkSpeed = 3f;

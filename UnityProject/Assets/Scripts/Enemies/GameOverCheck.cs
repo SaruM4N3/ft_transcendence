@@ -21,8 +21,7 @@ public class GameOverCheck : NetworkBehaviour
 
     public bool CanChoose => this.HasServerAuthority();
 
-    // Networked: wait for every client's scene load (and the PlayerStats reset it triggers) to finish
-    // before evaluating wipes, so a still-loading player's stale zero health can't re-trigger game over.
+    // Networked: waits for every client's scene load to finish before evaluating wipes, so stale health can't false-trigger it.
     void Start()
     {
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;

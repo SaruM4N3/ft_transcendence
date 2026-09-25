@@ -38,6 +38,7 @@ public class PlayerMovement : NetworkBehaviour
     private static readonly int LastInputXHash = Animator.StringToHash("LastInputX");
     private static readonly int LastInputYHash = Animator.StringToHash("LastInputY");
 
+    // Also applies keybinds here, covering the offline player which never goes through OnNetworkSpawn.
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -45,7 +46,6 @@ public class PlayerMovement : NetworkBehaviour
         animator = GetComponent<Animator>();
         actions = GetComponent<PlayerActions>();
 
-        // Covers the offline player, which never goes through OnNetworkSpawn.
         PlayerInput input = GetComponent<PlayerInput>();
         if (input != null)
             KeybindOverrides.Apply(input.actions);

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Spawns a floating damage number FX each time this enemy's health drops.
+// Spawns a floating damage number FX each time this actor's health drops.
 public class DamageNumberSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject damageNumberPrefab;

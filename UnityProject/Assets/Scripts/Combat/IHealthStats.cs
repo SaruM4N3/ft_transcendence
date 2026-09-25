@@ -1,6 +1,6 @@
 using System;
 
-// Read-only health view that WorldHealthBar binds to.
+// Read-only health view generic feedback (health bars, hit flash, damage numbers) binds to.
 public interface IHealthStats
 {
     float CurrentHealth { get; }

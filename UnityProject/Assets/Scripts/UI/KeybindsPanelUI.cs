@@ -3,8 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Lists rebindable actions (Primary/Secondary keyboard+mouse slots, plus a Gamepad slot) and drives
-// Unity's interactive rebind flow for each.
+// Lists rebindable actions (Primary/Secondary keyboard+mouse slots, plus a Gamepad slot) and drives Unity's interactive rebind flow.
 public class KeybindsPanelUI : MonoBehaviour
 {
     private enum Slot { Primary, Secondary, Gamepad }
@@ -213,8 +212,7 @@ public class KeybindsPanelUI : MonoBehaviour
         return -1;
     }
 
-    // Unity's display string for control-character keys (Tab, Enter, ...) is the literal control
-    // character, not a readable name; fall back to the binding path's last segment for those.
+    // Falls back to the binding path's last segment for control keys Unity can't render as text.
     private static string DisplayName(InputAction action, int bindingIndex)
     {
         string display = action.GetBindingDisplayString(bindingIndex);

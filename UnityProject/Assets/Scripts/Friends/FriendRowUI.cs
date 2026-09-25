@@ -29,7 +29,7 @@ public class FriendRowUI : MonoBehaviour
         secondaryButton.interactable = interactable;
     }
 
-    // Online green, Request yellow, otherwise red.
+    // Online green, In session blue, Request yellow, otherwise red.
     private static Color TagColor(string tag)
     {
         switch (tag)

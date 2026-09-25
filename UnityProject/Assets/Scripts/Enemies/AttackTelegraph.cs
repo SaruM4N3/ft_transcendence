@@ -1,8 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-// Red ground warning shown during an enemy's attack windup, so players can see and dodge the hit cone.
-// Procedurally drawn (no art asset yet) as a triangle-fan wedge matching the AI's actual hit check.
+// Red ground warning shown during an enemy's attack windup; procedurally drawn as a wedge matching the actual hit check.
 public class AttackTelegraph : MonoBehaviour
 {
     private const int Segments = 20;
@@ -19,8 +18,7 @@ public class AttackTelegraph : MonoBehaviour
     private MeshFilter meshFilter;
     private Color[] baseColors;
 
-    // Centered on the enemy's own position at the moment the windup starts - enemies stop moving to
-    // attack, so a position/direction captured once (rather than following the transform) is enough.
+    // Position/direction captured once at windup start - enemies stop moving to attack, so it never needs to follow the transform.
     public static void Show(Vector3 position, Vector2 direction, float coneAngleDegrees, float radius, float duration)
     {
         if (radius <= 0f || duration <= 0f || direction.sqrMagnitude < 0.0001f)
