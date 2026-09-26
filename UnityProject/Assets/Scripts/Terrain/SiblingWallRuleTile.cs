@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-/// <summary>RuleTile that treats configured tiles as connected "sibling" neighbors.</summary>
+// RuleTile treating configured tiles as connected siblings.
 [CreateAssetMenu(fileName = "New Sibling Wall Rule Tile", menuName = "Tiles/Sibling Wall Rule Tile")]
 public class SiblingWallRuleTile : RuleTile<SiblingWallRuleTile.Neighbor>
 {

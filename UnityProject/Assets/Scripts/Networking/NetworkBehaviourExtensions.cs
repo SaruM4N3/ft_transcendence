@@ -1,14 +1,12 @@
 using Unity.Netcode;
 
-/// <summary>True for the offline solo player (never spawned) or the local owner of a spawned one -
-/// false only for a spawned instance owned by someone else.</summary>
+// True for the offline solo player or the owner of a spawned one.
 public static class NetworkBehaviourExtensions
 {
     public static bool IsLocallyControlled(this NetworkBehaviour behaviour)
         => behaviour.NetworkObject != null && (!behaviour.NetworkObject.IsSpawned || behaviour.IsOwner);
 
-    /// <summary>Server-authority equivalent of IsLocallyControlled - true offline (solo play, never
-    /// spawned) or on the server; false on a spawned instance for anyone else (a joined client).</summary>
+    // True offline or on the server; false for a joined client's spawned copy.
     public static bool HasServerAuthority(this NetworkBehaviour behaviour)
         => behaviour.NetworkObject != null && (!behaviour.NetworkObject.IsSpawned || behaviour.IsServer);
 }

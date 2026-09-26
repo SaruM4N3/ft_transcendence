@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Full-screen red vignette that pulses on demand; builds its own overlay canvas and gradient at runtime.
+// Red screen-edge vignette pulse, built at runtime.
 public class ScreenEdgeFlash : MonoBehaviour
 {
     private const int TextureSize = 128;

@@ -3,16 +3,13 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-// Replicates the local player's class/color/name to every client. Subscribed in Awake (not
-// OnNetworkSpawn) so the same code path also drives the scene's offline, never-spawned player.
+// Replicates class, color and name; subscribed in Awake so offline solo works too.
 public class PlayerCustomization : NetworkBehaviour
 {
-    // Spawned instances only, used to detect/disambiguate duplicate names - see RefreshAllDisplayNames.
     private static readonly List<PlayerCustomization> ActiveInstances = new List<PlayerCustomization>();
 
     public static IReadOnlyList<PlayerCustomization> AllActiveInstances => ActiveInstances;
 
-    // Lets the lobby roster add/remove a row per player instead of polling.
     public static event System.Action<PlayerCustomization> OnPlayerRegistered;
     public static event System.Action<PlayerCustomization> OnPlayerUnregistered;
 
@@ -20,7 +17,6 @@ public class PlayerCustomization : NetworkBehaviour
     public event System.Action<string> OnDisplayNameChanged;
     public event System.Action<int> OnTeamChanged;
 
-    // Disambiguated name (e.g. "Bob (2)") - lets a newly bound roster row read it immediately.
     public string CurrentDisplayName { get; private set; }
 
     private readonly NetworkVariable<int> classIndex = new NetworkVariable<int>(
@@ -29,12 +25,10 @@ public class PlayerCustomization : NetworkBehaviour
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<FixedString32Bytes> playerName = new NetworkVariable<FixedString32Bytes>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    // Per-session/per-mode choice (which team to join at ready-check time) - not saved to PlayerProfileStore.
     private readonly NetworkVariable<int> teamIndex = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
-    // Server-writable (not Owner) so ServerResetReady() can clear any player's readiness; SetReady() below
-    // goes through a ServerRpc since even the server can't bypass the write-permission check directly.
+    // Server-writable so readiness can be reset; SetReady goes through a ServerRpc.
     private readonly NetworkVariable<bool> isReady = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -111,7 +105,6 @@ public class PlayerCustomization : NetworkBehaviour
         if (!string.IsNullOrEmpty(savedName))
             playerName.Value = savedName;
 
-        // HUD's OnEnable sync already ran off the pre-load defaults - nudge it to pick up the loaded values.
         if (CharacterCustomizationMenu.Instance != null)
             CharacterCustomizationMenu.Instance.NotifyProfileLoaded(gameObject);
     }
@@ -148,7 +141,6 @@ public class PlayerCustomization : NetworkBehaviour
         if (!this.IsLocallyControlled())
             return;
 
-        // Offline solo player has no RPC channel to send on.
         if (!NetworkObject.IsSpawned)
             return;
 

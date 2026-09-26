@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Deactivates a scene-placed offline player once a session is active, so it doesn't auto-spawn as a phantom.
+// Deactivates the scene's offline player once a session is active.
 public class OfflinePlayerGate : NetworkBehaviour
 {
     private void Awake()

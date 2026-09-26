@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Base stat set a class is defined by; each class is a tuned instance of this asset.
+// Base stats a class is defined by.
 [CreateAssetMenu(fileName = "ClassStats", menuName = "Transcendence/Class Stats")]
 public class ClassStats : ScriptableObject
 {

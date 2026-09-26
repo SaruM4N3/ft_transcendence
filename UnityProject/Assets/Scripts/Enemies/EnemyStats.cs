@@ -2,7 +2,7 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-// Networked health for a wave enemy. Unlike PlayerStats, the "owner" is always the server so the server can write currentHealth directly.
+// Networked enemy health; the server owns it and writes directly.
 public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
 {
     [SerializeField] private float maxHealth = 40f;
@@ -28,7 +28,7 @@ public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
             currentHealth.Value = maxHealth;
     }
 
-    // Callable from any client (whichever attacker's hitbox landed the hit).
+    // Callable from any client; applied on the server.
     public void RequestDamage(float amount)
     {
         if (!NetworkObject.IsSpawned)

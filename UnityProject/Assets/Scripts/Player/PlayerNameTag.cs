@@ -2,7 +2,7 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
-// World Space Canvas above this player, same pattern as InteractPromptUI's per-NPC prompt. (Only multi)
+// World-space name tag above a player, shown only in multiplayer.
 public class PlayerNameTag : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI nameLabel;

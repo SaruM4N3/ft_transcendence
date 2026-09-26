@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Ground ring at the player's feet that rotates to point at the mouse; its own child so flipX doesn't affect it.
+// Ground ring at the player's feet pointing at the mouse.
 public class MouseDirectionIndicator : MonoBehaviour
 {
     [SerializeField] private Color[] colorsByColorIndex =

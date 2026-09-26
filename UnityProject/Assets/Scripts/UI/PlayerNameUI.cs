@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-// Keeps the HUD name label in sync with the player's display name - same pattern as AvatarUI/BackgroundColorUI.
+// Keeps the HUD name label in sync with the display name.
 public class PlayerNameUI : MonoBehaviour
 {
     private TextMeshProUGUI label;
@@ -15,7 +15,6 @@ public class PlayerNameUI : MonoBehaviour
     {
         CharacterCustomizationMenu.OnNameChanged += SetName;
 
-        // Initial sync in case the Customize menu hasn't been opened yet this session.
         SetName(CharacterCustomizationMenu.Instance?.GetCurrentName());
     }
 

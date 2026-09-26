@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-// Tints the sprite briefly on a hit; auto-flashes on any health drop when an IHealthStats is on the same object.
+// Briefly tints the sprite on a hit or health drop.
 public class SpriteHitFlash : MonoBehaviour
 {
     [SerializeField] private Color flashColor = new Color(1f, 0.25f, 0.25f, 1f);
