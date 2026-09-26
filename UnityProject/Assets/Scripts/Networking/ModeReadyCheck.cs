@@ -42,6 +42,12 @@ public class ModeReadyCheck : NetworkBehaviour
     private void RequestReadyCheckServerRpc(FixedString64Bytes sceneName)
     {
         pendingSceneName.Value = sceneName;
+        ResetAllReady();
+    }
+
+    // Player objects persist across scene loads, so readiness must be cleared when a check starts and when it launches.
+    private static void ResetAllReady()
+    {
         foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
             player.ServerResetReady();
     }
@@ -62,6 +68,7 @@ public class ModeReadyCheck : NetworkBehaviour
 
         string sceneName = pendingSceneName.Value.ToString();
         pendingSceneName.Value = default;
+        ResetAllReady();
         NetworkManager.Singleton.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 }

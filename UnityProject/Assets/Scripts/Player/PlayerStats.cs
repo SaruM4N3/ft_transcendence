@@ -21,8 +21,11 @@ public class PlayerStats : NetworkBehaviour, IDamageable
     public float CurrentMana { get; private set; }
     public bool IsDead => currentHealth.Value <= 0f;
 
+    public static bool DeathProtected { get; set; }
+
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
+    public static event Action<PlayerStats> OnPlayerDied;
 
     public event Action<float, float> OnHealthReplicated;
 
@@ -33,8 +36,10 @@ public class PlayerStats : NetworkBehaviour, IDamageable
 
         RefreshActiveStats();
         CurrentMana = maxMana;
-        currentHealth.OnValueChanged += (_, newValue) =>
+        currentHealth.OnValueChanged += (previousValue, newValue) =>
         {
+            if (previousValue > 0f && newValue <= 0f)
+                OnPlayerDied?.Invoke(this);
             OnHealthReplicated?.Invoke(newValue, maxHealth);
             if (this.IsLocallyControlled())
                 OnHealthChanged?.Invoke(newValue, maxHealth);
@@ -122,7 +127,8 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         if (!this.IsLocallyControlled())
             return;
 
-        currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, 0f, maxHealth);
+        float minHealth = DeathProtected ? 1f : 0f;
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, Mathf.Min(minHealth, currentHealth.Value), maxHealth);
     }
 
     public void RequestDamage(float amount)

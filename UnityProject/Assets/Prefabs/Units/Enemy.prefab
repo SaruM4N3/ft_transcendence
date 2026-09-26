@@ -167,6 +167,7 @@ GameObject:
   - component: {fileID: 5772978326802835593}
   - component: {fileID: 5835712461897076585}
   - component: {fileID: 1403939639179829679}
+  - component: {fileID: 1606808482985473777}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -324,9 +325,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 2.5
-  attackRange: 1
+  attackRange: 0.8
   damage: 10
   attackCooldown: 1
+  attackHitDelay: 0.3
+  attackAnimationDuration: 0.7
+  hitRangeTolerance: 1.25
+  retargetInterval: 0.25
+  steerInterval: 0.1
+  directChaseRange: 8
+  lineOfSightInterval: 0.3
 --- !u!114 &1403939639179829679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -373,6 +381,20 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &1606808482985473777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8760497899193580633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 808510938eb2d86bcae80d33d4804186, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteHitFlash
+  flashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  duration: 0.15
 --- !u!1001 &4390653813344600292
 PrefabInstance:
   m_ObjectHideFlags: 0
