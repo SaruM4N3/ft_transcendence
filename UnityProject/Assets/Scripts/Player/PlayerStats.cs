@@ -25,6 +25,7 @@ public class PlayerStats : NetworkBehaviour, IDamageable
 
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
+    public static event Action<PlayerStats> OnPlayerDied;
 
     public event Action<float, float> OnHealthReplicated;
 
@@ -35,8 +36,10 @@ public class PlayerStats : NetworkBehaviour, IDamageable
 
         RefreshActiveStats();
         CurrentMana = maxMana;
-        currentHealth.OnValueChanged += (_, newValue) =>
+        currentHealth.OnValueChanged += (previousValue, newValue) =>
         {
+            if (previousValue > 0f && newValue <= 0f)
+                OnPlayerDied?.Invoke(this);
             OnHealthReplicated?.Invoke(newValue, maxHealth);
             if (this.IsLocallyControlled())
                 OnHealthChanged?.Invoke(newValue, maxHealth);
