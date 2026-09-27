@@ -15,8 +15,28 @@ public class WaveSpawner : NetworkBehaviour
     [SerializeField] private float spawnClearance = 1f;
 
     private readonly List<NetworkObject> aliveEnemies = new List<NetworkObject>();
+    private readonly NetworkVariable<int> currentWave = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<double> startServerTime = new NetworkVariable<double>(
+        0d, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private int waveNumber;
+    private float offlineStartTime;
     private bool wavesStarted;
+
+    public int CurrentWave => IsSpawned ? currentWave.Value : waveNumber;
+
+    // Seconds since the first wave began, on the shared server clock when networked.
+    public float ElapsedSeconds
+    {
+        get
+        {
+            if (CurrentWave <= 0)
+                return 0f;
+
+            return IsSpawned ? (float)(NetworkManager.ServerTime.Time - startServerTime.Value) : Time.time - offlineStartTime;
+        }
+    }
 
     void Start()
     {
@@ -55,13 +75,27 @@ public class WaveSpawner : NetworkBehaviour
     {
         while (true)
         {
+            if (waveNumber == 0)
+                MarkStartTime();
+
             waveNumber++;
+            if (IsSpawned)
+                currentWave.Value = waveNumber;
+
             int count = baseEnemiesPerWave + (waveNumber - 1) * extraEnemiesPerWave;
             SpawnWave(count);
 
             yield return new WaitUntil(AllEnemiesDead);
             yield return new WaitForSeconds(timeBetweenWaves);
         }
+    }
+
+    private void MarkStartTime()
+    {
+        if (IsSpawned)
+            startServerTime.Value = NetworkManager.ServerTime.Time;
+        else
+            offlineStartTime = Time.time;
     }
 
     private bool AllEnemiesDead()
