@@ -12,10 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e7453d5398a9eaa39dca01cb3e75e67, type: 3}
   m_Name: Archer_Kit
   m_EditorClassIdentifier: Assembly-CSharp::ClassKit
-  attackCooldown: 0.35
+  attackCooldown: 1
   specialCooldown: 2
   ultimateCooldown: 5
   attackFxPrefab: {fileID: 8561813417502051360, guid: cdcba958b8be78ae8a9cfcc3b63754ef, type: 3}
   attackFxDistance: 1
+  damage: 12
   attackMoveLockDuration: 0.2
   attackMoveSpeedMultiplier: 0.5
+  attackAnimSpeed: 2
+  specialAnimSpeed: 1

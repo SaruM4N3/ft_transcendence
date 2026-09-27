@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a66c09d7042c9ffa9f15490369cf586, type: 3}
+  m_Name: Skeleton_Kit
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyKit
+  maxHealth: 40
+  moveSpeed: 3
+  attackRange: 1.75
+  attackAngle: 70
+  damage: 10
+  attackCooldown: 1
+  attackHitDelay: 0.5
+  attackAnimationDuration: 0.5
+  attackMoveSpeedMultiplier: 0
+  hitRangeTolerance: 1.25
+  retargetInterval: 0.25
+  steerInterval: 0.1
+  directChaseRange: 8
+  lineOfSightInterval: 0.3
+  maxDistanceFromPlayers: 40
+  leashCheckInterval: 2
+  sprite: {fileID: -6630793407684982308, guid: 901c9676808633c25bbf90646e4da299, type: 3}
+  animatorController: {fileID: -3866818618918020108, guid: 901c9676808633c25bbf90646e4da299, type: 3}

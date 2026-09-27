@@ -69,7 +69,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
     public static event System.Action<Sprite> OnBackgroundChanged;
     public static event System.Action<string> OnNameChanged;
 
-    [SerializeField] private GameObject[] classPresets;
     [SerializeField] private ClassStats[] statsByClass;
     [SerializeField] private ClassKit[] kitsByClass;
     [SerializeField] private ColorVariant[] colorVariants;
@@ -94,7 +93,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public Sprite GetPortrait(int classIndex, int colorIndex)
     {
-        if (classIndex < 0 || classIndex >= classPresets.Length)
+        if (classIndex < 0 || classIndex >= statsByClass.Length)
             return null;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return null;
@@ -143,7 +142,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public void SelectClass(int index)
     {
-        if (index < 0 || index >= classPresets.Length || classPresets[index] == null)
+        if (index < 0 || index >= statsByClass.Length)
             return;
 
         GameObject player = LocalPlayer.Get();
@@ -186,7 +185,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
     {
         int classIndex = CurrentClassIndex(player);
         int colorIndex = CurrentColorIndex(player);
-        if (classIndex < 0 || classIndex >= classPresets.Length)
+        if (classIndex < 0 || classIndex >= statsByClass.Length)
             return;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return;
@@ -202,7 +201,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public bool ApplyVisuals(GameObject player, int classIndex, int colorIndex)
     {
-        if (classIndex < 0 || classIndex >= classPresets.Length)
+        if (classIndex < 0 || classIndex >= statsByClass.Length)
             return false;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return false;
@@ -224,9 +223,10 @@ public class CharacterCustomizationMenu : MonoBehaviour
         AnimatorOverrideController overrideController = current as AnimatorOverrideController;
         RuntimeAnimatorController baseController = overrideController != null ? overrideController.runtimeAnimatorController : current;
 
-        for (int i = 0; i < classPresets.Length; i++)
+        RuntimeAnimatorController[] baseControllersByClass = colorVariants[0].controllersByClass;
+        for (int i = 0; i < baseControllersByClass.Length; i++)
         {
-            if (classPresets[i].GetComponent<Animator>().runtimeAnimatorController == baseController)
+            if (baseControllersByClass[i] == baseController)
                 return i;
         }
 

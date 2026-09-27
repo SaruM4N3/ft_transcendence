@@ -5,24 +5,21 @@ using UnityEngine;
 public class ArrowProjectile : MonoBehaviour, IAttackFX
 {
     [SerializeField] private float speed = 12f;
-    [SerializeField] private float damage = 12f;
     [SerializeField] private float maxLifetime = 2f;
 
-    private Collider2D hitbox;
     private GameObject owner;
     private bool hasHitbox;
+    private float damage;
 
-    public void Init(GameObject attacker, bool hasHitboxValue)
+    public void Init(GameObject attacker, bool hasHitboxValue, float damageValue)
     {
         owner = attacker;
         hasHitbox = hasHitboxValue;
-        if (!hasHitbox && hitbox != null)
-            hitbox.enabled = false;
+        damage = damageValue;
     }
 
     void Awake()
     {
-        hitbox = GetComponent<Collider2D>();
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -30,11 +27,9 @@ public class ArrowProjectile : MonoBehaviour, IAttackFX
         Destroy(gameObject, maxLifetime);
     }
 
+    // Stops on the first thing it hits on every peer, even though only the attacker's copy actually deals damage.
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!hasHitbox)
-            return;
-
         var damageable = other.GetComponentInParent<IDamageable>();
         if (damageable == null)
             return;
@@ -43,7 +38,9 @@ public class ArrowProjectile : MonoBehaviour, IAttackFX
         if (behaviour != null && behaviour.gameObject == owner)
             return;
 
-        damageable.RequestDamage(damage);
+        if (hasHitbox)
+            damageable.RequestDamage(damage);
+
         Destroy(gameObject);
     }
 }

@@ -2,30 +2,18 @@ using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
 
-// Server-authoritative chase-and-melee AI driven by shared flow fields.
+// Server-authoritative chase AI driven by shared flow fields; attack execution lives in EnemyActions.
 public class EnemyAI : NetworkBehaviour
 {
-    [SerializeField] private float moveSpeed = 2.5f;
-    [SerializeField] private float attackRange = 0.8f;
-    [SerializeField] private float attackAngle = 100f;
-    [SerializeField] private float damage = 10f;
-    [SerializeField] private float attackCooldown = 1f;
-    [SerializeField] private float attackHitDelay = 0.3f;
-    [SerializeField] private float attackAnimationDuration = 0.7f;
-    [SerializeField] private float attackMoveSpeedMultiplier = 0.25f;
-    [SerializeField] private float hitRangeTolerance = 1.5f;
-    [SerializeField] private float retargetInterval = 0.25f;
-    [SerializeField] private float steerInterval = 0.1f;
-    [SerializeField] private float directChaseRange = 8f;
-    [SerializeField] private float lineOfSightInterval = 0.3f;
-    [SerializeField] private float maxDistanceFromPlayers = 40f;
-    [SerializeField] private float leashCheckInterval = 2f;
+    private EnemyKit kit;
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
     private Animator animator;
     private NetworkTransform networkTransform;
     private WaveSpawner waveSpawner;
+    private EnemyActions actions;
+    private Enemy hub;
     private float bodyRadius;
     private Vector2 bodyOffset;
     private float nextAttackTime;
@@ -39,12 +27,9 @@ public class EnemyAI : NetworkBehaviour
     private bool hasLineOfSight;
     private Vector2 steerDirection;
 
-    private PlayerStats swingTarget;
-    private float pendingHitTime;
-
     private Vector2 lastPosition;
     private float lastMovedTime;
-    private float attackAnimationEndTime;
+    private float attackVisualEndTime;
     private int currentAnimationHash;
 
     private static PhysicsMaterial2D slipperyMaterial;
@@ -53,16 +38,13 @@ public class EnemyAI : NetworkBehaviour
     private static readonly int RunHash = Animator.StringToHash("Run");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
 
-    private readonly NetworkVariable<byte> swingCount = new NetworkVariable<byte>(
-        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    // Assigned at spawn time by whoever instantiates this enemy (see Enemy.Initialize); never baked into the prefab.
+    public EnemyKit Kit { get => kit; set => kit = value; }
 
-    // Swing direction in degrees, replicated so remote clients can reproduce the same telegraph the server resolves against.
-    private readonly NetworkVariable<float> swingAngleDegrees = new NetworkVariable<float>(
-        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-    // BodyCenter frozen at windup start, so ResolveHit checks the same spot the telegraph was drawn at.
-    private readonly NetworkVariable<Vector2> swingOrigin = new NetworkVariable<Vector2>(
-        Vector2.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    // Replicates which EnemyKit to use, so remote clients (who never go through WaveSpawner's direct
+    // Initialize call) can resolve and apply the same kit themselves once they see this object spawn.
+    private readonly NetworkVariable<int> kitIndex = new NetworkVariable<int>(
+        -1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     void Awake()
     {
@@ -71,6 +53,8 @@ public class EnemyAI : NetworkBehaviour
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
         networkTransform = GetComponent<NetworkTransform>();
+        actions = GetComponent<EnemyActions>();
+        hub = GetComponent<Enemy>();
 
         CircleCollider2D circle = GetComponent<CircleCollider2D>();
         float scale = Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
@@ -79,32 +63,50 @@ public class EnemyAI : NetworkBehaviour
         EnemyFlowFieldManager.BodyOffset = bodyOffset;
     }
 
-    // Staggers timers so enemies don't all update on the same frame.
+    // Staggers timers so enemies don't all update on the same frame. Only the server ever reads them
+    // (FixedUpdate below is server-gated), so it's safe to skip this on a remote client whose kit
+    // hasn't arrived yet - it resolves kit via OnNetworkSpawn instead, see HandleKitIndexChanged.
     void Start()
     {
         lastPosition = transform.position;
-        nextRetargetTime = Time.time + Random.value * retargetInterval;
-        nextSteerTime = Time.time + Random.value * steerInterval;
-        nextLineOfSightTime = Time.time + Random.value * lineOfSightInterval;
-        nextLeashCheckTime = Time.time + Random.value * leashCheckInterval;
         waveSpawner = FindAnyObjectByType<WaveSpawner>();
+
+        if (kit == null)
+            return;
+
+        nextRetargetTime = Time.time + Random.value * kit.RetargetInterval;
+        nextSteerTime = Time.time + Random.value * kit.SteerInterval;
+        nextLineOfSightTime = Time.time + Random.value * kit.LineOfSightInterval;
+        nextLeashCheckTime = Time.time + Random.value * kit.LeashCheckInterval;
     }
 
     public override void OnNetworkSpawn()
     {
-        swingCount.OnValueChanged += HandleSwingCountChanged;
+        kitIndex.OnValueChanged += HandleKitIndexChanged;
+        if (kit == null && kitIndex.Value >= 0)
+            ApplyKitFromIndex(kitIndex.Value);
     }
 
     public override void OnNetworkDespawn()
     {
-        swingCount.OnValueChanged -= HandleSwingCountChanged;
+        kitIndex.OnValueChanged -= HandleKitIndexChanged;
     }
 
-    // Replays the swing on remote clients.
-    private void HandleSwingCountChanged(byte previous, byte current)
+    // Called by WaveSpawner before Spawn(), so the index is part of the payload remote clients first see.
+    public void SetNetworkedKitIndex(int index) => kitIndex.Value = index;
+
+    private void HandleKitIndexChanged(int previous, int current)
     {
-        if (!IsServer)
-            PlayAttackAnimation();
+        if (kit == null && current >= 0)
+            ApplyKitFromIndex(current);
+    }
+
+    private void ApplyKitFromIndex(int index)
+    {
+        WaveSpawner spawner = waveSpawner != null ? waveSpawner : FindAnyObjectByType<WaveSpawner>();
+        EnemyKit resolvedKit = spawner != null ? spawner.GetKit(index) : null;
+        if (resolvedKit != null)
+            hub.Initialize(resolvedKit);
     }
 
     // Runs on every peer; facing and animation come from real movement.
@@ -119,9 +121,6 @@ public class EnemyAI : NetworkBehaviour
         if (!this.HasServerAuthority())
             return;
 
-        if (pendingHitTime > 0f && Time.time >= pendingHitTime)
-            ResolveHit();
-
         EnemyFlowFieldManager manager = EnemyFlowFieldManager.Instance;
         if (target == null || target.IsDead || seenPlayersVersion != manager.PlayersVersion || Time.time >= nextRetargetTime)
             ChooseTarget(manager);
@@ -134,40 +133,43 @@ public class EnemyAI : NetworkBehaviour
 
         if (Time.time >= nextLeashCheckTime)
         {
-            nextLeashCheckTime = Time.time + leashCheckInterval;
+            nextLeashCheckTime = Time.time + kit.LeashCheckInterval;
             if (CheckLeash())
                 return;
         }
 
-        if (pendingHitTime > 0f)
+        if (actions != null && actions.IsWindingUp)
         {
-            rb.linearVelocity = steerDirection * moveSpeed * attackMoveSpeedMultiplier;
+            rb.linearVelocity = steerDirection * kit.MoveSpeed * kit.AttackMoveSpeedMultiplier;
             return;
         }
 
         Vector2 toTarget = TargetCenter(target) - BodyCenter;
-        if (toTarget.sqrMagnitude <= attackRange * attackRange)
+        if (toTarget.sqrMagnitude <= kit.AttackRange * kit.AttackRange)
         {
             rb.linearVelocity = Vector2.zero;
             if (Time.time >= nextAttackTime)
-                StartAttack();
+            {
+                nextAttackTime = Time.time + kit.AttackCooldown;
+                actions?.StartAttack(target);
+            }
             return;
         }
 
         if (Time.time >= nextSteerTime)
         {
-            nextSteerTime = Time.time + steerInterval;
+            nextSteerTime = Time.time + kit.SteerInterval;
             steerDirection = ComputeSteerDirection(manager, toTarget);
         }
 
-        rb.linearVelocity = steerDirection * moveSpeed;
+        rb.linearVelocity = steerDirection * kit.MoveSpeed;
     }
 
     // The collider is offset from the pivot; queries must start at the real body.
-    private Vector2 BodyCenter => rb.position + bodyOffset;
+    public Vector2 BodyCenter => rb.position + bodyOffset;
 
     // Range checks use collider centres, since pivots sit at different heights.
-    private static Vector2 TargetCenter(PlayerStats player)
+    public static Vector2 TargetCenter(PlayerStats player)
     {
         Collider2D collider = player.GetComponent<Collider2D>();
         return collider != null ? (Vector2)collider.bounds.center : (Vector2)player.transform.position;
@@ -175,7 +177,7 @@ public class EnemyAI : NetworkBehaviour
 
     private void ChooseTarget(EnemyFlowFieldManager manager)
     {
-        nextRetargetTime = Time.time + retargetInterval;
+        nextRetargetTime = Time.time + kit.RetargetInterval;
         seenPlayersVersion = manager.PlayersVersion;
         target = manager.FindNearestLivingPlayer(rb.position);
     }
@@ -183,7 +185,7 @@ public class EnemyAI : NetworkBehaviour
     // Recycles enemies that end up far from every player (e.g. players regrouped elsewhere) back near the action.
     private bool CheckLeash()
     {
-        if (waveSpawner == null || (TargetCenter(target) - BodyCenter).sqrMagnitude <= maxDistanceFromPlayers * maxDistanceFromPlayers)
+        if (waveSpawner == null || (TargetCenter(target) - BodyCenter).sqrMagnitude <= kit.MaxDistanceFromPlayers * kit.MaxDistanceFromPlayers)
             return false;
 
         Vector3 teleportPos = waveSpawner.FindSpawnPosition();
@@ -200,7 +202,7 @@ public class EnemyAI : NetworkBehaviour
     // Straight at the player with a clear line, otherwise along the flow field.
     private Vector2 ComputeSteerDirection(EnemyFlowFieldManager manager, Vector2 toTarget)
     {
-        if (toTarget.sqrMagnitude <= directChaseRange * directChaseRange && HasClearLine(toTarget))
+        if (toTarget.sqrMagnitude <= kit.DirectChaseRange * kit.DirectChaseRange && HasClearLine(toTarget))
             return toTarget.normalized;
 
         if (manager.TryGetDirection(target, BodyCenter, out Vector2 fieldDirection))
@@ -214,7 +216,7 @@ public class EnemyAI : NetworkBehaviour
     {
         if (Time.time >= nextLineOfSightTime)
         {
-            nextLineOfSightTime = Time.time + lineOfSightInterval;
+            nextLineOfSightTime = Time.time + kit.LineOfSightInterval;
             hasLineOfSight = ObstacleQuery.IsClear(BodyCenter, BodyCenter + toTarget, bodyRadius * 1.15f);
         }
         return hasLineOfSight;
@@ -228,60 +230,24 @@ public class EnemyAI : NetworkBehaviour
         return slipperyMaterial;
     }
 
-    // Damage lands attackHitDelay later; swing state is always written (not gated on IsSpawned) so offline solo play works too.
-    private void StartAttack()
+    // Applies the kit's sprite/controller to the already-cached child renderer/animator.
+    public void ApplyVisual(Sprite sprite, RuntimeAnimatorController controller)
     {
-        nextAttackTime = Time.time + attackCooldown;
-        swingTarget = target;
-        pendingHitTime = Time.time + attackHitDelay;
-
-        Vector2 origin = BodyCenter;
-        Vector2 direction = (TargetCenter(target) - origin).normalized;
-        swingOrigin.Value = origin;
-        swingAngleDegrees.Value = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        if (IsSpawned)
-            swingCount.Value = (byte)(swingCount.Value + 1);
-        PlayAttackAnimation(origin, direction);
-    }
-
-    // Connects only if the victim is alive, in reach, and within the swing's frozen facing cone - matches the telegraph shown.
-    private void ResolveHit()
-    {
-        pendingHitTime = 0f;
-        if (swingTarget == null || swingTarget.IsDead)
-            return;
-
-        Vector2 toVictim = TargetCenter(swingTarget) - swingOrigin.Value;
-        float reach = attackRange * hitRangeTolerance;
-        if (toVictim.sqrMagnitude > reach * reach)
-            return;
-
-        Vector2 swingDirection = SwingDirection();
-        if (Vector2.Angle(swingDirection, toVictim) > attackAngle * 0.5f)
-            return;
-
-        swingTarget.RequestDamage(damage);
-    }
-
-    private Vector2 SwingDirection()
-    {
-        float radians = swingAngleDegrees.Value * Mathf.Deg2Rad;
-        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
-    }
-
-    // Remote clients reach this via HandleSwingCountChanged, with no local windup state of their own to use.
-    private void PlayAttackAnimation() => PlayAttackAnimation(swingOrigin.Value, SwingDirection());
-
-    private void PlayAttackAnimation(Vector2 origin, Vector2 direction)
-    {
+        if (spriteRenderer != null)
+            spriteRenderer.sprite = sprite;
         if (animator != null)
-        {
-            attackAnimationEndTime = Time.time + attackAnimationDuration;
-            currentAnimationHash = AttackHash;
-            animator.Play(AttackHash, 0, 0f);
-        }
+            animator.runtimeAnimatorController = controller;
+    }
 
-        AttackTelegraph.Show(origin, direction, attackAngle, attackRange * hitRangeTolerance, attackHitDelay);
+    // Called by EnemyActions so the shared Animator/state tracking stays in one place.
+    public void PlayAttackVisual(float duration)
+    {
+        if (animator == null)
+            return;
+
+        attackVisualEndTime = Time.time + duration;
+        currentAnimationHash = AttackHash;
+        animator.Play(AttackHash, 0, 0f);
     }
 
     // Faces movement and picks Attack/Run/Idle, playing only on state change.
@@ -306,7 +272,7 @@ public class EnemyAI : NetworkBehaviour
             lastMovedTime = Time.time;
 
         int desired;
-        if (Time.time < attackAnimationEndTime)
+        if (Time.time < attackVisualEndTime)
             desired = AttackHash;
         else
             desired = Time.time - lastMovedTime < 0.15f ? RunHash : IdleHash;

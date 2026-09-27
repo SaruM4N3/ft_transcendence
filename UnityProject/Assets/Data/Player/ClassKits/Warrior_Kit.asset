@@ -17,5 +17,7 @@ MonoBehaviour:
   ultimateCooldown: 5
   attackFxPrefab: {fileID: 7559628715613984797, guid: 0211bf62865831f9b90567f260708fee, type: 3}
   attackFxDistance: 1
-  attackMoveLockDuration: 0.3
-  attackMoveSpeedMultiplier: 0.35
+  attackMoveLockDuration: 0.25
+  attackMoveSpeedMultiplier: 0.75
+  attackAnimSpeed: 2.5
+  specialAnimSpeed: 2

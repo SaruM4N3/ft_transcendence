@@ -4,9 +4,12 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "ClassStats", menuName = "Transcendence/Class Stats")]
 public class ClassStats : ScriptableObject
 {
+    [Header("Health")]
     [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float maxMana = 50f;
     [SerializeField] private float healthRegenPerSecond = 1f;
+
+    [Header("Mana")]
+    [SerializeField] private float maxMana = 50f;
     [SerializeField] private float manaRegenPerSecond = 1f;
 
     public float MaxHealth => maxHealth;

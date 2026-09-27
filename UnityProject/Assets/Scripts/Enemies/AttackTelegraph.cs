@@ -18,14 +18,16 @@ public class AttackTelegraph : MonoBehaviour
     private MeshFilter meshFilter;
     private Color[] baseColors;
 
-    // Position/direction captured once at windup start - enemies stop moving to attack, so it never needs to follow the transform.
-    public static void Show(Vector3 position, Vector2 direction, float coneAngleDegrees, float radius, float duration)
+    // Parented to the enemy (if given) so it tracks any drift during the windup, instead of staying frozen in world space.
+    public static void Show(Transform anchor, Vector3 position, Vector2 direction, float coneAngleDegrees, float radius, float duration)
     {
         if (radius <= 0f || duration <= 0f || direction.sqrMagnitude < 0.0001f)
             return;
 
         var go = new GameObject("AttackTelegraph", typeof(MeshFilter), typeof(MeshRenderer));
         go.transform.position = position;
+        if (anchor != null)
+            go.transform.SetParent(anchor, worldPositionStays: true);
 
         AttackTelegraph telegraph = go.AddComponent<AttackTelegraph>();
         telegraph.Init(direction, coneAngleDegrees, radius, duration);

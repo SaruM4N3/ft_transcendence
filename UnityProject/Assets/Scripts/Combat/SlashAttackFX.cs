@@ -8,19 +8,20 @@ public class SlashAttackFX : MonoBehaviour, IAttackFX
 
     [SerializeField] private Sprite[] frames;
     [SerializeField] private float frameRate = 24f;
-    [SerializeField] private float damage = 15f;
 
     private SpriteRenderer spriteRenderer;
     private Collider2D hitbox;
     private GameObject owner;
+    private float damage;
     private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
     private int frameIndex;
     private float frameTimer;
 
     // Tracks the attacker for its whole lifetime, so a player moving mid-swing doesn't outrun it.
-    public void Init(GameObject attacker, bool hasHitbox)
+    public void Init(GameObject attacker, bool hasHitbox, float damageValue)
     {
         owner = attacker;
+        damage = damageValue;
         transform.SetParent(attacker.transform);
         if (!hasHitbox && hitbox != null)
             hitbox.enabled = false;

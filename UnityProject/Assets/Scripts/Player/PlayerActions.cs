@@ -181,6 +181,6 @@ public class PlayerActions : NetworkBehaviour
             return;
 
         GameObject fx = Instantiate(prefab, position, Quaternion.Euler(0f, 0f, angle));
-        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox);
+        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit.Damage);
     }
 }

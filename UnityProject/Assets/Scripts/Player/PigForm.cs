@@ -5,8 +5,6 @@ public class PigForm : MonoBehaviour
 {
     private const int StartupGraceFrames = 2;
     private const float TransformFxLifetime = 1f;
-    private const float FacingSampleInterval = 0.15f;
-    private const float MinFacingDistance = 0.05f;
 
     [SerializeField] private GameObject pigPrefab;
     [SerializeField] private float pigScale = 1.5f;
@@ -16,9 +14,12 @@ public class PigForm : MonoBehaviour
     private static readonly int IdleHash = Animator.StringToHash("Idle");
     private static readonly int RunHash = Animator.StringToHash("Run");
     private static readonly int ExplosionSpellHash = Animator.StringToHash("Explosion Spell");
+    private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
+    private static readonly int LastInputXHash = Animator.StringToHash("LastInputX");
 
     private PlayerStats stats;
     private SpriteRenderer bodyRenderer;
+    private Animator bodyAnimator;
     private Rigidbody2D rb;
     private Collider2D bodyCollider;
     private int enemyMask;
@@ -31,15 +32,12 @@ public class PigForm : MonoBehaviour
 
     private int currentAnimationHash;
     private int startFrame;
-    private bool isMoving;
-
-    private Vector2 facingSamplePosition;
-    private float nextFacingSampleTime;
 
     void Awake()
     {
         stats = GetComponent<PlayerStats>();
         bodyRenderer = GetComponent<SpriteRenderer>();
+        bodyAnimator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         bodyCollider = GetComponent<Collider2D>();
         enemyMask = LayerMask.GetMask("Enemy");
@@ -104,9 +102,6 @@ public class PigForm : MonoBehaviour
             rb.excludeLayers = active ? rb.excludeLayers | enemyMask : rb.excludeLayers & ~enemyMask;
 
         currentAnimationHash = 0;
-        isMoving = false;
-        facingSamplePosition = transform.position;
-        nextFacingSampleTime = 0f;
     }
 
     private void CreatePig()
@@ -121,19 +116,16 @@ public class PigForm : MonoBehaviour
         pig.transform.position += bodyCenter - pigRenderer.bounds.center;
     }
 
-    // Faces and animates off movement sampled over a real time window, so NetworkTransform interpolation jitter can't flicker it.
+    // Reuses the body's own Animator params (already kept in sync across peers by NetworkAnimator) instead of
+    // re-deriving movement from a remote-observed Transform, which can read as moving even at rest.
     private void UpdatePigVisuals()
     {
-        if (Time.time >= nextFacingSampleTime)
+        bool isMoving = bodyAnimator != null && bodyAnimator.GetBool(IsWalkingHash);
+        if (bodyAnimator != null)
         {
-            Vector2 position = transform.position;
-            Vector2 sampledDelta = position - facingSamplePosition;
-            facingSamplePosition = position;
-            nextFacingSampleTime = Time.time + FacingSampleInterval;
-
-            isMoving = sampledDelta.sqrMagnitude > MinFacingDistance * MinFacingDistance;
-            if (Mathf.Abs(sampledDelta.x) > MinFacingDistance)
-                pigRenderer.flipX = sampledDelta.x < 0f;
+            float lastInputX = bodyAnimator.GetFloat(LastInputXHash);
+            if (Mathf.Abs(lastInputX) > 0.01f)
+                pigRenderer.flipX = lastInputX < 0f;
         }
 
         int desired = isMoving ? RunHash : IdleHash;

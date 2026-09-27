@@ -193,6 +193,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveSpawner
   ShowTopMostFoldoutHeaderGroup: 1
   enemyPrefab: {fileID: 8760497899193580633, guid: 80684958157020e5b9d23c35045e0a68, type: 3}
+  enemyKits:
+  - {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
   baseEnemiesPerWave: 5
   extraEnemiesPerWave: 5
   extraEnemiesPerPlayer: 5

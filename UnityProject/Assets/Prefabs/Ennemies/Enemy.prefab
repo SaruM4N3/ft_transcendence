@@ -169,6 +169,8 @@ GameObject:
   - component: {fileID: 1403939639179829679}
   - component: {fileID: 1606808482985473777}
   - component: {fileID: 4087991535099103797}
+  - component: {fileID: 170043925852161942}
+  - component: {fileID: 3634697355849425219}
   m_Layer: 12
   m_Name: Enemy
   m_TagString: Untagged
@@ -311,7 +313,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStats
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 40
+  kit: {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
 --- !u!114 &5835712461897076585
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -325,21 +327,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 2.5
-  attackRange: 1.5
-  attackAngle: 70
-  damage: 10
-  attackCooldown: 1
-  attackHitDelay: 0.25
-  attackAnimationDuration: 0.6
-  attackMoveSpeedMultiplier: 0.2
-  hitRangeTolerance: 1.5
-  retargetInterval: 0.25
-  steerInterval: 0.1
-  directChaseRange: 8
-  lineOfSightInterval: 0.3
-  maxDistanceFromPlayers: 40
-  leashCheckInterval: 2
+  kit: {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
 --- !u!114 &1403939639179829679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -414,6 +402,38 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DamageNumberSpawner
   damageNumberPrefab: {fileID: 1363164118058132356, guid: b62b04b50060d6d08accea0da4101a45, type: 3}
   spawnOffset: {x: 0, y: 0.5, z: 0}
+--- !u!114 &170043925852161942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8760497899193580633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fc7d865fabeec7d9b374d45313dd4e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyActions
+  ShowTopMostFoldoutHeaderGroup: 1
+  kit: {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
+--- !u!114 &3634697355849425219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8760497899193580633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ab265f06dfecb664bbb446a9615838e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  ai: {fileID: 5835712461897076585}
+  actions: {fileID: 170043925852161942}
+  stats: {fileID: 5772978326802835593}
+  hitFlash: {fileID: 1606808482985473777}
+  damageNumbers: {fileID: 4087991535099103797}
+  networkTransform: {fileID: 1403939639179829679}
 --- !u!1001 &4390653813344600292
 PrefabInstance:
   m_ObjectHideFlags: 0

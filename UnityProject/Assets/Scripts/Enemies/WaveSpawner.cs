@@ -7,6 +7,7 @@ using UnityEngine;
 public class WaveSpawner : NetworkBehaviour
 {
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private EnemyKit[] enemyKits;
     [SerializeField] private int baseEnemiesPerWave = 3;
     [SerializeField] private int extraEnemiesPerWave = 2;
     [SerializeField] private int extraEnemiesPerPlayer = 2;
@@ -97,16 +98,29 @@ public class WaveSpawner : NetworkBehaviour
             offlineStartTime = Time.time;
     }
 
+    // Public so EnemyAI can resolve the same kit by index on every peer (see EnemyAI.ApplyKitFromIndex).
+    public EnemyKit GetKit(int index)
+    {
+        return index >= 0 && index < enemyKits.Length ? enemyKits[index] : null;
+    }
+
     private void SpawnWave(int count)
     {
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
 
         for (int i = 0; i < count; i++)
         {
+            const int kitIndex = 0; // only one enemy type for now
             GameObject instance = Instantiate(enemyPrefab, FindSpawnPosition(), Quaternion.identity);
+            instance.GetComponent<Enemy>().Initialize(GetKit(kitIndex));
+
             NetworkObject netObj = instance.GetComponent<NetworkObject>();
             if (isNetworked)
+            {
+                // Set before Spawn() so it's part of the initial state remote clients receive.
+                instance.GetComponent<EnemyAI>().SetNetworkedKitIndex(kitIndex);
                 netObj.Spawn(true);
+            }
         }
     }
 
