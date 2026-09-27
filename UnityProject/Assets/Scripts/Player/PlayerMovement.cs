@@ -41,8 +41,10 @@ public class PlayerMovement : NetworkBehaviour
     private PauseManager pauseManager;
     private PlayerStats stats;
 
-    // Blocked while paused or dead.
-    private bool IsBlocked => PauseManager.IsPaused || (stats != null && stats.IsDead);
+    private bool IsBlocked => PauseManager.IsPaused;
+
+    // Dead players (pigs) can still move but not fight.
+    private bool CanFight => !IsBlocked && (stats == null || !stats.IsDead);
 
     private const float FacingHysteresis = 1.15f;
     private const float BackwardDotThreshold = -0.1f;
@@ -62,21 +64,6 @@ public class PlayerMovement : NetworkBehaviour
         animator = GetComponent<Animator>();
 
         stats = GetComponent<PlayerStats>();
-        if (stats != null)
-            stats.OnHealthReplicated += HandleHealthReplicated;
-    }
-
-    void OnDestroy()
-    {
-        if (stats != null)
-            stats.OnHealthReplicated -= HandleHealthReplicated;
-    }
-
-    // Fires for every observer so a death is visible to all.
-    private void HandleHealthReplicated(float currentHealth, float maxHealth)
-    {
-        if (spriteRenderer != null)
-            spriteRenderer.enabled = currentHealth > 0f;
     }
 
     // Only the owner reads input and renders a camera.
@@ -135,6 +122,9 @@ public class PlayerMovement : NetworkBehaviour
         aimAngle.Value = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
         UpdateFacing(aimDir);
         UpdateMoveSpeedMult();
+
+        if (isGuarding && !CanFight)
+            StopGuarding();
 
         if (isGuarding)
         {
@@ -195,7 +185,7 @@ public class PlayerMovement : NetworkBehaviour
 
         bool wantsGuard = !ctx.canceled;
 
-        if (wantsGuard && (IsBlocked || Time.time < guardReadyTime))
+        if (wantsGuard && (!CanFight || Time.time < guardReadyTime))
             return;
 
         if (ctx.canceled && !isGuarding)
@@ -215,7 +205,7 @@ public class PlayerMovement : NetworkBehaviour
 
     public void LightAttack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || IsBlocked || Time.time < lightAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < lightAttackReadyTime)
             return;
 
         animator.SetTrigger(LightAttackHash);
@@ -277,12 +267,20 @@ public class PlayerMovement : NetworkBehaviour
 
     public void HeavyAttack(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled() || !ctx.performed || IsBlocked || Time.time < heavyAttackReadyTime)
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < heavyAttackReadyTime)
             return;
 
         animator.SetTrigger(HeavyAttackHash);
         heavyAttackReadyTime = Time.time + heavyAttackCooldown;
         OnAbilityUsed?.Invoke(AbilityType.HeavyAttack, heavyAttackCooldown);
+    }
+
+    // Drops the guard when it can no longer be held, e.g. on death.
+    private void StopGuarding()
+    {
+        isGuarding = false;
+        animator.SetBool(IsGuardingHash, false);
+        animator.SetBool(IsWalkingHash, moveInput.sqrMagnitude > 0.01f);
     }
 
     // Snaps the aim to a cardinal facing, with hysteresis so diagonals don't flicker.
