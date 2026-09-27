@@ -82,13 +82,16 @@ public static class FriendsManager
             OnInviteReceived?.Invoke(invite);
     }
 
-    // Code of the current session, or null when solo.
+    // Code of the live session, or null when solo; stale entries left by a deleted session are ignored.
     public static string CurrentSessionCode
     {
         get
         {
+            if (Unity.Netcode.NetworkManager.Singleton == null || !Unity.Netcode.NetworkManager.Singleton.IsListening)
+                return null;
+
             foreach (var pair in MultiplayerService.Instance.Sessions)
-                if (!string.IsNullOrEmpty(pair.Value.Code))
+                if (pair.Value.State == SessionState.Connected && !string.IsNullOrEmpty(pair.Value.Code))
                     return pair.Value.Code;
             return null;
         }

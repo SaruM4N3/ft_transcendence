@@ -1,8 +1,6 @@
-using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
-using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -104,31 +102,9 @@ public class PauseManager : MonoBehaviour
     private async Task LeaveSessionThenLoadLobbyAsync()
     {
         if (IsOnline)
-            await LeaveSessionAsync();
+            await SessionDisconnectHandler.LeaveSessionsAsync();
 
         LoadingScreenManager.LoadScene(lobbySceneName);
-    }
-
-    // Hosts delete the session; a failed call never blocks leaving.
-    private static async Task LeaveSessionAsync()
-    {
-        foreach (ISession session in MultiplayerService.Instance.Sessions.Values.ToList())
-        {
-            try
-            {
-                if (session.IsHost)
-                    await session.AsHost().DeleteAsync();
-                else
-                    await session.LeaveAsync();
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning($"PauseManager: couldn't leave session cleanly - {e.Message}");
-            }
-        }
-
-        if (IsOnline)
-            NetworkManager.Singleton.Shutdown();
     }
 
     // Shows the leave button when there is somewhere to go; hides Quit on WebGL.
