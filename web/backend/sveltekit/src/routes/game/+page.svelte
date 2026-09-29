@@ -113,9 +113,15 @@
 </div>
 
 <style>
+    :global(body) {
+        margin: 0;
+        cursor: none !important;
+
+    }
+
     .game-page {
         width: 100vw;
-        height: 99vh;
+        height: 100vh;
         overflow: hidden;
     }
 
@@ -127,6 +133,7 @@
     #unity-canvas {
         width: 100%;
         height: 100%;
+        cursor: none !important;
     }
 
     #unity-loading-bar {

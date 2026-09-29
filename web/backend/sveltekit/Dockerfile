@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=build /app/build ./build
 COPY --from=build /app/package*.json ./
 #2
-RUN npm ci --omit=Developers
+RUN npm ci
 USER node
 EXPOSE 3000
 CMD ["node", "build"]
