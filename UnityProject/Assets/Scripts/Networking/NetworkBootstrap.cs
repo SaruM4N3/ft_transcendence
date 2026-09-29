@@ -209,7 +209,7 @@ public class NetworkBootstrap : MonoBehaviour
         if (offlinePlayer == null)
             return (0, 0, string.Empty, Vector3.zero, Quaternion.identity);
 
-        PlayerCustomization customization = offlinePlayer.GetComponent<PlayerCustomization>();
+        Player customization = offlinePlayer.GetComponent<Player>();
         (int classIndex, int colorIndex, string playerName) current = customization != null
             ? (customization.ClassIndex, customization.ColorIndex, customization.PlayerName)
             : (0, 0, string.Empty);
@@ -237,7 +237,7 @@ public class NetworkBootstrap : MonoBehaviour
         }
 
         NetworkObject playerObject = NetworkManager.Singleton.LocalClient?.PlayerObject;
-        PlayerCustomization customization = playerObject != null ? playerObject.GetComponent<PlayerCustomization>() : null;
+        Player customization = playerObject != null ? playerObject.GetComponent<Player>() : null;
         if (customization != null)
         {
             customization.SetSelection(classIndex, colorIndex);

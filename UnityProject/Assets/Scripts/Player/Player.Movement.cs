@@ -3,15 +3,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-public class PlayerMovement : NetworkBehaviour
+public partial class Player
 {
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float runSpeed = 10f;
 
-    private SpriteRenderer spriteRenderer;
-    private Rigidbody2D rb;
     private Camera cam;
-    private PlayerActions actions;
 
     private readonly NetworkVariable<float> aimAngle = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -19,7 +17,6 @@ public class PlayerMovement : NetworkBehaviour
     public float AimAngleDegrees => aimAngle.Value;
     public bool HasMoveInput => moveInput.sqrMagnitude > 0.01f;
 
-    private Animator animator;
     private Vector2 moveInput;
     private Vector2 facing = Vector2.down;
     private bool facingApplied;
@@ -27,8 +24,6 @@ public class PlayerMovement : NetworkBehaviour
     private bool isRunning;
 
     private PauseManager pauseManager;
-
-    private bool IsBlocked => PauseManager.IsPaused;
 
     private const float FacingHysteresis = 1.15f;
     private const float BackwardDotThreshold = -0.1f;
@@ -39,40 +34,32 @@ public class PlayerMovement : NetworkBehaviour
     private static readonly int LastInputYHash = Animator.StringToHash("LastInputY");
 
     // Also applies keybinds here, covering the offline player which never goes through OnNetworkSpawn.
-    void Start()
+    private void StartMovement()
     {
-        rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        animator = GetComponent<Animator>();
-        actions = GetComponent<PlayerActions>();
-
-        PlayerInput input = GetComponent<PlayerInput>();
-        if (input != null)
-            KeybindOverrides.Apply(input.actions);
+        if (playerInput != null)
+            KeybindOverrides.Apply(playerInput.actions);
     }
 
     // Only the owner reads input and renders a camera.
-    public override void OnNetworkSpawn()
+    private void SpawnMovement()
     {
         if (!IsOwner)
         {
-            PlayerInput input = GetComponent<PlayerInput>();
-            if (input != null)
-                input.enabled = false;
+            if (playerInput != null)
+                playerInput.enabled = false;
 
             PlayerCameraRig.SetActive(transform, active: false);
             return;
         }
 
-        PlayerInput ownerInput = GetComponent<PlayerInput>();
-        if (ownerInput != null)
-            KeybindOverrides.Apply(ownerInput.actions);
+        if (playerInput != null)
+            KeybindOverrides.Apply(playerInput.actions);
 
         if (NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadComplete += HandleSceneLoadComplete;
     }
 
-    public override void OnNetworkDespawn()
+    private void DespawnMovement()
     {
         if (IsOwner && NetworkManager != null && NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
@@ -87,13 +74,12 @@ public class PlayerMovement : NetworkBehaviour
         if (spawnPoint == null)
             return;
 
-        Rigidbody2D body = GetComponent<Rigidbody2D>();
-        body.position = spawnPoint.transform.position;
-        body.linearVelocity = Vector2.zero;
+        rb.position = spawnPoint.transform.position;
+        rb.linearVelocity = Vector2.zero;
         transform.position = spawnPoint.transform.position;
     }
 
-    void Update()
+    private void UpdateMovement()
     {
         FlipTowards(animator.GetFloat(LastInputXHash));
 
@@ -107,14 +93,23 @@ public class PlayerMovement : NetworkBehaviour
             return;
         }
 
-        Vector2 aimDir = GetMouseAimDirection();
+        // Dead (pig form): face where it's walking, not the mouse - there's nothing left to aim.
+        Vector2 aimDir = IsDead ? GetMovementFacingDirection() : GetMouseAimDirection();
         aimAngle.Value = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
         UpdateFacing(aimDir);
         UpdateMoveSpeedMult();
 
-        actions?.StopGuardingIfCannotFight();
+        StopGuardingIfCannotFight();
 
-        float speedMult = actions != null ? actions.MovementSpeedMultiplier : 1f;
+        // Mounted on a pig to revive it: can still aim/attack, but UpdateMount drives position instead.
+        if (isMounted)
+        {
+            rb.linearVelocity = Vector2.zero;
+            animator.SetBool(IsWalkingHash, false);
+            return;
+        }
+
+        float speedMult = MovementSpeedMultiplier;
         if (speedMult <= 0f)
         {
             rb.linearVelocity = Vector2.zero;
@@ -135,8 +130,7 @@ public class PlayerMovement : NetworkBehaviour
         if (IsBlocked)
             return;
 
-        bool isGuarding = actions != null && actions.IsGuarding;
-        animator.SetBool(IsWalkingHash, !isGuarding && hasDirection);
+        animator.SetBool(IsWalkingHash, !IsGuarding && hasDirection);
     }
 
     public void Run(InputAction.CallbackContext ctx)
@@ -163,6 +157,11 @@ public class PlayerMovement : NetworkBehaviour
             pauseManager = FindAnyObjectByType<PauseManager>();
 
         pauseManager?.Pause(ctx);
+    }
+
+    private Vector2 GetMovementFacingDirection()
+    {
+        return moveInput.sqrMagnitude > 0.0001f ? moveInput.normalized : facing;
     }
 
     // Mouse-to-world aim, evaluated every frame.

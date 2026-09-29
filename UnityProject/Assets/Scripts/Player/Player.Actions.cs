@@ -3,17 +3,13 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Attack/Special/Ultimate: cooldowns, FX spawning, guard state, all driven by the active ClassKit.
-public class PlayerActions : NetworkBehaviour
+public partial class Player
 {
     public static event Action<AbilityType, float> OnAbilityUsed;
 
+    [Header("Actions")]
     [SerializeField] private ClassKit defaultKit;
 
-    private Animator animator;
-    private PlayerMovement movement;
-    private PlayerCustomization customization;
-    private PlayerStats stats;
     private ClassKit activeKit;
 
     private bool isGuarding;
@@ -35,12 +31,9 @@ public class PlayerActions : NetworkBehaviour
         }
     }
 
-    private bool IsBlocked => PauseManager.IsPaused;
-
     // Dead players (pigs) can still move but not fight.
-    private bool CanFight => !IsBlocked && (stats == null || !stats.IsDead);
+    private bool CanFight => !IsBlocked && !IsDead;
 
-    private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
     // Animator parameter strings stay as-is (LightAttack/HeavyAttack) - only the C#-facing names change.
     private static readonly int AttackHash = Animator.StringToHash("LightAttack");
@@ -48,23 +41,17 @@ public class PlayerActions : NetworkBehaviour
     private static readonly int AttackAnimSpeedHash = Animator.StringToHash("AttackAnimSpeed");
     private static readonly int SpecialAnimSpeedHash = Animator.StringToHash("SpecialAnimSpeed");
 
-    void Awake()
+    private void AwakeActions()
     {
-        animator = GetComponent<Animator>();
-        movement = GetComponent<PlayerMovement>();
-        customization = GetComponent<PlayerCustomization>();
-        stats = GetComponent<PlayerStats>();
-
         RefreshActiveKit();
-        if (customization != null)
-            customization.OnClassOrColorChanged += (_, _) => RefreshActiveKit();
+        OnClassOrColorChanged += (_, _) => RefreshActiveKit();
     }
 
     private void RefreshActiveKit()
     {
-        ClassKit kit = null;
-        if (customization != null && CharacterCustomizationMenu.Instance != null)
-            kit = CharacterCustomizationMenu.Instance.GetKit(customization.ClassIndex);
+        ClassKit kit = CharacterCustomizationMenu.Instance != null
+            ? CharacterCustomizationMenu.Instance.GetKit(ClassIndex)
+            : null;
         activeKit = kit != null ? kit : defaultKit;
     }
 
@@ -80,7 +67,7 @@ public class PlayerActions : NetworkBehaviour
             isAttackHeld = true;
     }
 
-    void Update()
+    private void UpdateActions()
     {
         if (isAttackHeld && this.IsLocallyControlled() && CanFight && Time.time >= attackReadyTime)
             FireAttack();
@@ -124,7 +111,7 @@ public class PlayerActions : NetworkBehaviour
         isGuarding = wantsGuard;
 
         animator.SetBool(IsGuardingHash, isGuarding);
-        animator.SetBool(IsWalkingHash, !isGuarding && movement != null && movement.HasMoveInput);
+        animator.SetBool(IsWalkingHash, !isGuarding && HasMoveInput);
 
         if (ctx.canceled)
         {
@@ -141,7 +128,7 @@ public class PlayerActions : NetworkBehaviour
 
         isGuarding = false;
         animator.SetBool(IsGuardingHash, false);
-        animator.SetBool(IsWalkingHash, movement != null && movement.HasMoveInput);
+        animator.SetBool(IsWalkingHash, HasMoveInput);
     }
 
     private void SpawnAttackFx()
@@ -149,38 +136,40 @@ public class PlayerActions : NetworkBehaviour
         if (activeKit.AttackFxPrefab == null)
             return;
 
-        float angle = movement.AimAngleDegrees;
-        Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
-        Vector3 spawnPos = transform.position + (Vector3)(dir * activeKit.AttackFxDistance);
+        float angle = AimAngleDegrees;
 
         if (NetworkObject.IsSpawned)
-            SpawnAttackFxServerRpc(spawnPos, angle);
+            SpawnAttackFxServerRpc(angle);
         else
-            SpawnLocalFx(spawnPos, angle, hasHitbox: true);
+            SpawnLocalFx(angle, hasHitbox: true);
     }
 
     [ServerRpc]
-    private void SpawnAttackFxServerRpc(Vector3 position, float angle)
+    private void SpawnAttackFxServerRpc(float angle)
     {
-        SpawnAttackFxClientRpc(position, angle, OwnerClientId);
+        SpawnAttackFxClientRpc(angle, OwnerClientId);
     }
 
     // Spawns the attack FX on every client; only the attacker's copy deals damage.
     [ClientRpc]
-    private void SpawnAttackFxClientRpc(Vector3 position, float angle, ulong attackerClientId)
+    private void SpawnAttackFxClientRpc(float angle, ulong attackerClientId)
     {
         bool hasHitbox = NetworkManager.Singleton.LocalClientId == attackerClientId;
-        SpawnLocalFx(position, angle, hasHitbox);
+        SpawnLocalFx(angle, hasHitbox);
     }
 
-    // Not parented here - each FX type decides that for itself (a slash tracks the attacker, a projectile doesn't).
-    private void SpawnLocalFx(Vector3 position, float angle, bool hasHitbox)
+    // Position is computed locally from the attacker's current transform, not sent over RPC - a client's round-trip
+    // latency would otherwise bake a stale offset into the spawn point, making the FX look detached from the start.
+    private void SpawnLocalFx(float angle, bool hasHitbox)
     {
         GameObject prefab = activeKit.AttackFxPrefab;
         if (prefab == null)
             return;
 
-        GameObject fx = Instantiate(prefab, position, Quaternion.Euler(0f, 0f, angle));
+        Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        Vector3 spawnPos = transform.position + (Vector3)(dir * activeKit.AttackFxDistance);
+
+        GameObject fx = Instantiate(prefab, spawnPos, Quaternion.Euler(0f, 0f, angle));
         fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit.Damage);
     }
 }

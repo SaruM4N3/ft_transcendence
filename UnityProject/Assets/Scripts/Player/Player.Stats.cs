@@ -1,12 +1,14 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class PlayerStats : NetworkBehaviour, IDamageable
+public partial class Player
 {
+    [Header("Stats")]
     [SerializeField] private ClassStats defaultStats;
-    [SerializeField] private PlayerCustomization customization;
 
     private ClassStats activeStats;
     private float maxHealth;
@@ -25,15 +27,12 @@ public class PlayerStats : NetworkBehaviour, IDamageable
 
     public static event Action<float, float> OnHealthChanged;
     public static event Action<float, float> OnManaChanged;
-    public static event Action<PlayerStats> OnPlayerDied;
+    public static event Action<Player> OnPlayerDied;
 
     public event Action<float, float> OnHealthReplicated;
 
-    void Awake()
+    private void AwakeStats()
     {
-        if (customization == null)
-            customization = GetComponent<PlayerCustomization>();
-
         RefreshActiveStats();
         CurrentMana = maxMana;
         currentHealth.OnValueChanged += (previousValue, newValue) =>
@@ -44,19 +43,18 @@ public class PlayerStats : NetworkBehaviour, IDamageable
             if (this.IsLocallyControlled())
                 OnHealthChanged?.Invoke(newValue, maxHealth);
         };
-        if (customization != null)
-            customization.OnClassOrColorChanged += (_, _) => HandleClassChanged();
+        OnClassOrColorChanged += (_, _) => HandleClassChanged();
         StartCoroutine(InitializeHealthNextFrame());
     }
 
-    private System.Collections.IEnumerator InitializeHealthNextFrame()
+    private IEnumerator InitializeHealthNextFrame()
     {
         yield return null;
         if (this.IsLocallyControlled())
             currentHealth.Value = maxHealth;
     }
 
-    void Start()
+    private void StartStats()
     {
         if (!this.IsLocallyControlled())
             return;
@@ -65,19 +63,19 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
-    public override void OnNetworkSpawn()
+    private void SpawnStats()
     {
         if (NetworkManager != null && NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadEventCompleted += HandleSceneLoadEventCompleted;
     }
 
-    public override void OnNetworkDespawn()
+    private void DespawnStats()
     {
         if (NetworkManager != null && NetworkManager.SceneManager != null)
             NetworkManager.SceneManager.OnLoadEventCompleted -= HandleSceneLoadEventCompleted;
     }
 
-    private void HandleSceneLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, System.Collections.Generic.List<ulong> clientsCompleted, System.Collections.Generic.List<ulong> clientsTimedOut)
+    private void HandleSceneLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         ResetToFull();
     }
@@ -92,7 +90,7 @@ public class PlayerStats : NetworkBehaviour, IDamageable
         OnManaChanged?.Invoke(CurrentMana, maxMana);
     }
 
-    void Update()
+    private void UpdateStats()
     {
         if (!this.IsLocallyControlled() || activeStats == null || IsDead)
             return;
@@ -113,9 +111,9 @@ public class PlayerStats : NetworkBehaviour, IDamageable
 
     private void RefreshActiveStats()
     {
-        ClassStats stats = null;
-        if (customization != null && CharacterCustomizationMenu.Instance != null)
-            stats = CharacterCustomizationMenu.Instance.GetStats(customization.ClassIndex);
+        ClassStats stats = CharacterCustomizationMenu.Instance != null
+            ? CharacterCustomizationMenu.Instance.GetStats(ClassIndex)
+            : null;
         activeStats = stats != null ? stats : defaultStats;
 
         maxHealth = activeStats != null ? activeStats.MaxHealth : 100f;
@@ -154,6 +152,40 @@ public class PlayerStats : NetworkBehaviour, IDamageable
     private void ApplyDamageClientRpc(float amount, ClientRpcParams rpcParams = default)
     {
         TakeDamage(amount);
+    }
+
+    // Called by a rider once the 20s mount channel completes; routed to the downed player's own owner, same pattern as damage.
+    public void RequestRevive()
+    {
+        if (!NetworkObject.IsSpawned)
+        {
+            Revive();
+            return;
+        }
+        RequestReviveServerRpc();
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestReviveServerRpc()
+    {
+        ApplyReviveClientRpc(new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
+        });
+    }
+
+    [ClientRpc]
+    private void ApplyReviveClientRpc(ClientRpcParams rpcParams = default)
+    {
+        Revive();
+    }
+
+    private void Revive()
+    {
+        if (!this.IsLocallyControlled())
+            return;
+
+        currentHealth.Value = maxHealth;
     }
 
     public void Heal(float amount)

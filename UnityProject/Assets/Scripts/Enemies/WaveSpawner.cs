@@ -82,7 +82,7 @@ public class WaveSpawner : NetworkBehaviour
             if (IsSpawned)
                 currentWave.Value = waveNumber;
 
-            int playerCount = Mathf.Max(1, PlayerCustomization.AllActiveInstances.Count);
+            int playerCount = Mathf.Max(1, Player.AllActiveInstances.Count);
             int count = baseEnemiesPerWave + (waveNumber - 1) * extraEnemiesPerWave + (playerCount - 1) * extraEnemiesPerPlayer;
             SpawnWave(count);
 
@@ -110,7 +110,8 @@ public class WaveSpawner : NetworkBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            const int kitIndex = 0; // only one enemy type for now
+            // Only one enemy type for now.
+            const int kitIndex = 0;
             GameObject instance = Instantiate(enemyPrefab, FindSpawnPosition(), Quaternion.identity);
             instance.GetComponent<Enemy>().Initialize(GetKit(kitIndex));
 
@@ -148,7 +149,7 @@ public class WaveSpawner : NetworkBehaviour
     {
         EnemyFlowFieldManager manager = EnemyFlowFieldManager.Instance;
         manager.RefreshPlayers();
-        IReadOnlyList<PlayerStats> living = manager.LivingPlayers;
+        IReadOnlyList<Player> living = manager.LivingPlayers;
 
         return living.Count > 0 ? living[Random.Range(0, living.Count)].transform.position : transform.position;
     }

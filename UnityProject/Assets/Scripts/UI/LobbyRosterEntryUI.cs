@@ -2,46 +2,40 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// One roster row, explicitly bound to a player's customization and stats.
+// One roster row, explicitly bound to a player.
 public class LobbyRosterEntryUI : MonoBehaviour
 {
     [SerializeField] private Image avatarImage;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private Image healthFillImage;
 
-    private PlayerCustomization boundCustomization;
-    private PlayerStats boundStats;
+    private Player boundPlayer;
 
-    public void Bind(PlayerCustomization customization, PlayerStats stats)
+    public void Bind(Player player)
     {
         Unbind();
 
-        boundCustomization = customization;
-        boundStats = stats;
+        boundPlayer = player;
 
-        customization.OnDisplayNameChanged += SetName;
-        customization.OnClassOrColorChanged += SetAvatar;
-        if (stats != null)
-            stats.OnHealthReplicated += SetHealth;
+        player.OnDisplayNameChanged += SetName;
+        player.OnClassOrColorChanged += SetAvatar;
+        player.OnHealthReplicated += SetHealth;
 
-        SetName(customization.CurrentDisplayName);
-        SetAvatar(customization.ClassIndex, customization.ColorIndex);
-        if (stats != null)
-            SetHealth(stats.CurrentHealth, stats.MaxHealth);
+        SetName(player.CurrentDisplayName);
+        SetAvatar(player.ClassIndex, player.ColorIndex);
+        SetHealth(player.CurrentHealth, player.MaxHealth);
     }
 
     public void Unbind()
     {
-        if (boundCustomization != null)
+        if (boundPlayer != null)
         {
-            boundCustomization.OnDisplayNameChanged -= SetName;
-            boundCustomization.OnClassOrColorChanged -= SetAvatar;
+            boundPlayer.OnDisplayNameChanged -= SetName;
+            boundPlayer.OnClassOrColorChanged -= SetAvatar;
+            boundPlayer.OnHealthReplicated -= SetHealth;
         }
-        if (boundStats != null)
-            boundStats.OnHealthReplicated -= SetHealth;
 
-        boundCustomization = null;
-        boundStats = null;
+        boundPlayer = null;
     }
 
     private void OnDestroy() => Unbind();

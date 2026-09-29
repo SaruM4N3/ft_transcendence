@@ -16,7 +16,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     [SerializeField] private TMP_InputField nameInputField;
     [SerializeField] private int maxNameLength = 20;
-    [SerializeField] private GameObject previewCharacter;
 
     private void Awake()
     {
@@ -26,21 +25,28 @@ public class CharacterCustomizationMenu : MonoBehaviour
             nameInputField.onEndEdit.AddListener(SetPlayerName);
     }
 
+    // Renders the real local player (not a separate doll) into CharacterPreviewRT while the panel is open.
     private void OnEnable()
     {
         GameObject player = LocalPlayer.Get();
         if (player == null)
             return;
 
-        if (nameInputField != null)
-        {
-            PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
-            if (customization != null)
-                nameInputField.text = customization.PlayerName;
-        }
+        Player customization = player.GetComponent<Player>();
 
-        if (previewCharacter != null)
-            ApplyVisuals(previewCharacter, CurrentClassIndex(player), CurrentColorIndex(player));
+        if (nameInputField != null && customization != null)
+            nameInputField.text = customization.PlayerName;
+
+        customization?.SetPreviewCameraActive(true);
+    }
+
+    private void OnDisable()
+    {
+        GameObject player = LocalPlayer.Get();
+        if (player == null)
+            return;
+
+        player.GetComponent<Player>()?.SetPreviewCameraActive(false);
     }
 
     public void SetPlayerName(string value)
@@ -55,7 +61,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (player == null)
             return;
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         if (customization != null)
             customization.SetName(value);
 
@@ -136,7 +142,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (player == null)
             return string.Empty;
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         return customization != null ? customization.PlayerName : string.Empty;
     }
 
@@ -169,14 +175,11 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (!ApplyVisuals(player, classIndex, colorIndex))
             return;
 
-        if (previewCharacter != null)
-            ApplyVisuals(previewCharacter, classIndex, colorIndex);
-
         OnPortraitChanged?.Invoke(colorVariants[colorIndex].portraitSpritesByClass[classIndex]);
         if (colorIndex < backgroundSpritesByColor.Length)
             OnBackgroundChanged?.Invoke(backgroundSpritesByColor[colorIndex]);
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         if (customization != null)
             customization.SetSelection(classIndex, colorIndex);
     }
@@ -194,7 +197,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (colorIndex < backgroundSpritesByColor.Length)
             OnBackgroundChanged?.Invoke(backgroundSpritesByColor[colorIndex]);
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         if (customization != null && !string.IsNullOrEmpty(customization.PlayerName))
             OnNameChanged?.Invoke(customization.PlayerName);
     }

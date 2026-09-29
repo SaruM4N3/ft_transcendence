@@ -14,29 +14,27 @@ public class MouseDirectionIndicator : MonoBehaviour
     };
 
     private SpriteRenderer spriteRenderer;
-    private PlayerMovement playerMovement;
-    private PlayerCustomization customization;
+    private Player player;
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        playerMovement = GetComponentInParent<PlayerMovement>();
-        customization = GetComponentInParent<PlayerCustomization>();
+        player = GetComponentInParent<Player>();
     }
 
     void OnEnable()
     {
-        if (customization == null)
+        if (player == null)
             return;
 
-        customization.OnClassOrColorChanged += ApplyColor;
-        ApplyColor(customization.ClassIndex, customization.ColorIndex);
+        player.OnClassOrColorChanged += ApplyColor;
+        ApplyColor(player.ClassIndex, player.ColorIndex);
     }
 
     void OnDisable()
     {
-        if (customization != null)
-            customization.OnClassOrColorChanged -= ApplyColor;
+        if (player != null)
+            player.OnClassOrColorChanged -= ApplyColor;
     }
 
     private void ApplyColor(int classIndex, int colorIndex)
@@ -49,13 +47,13 @@ public class MouseDirectionIndicator : MonoBehaviour
 
     void Update()
     {
-        if (playerMovement == null)
+        if (player == null)
             return;
 
         spriteRenderer.enabled = true;
         if (PauseManager.IsPaused)
             return;
 
-        transform.rotation = Quaternion.Euler(0f, 0f, playerMovement.AimAngleDegrees - 90f);
+        transform.rotation = Quaternion.Euler(0f, 0f, player.AimAngleDegrees - 90f);
     }
 }

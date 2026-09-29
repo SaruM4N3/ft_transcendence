@@ -36,9 +36,9 @@ public class ReadyCheckUI : MonoBehaviour
 
     private bool isOpen;
     private ModeReadyCheck subscribedInstance;
-    private readonly List<PlayerCustomization> orderedPlayers = new List<PlayerCustomization>();
-    private readonly Dictionary<PlayerCustomization, ReadyCheckEntryUI> rows =
-        new Dictionary<PlayerCustomization, ReadyCheckEntryUI>();
+    private readonly List<Player> orderedPlayers = new List<Player>();
+    private readonly Dictionary<Player, ReadyCheckEntryUI> rows =
+        new Dictionary<Player, ReadyCheckEntryUI>();
     private readonly List<RectTransform> teamButtons = new List<RectTransform>();
     private string[] currentTeamNames;
 
@@ -52,8 +52,8 @@ public class ReadyCheckUI : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerCustomization.OnPlayerRegistered += HandlePlayerRegistered;
-        PlayerCustomization.OnPlayerUnregistered += HandlePlayerUnregistered;
+        Player.OnPlayerRegistered += HandlePlayerRegistered;
+        Player.OnPlayerUnregistered += HandlePlayerUnregistered;
     }
 
     private void OnDisable()
@@ -61,8 +61,8 @@ public class ReadyCheckUI : MonoBehaviour
         if (subscribedInstance != null)
             subscribedInstance.OnPendingSceneChanged -= HandlePendingSceneChanged;
         subscribedInstance = null;
-        PlayerCustomization.OnPlayerRegistered -= HandlePlayerRegistered;
-        PlayerCustomization.OnPlayerUnregistered -= HandlePlayerUnregistered;
+        Player.OnPlayerRegistered -= HandlePlayerRegistered;
+        Player.OnPlayerUnregistered -= HandlePlayerUnregistered;
 
         ClearRows();
         RebuildTeamButtons(null);
@@ -130,7 +130,7 @@ public class ReadyCheckUI : MonoBehaviour
 
             Button button = buttonRect.GetComponent<Button>();
             if (button != null)
-                button.onClick.AddListener(() => LocalPlayer.GetCustomization()?.SetTeam(teamIndex));
+                button.onClick.AddListener(() => LocalPlayer.GetPlayer()?.SetTeam(teamIndex));
 
             teamButtons.Add(buttonRect);
         }
@@ -139,7 +139,7 @@ public class ReadyCheckUI : MonoBehaviour
     private void RebuildRows()
     {
         ClearRows();
-        foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
+        foreach (Player player in Player.AllActiveInstances)
             AddRow(player);
     }
 
@@ -153,7 +153,7 @@ public class ReadyCheckUI : MonoBehaviour
     }
 
     // Adds a row when a player joins during a check.
-    private void HandlePlayerRegistered(PlayerCustomization player)
+    private void HandlePlayerRegistered(Player player)
     {
         if (!isOpen || rows.ContainsKey(player))
             return;
@@ -161,7 +161,7 @@ public class ReadyCheckUI : MonoBehaviour
         AddRow(player);
     }
 
-    private void HandlePlayerUnregistered(PlayerCustomization player)
+    private void HandlePlayerUnregistered(Player player)
     {
         if (!rows.TryGetValue(player, out ReadyCheckEntryUI entry))
             return;
@@ -173,7 +173,7 @@ public class ReadyCheckUI : MonoBehaviour
         RelayoutRows();
     }
 
-    private void AddRow(PlayerCustomization player)
+    private void AddRow(Player player)
     {
         if (rowTemplate == null)
             return;
@@ -202,11 +202,11 @@ public class ReadyCheckUI : MonoBehaviour
 
     public void ToggleReady()
     {
-        PlayerCustomization customization = LocalPlayer.GetCustomization();
-        if (customization == null)
+        Player player = LocalPlayer.GetPlayer();
+        if (player == null)
             return;
 
-        customization.SetReady(!customization.IsReady);
+        player.SetReady(!player.IsReady);
         UpdateReadyButtonLabel();
     }
 
@@ -215,7 +215,7 @@ public class ReadyCheckUI : MonoBehaviour
         if (readyButtonLabel == null)
             return;
 
-        PlayerCustomization customization = LocalPlayer.GetCustomization();
-        readyButtonLabel.text = customization != null && customization.IsReady ? "Cancel" : "Ready";
+        Player player = LocalPlayer.GetPlayer();
+        readyButtonLabel.text = player != null && player.IsReady ? "Cancel" : "Ready";
     }
 }

@@ -17,12 +17,12 @@ public class CooldownIcon : MonoBehaviour
 
     void OnEnable()
     {
-        PlayerActions.OnAbilityUsed += HandleAbilityUsed;
+        Player.OnAbilityUsed += HandleAbilityUsed;
     }
 
     void OnDisable()
     {
-        PlayerActions.OnAbilityUsed -= HandleAbilityUsed;
+        Player.OnAbilityUsed -= HandleAbilityUsed;
     }
 
     void Update()

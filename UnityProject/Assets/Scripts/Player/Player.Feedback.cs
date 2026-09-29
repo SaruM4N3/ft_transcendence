@@ -1,62 +1,47 @@
 using Unity.Cinemachine;
-using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-// Hurt and attack game-feel: flash, shake, red edges.
-[RequireComponent(typeof(PlayerStats))]
-public class PlayerFeedback : NetworkBehaviour
+public partial class Player
 {
+    [Header("References")]
     [SerializeField] private CinemachineImpulseSource impulseSource;
     [SerializeField] private SpriteHitFlash hitFlash;
 
+    [Header("Feedback")]
     [SerializeField] private float hurtShake = 0.35f;
     [SerializeField] private float hurtVignetteStrength = 0.6f;
     [SerializeField] private float hurtVignetteDuration = 0.45f;
-    [FormerlySerializedAs("lightAttackShake")]
     [SerializeField] private float attackShake = 0.06f;
-    [FormerlySerializedAs("heavyAttackShake")]
     [SerializeField] private float specialShake = 0.15f;
     [SerializeField] private float hitLandedShake = 0.12f;
 
-    private PlayerStats stats;
     private ScreenEdgeFlash edgeFlash;
     private float lastHealth = -1f;
 
-    // Skips the customization preview, which has no NetworkObject.
-    void Awake()
+    private void AwakeFeedback()
     {
-        if (GetComponent<NetworkObject>() == null)
-        {
-            enabled = false;
-            return;
-        }
-
-        stats = GetComponent<PlayerStats>();
         if (impulseSource == null)
             impulseSource = GetComponent<CinemachineImpulseSource>();
         if (hitFlash == null)
             hitFlash = GetComponent<SpriteHitFlash>();
     }
 
-    void OnEnable()
+    private void OnEnableFeedback()
     {
-        stats.OnHealthReplicated += HandleHealthReplicated;
-        PlayerActions.OnAbilityUsed += HandleAbilityUsed;
+        OnHealthReplicated += HandleHealthReplicated;
+        OnAbilityUsed += HandleAbilityUsed;
         SlashAttackFX.OnHitLanded += HandleHitLanded;
     }
 
-    void OnDisable()
+    private void OnDisableFeedback()
     {
-        if (stats != null)
-            stats.OnHealthReplicated -= HandleHealthReplicated;
-        PlayerActions.OnAbilityUsed -= HandleAbilityUsed;
+        OnHealthReplicated -= HandleHealthReplicated;
+        OnAbilityUsed -= HandleAbilityUsed;
         SlashAttackFX.OnHitLanded -= HandleHitLanded;
     }
 
-    public override void OnDestroy()
+    private void OnDestroyFeedback()
     {
-        base.OnDestroy();
         if (edgeFlash != null)
             Destroy(edgeFlash.gameObject);
     }

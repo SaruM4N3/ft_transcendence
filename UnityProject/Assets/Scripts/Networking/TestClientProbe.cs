@@ -87,7 +87,7 @@ public class TestClientProbe : MonoBehaviour
         if (!hasReadied && NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
         {
             hasReadied = true;
-            var customization = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerCustomization>();
+            var customization = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
             customization?.SetReady(true);
             Debug.Log("[TestClientProbe] auto-readied");
         }
@@ -102,7 +102,7 @@ public class TestClientProbe : MonoBehaviour
     private void LogState()
     {
         string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        string[] players = PlayerCustomization.AllActiveInstances
+        string[] players = Player.AllActiveInstances
             .Select(p =>
             {
                 NetworkObject no = p.GetComponent<NetworkObject>();
@@ -114,7 +114,7 @@ public class TestClientProbe : MonoBehaviour
         string enemyInfo = string.Join(",", enemies.Select(e => $"pos={e.transform.position} hp={e.CurrentHealth}"));
 
         GameObject localPlayer = LocalPlayer.Get();
-        PlayerStats stats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
+        Player stats = localPlayer != null ? localPlayer.GetComponent<Player>() : null;
 
         GameObject[] activePlayerTagged = GameObject.FindGameObjectsWithTag("Player");
         string rawInfo = string.Join(",", activePlayerTagged.Select(g =>

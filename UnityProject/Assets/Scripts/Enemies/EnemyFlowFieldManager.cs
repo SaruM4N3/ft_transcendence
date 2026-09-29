@@ -11,14 +11,14 @@ public class EnemyFlowFieldManager : MonoBehaviour
 
     private static EnemyFlowFieldManager instance;
 
-    private readonly List<PlayerStats> livingPlayers = new List<PlayerStats>();
-    private readonly List<PlayerStats> scratchPlayers = new List<PlayerStats>();
-    private readonly Dictionary<PlayerStats, EnemyFlowField> fields = new Dictionary<PlayerStats, EnemyFlowField>();
-    private readonly List<PlayerStats> staleKeys = new List<PlayerStats>();
+    private readonly List<Player> livingPlayers = new List<Player>();
+    private readonly List<Player> scratchPlayers = new List<Player>();
+    private readonly Dictionary<Player, EnemyFlowField> fields = new Dictionary<Player, EnemyFlowField>();
+    private readonly List<Player> staleKeys = new List<Player>();
     private float nextPlayerRefreshTime;
 
     public int PlayersVersion { get; private set; }
-    public IReadOnlyList<PlayerStats> LivingPlayers => livingPlayers;
+    public IReadOnlyList<Player> LivingPlayers => livingPlayers;
 
     public static Vector2 BodyOffset { get; set; }
 
@@ -34,12 +34,12 @@ public class EnemyFlowFieldManager : MonoBehaviour
 
     void OnEnable()
     {
-        PlayerStats.OnPlayerDied += HandlePlayerDied;
+        Player.OnPlayerDied += HandlePlayerDied;
     }
 
     void OnDisable()
     {
-        PlayerStats.OnPlayerDied -= HandlePlayerDied;
+        Player.OnPlayerDied -= HandlePlayerDied;
     }
 
     void OnDestroy()
@@ -56,11 +56,11 @@ public class EnemyFlowFieldManager : MonoBehaviour
         UpdateFields();
     }
 
-    public PlayerStats FindNearestLivingPlayer(Vector2 position)
+    public Player FindNearestLivingPlayer(Vector2 position)
     {
-        PlayerStats nearest = null;
+        Player nearest = null;
         float nearestDistSq = float.MaxValue;
-        foreach (PlayerStats player in livingPlayers)
+        foreach (Player player in livingPlayers)
         {
             float distSq = ((Vector2)player.transform.position - position).sqrMagnitude;
             if (distSq < nearestDistSq)
@@ -73,7 +73,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
     }
 
     // Samples the target's field; false if not built yet or out of range.
-    public bool TryGetDirection(PlayerStats target, Vector2 position, out Vector2 direction)
+    public bool TryGetDirection(Player target, Vector2 position, out Vector2 direction)
     {
         direction = Vector2.zero;
         if (!fields.TryGetValue(target, out EnemyFlowField field))
@@ -86,7 +86,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
         return field.IsBuilt && field.TryGetDirection(position, out direction);
     }
 
-    private void HandlePlayerDied(PlayerStats dead)
+    private void HandlePlayerDied(Player dead)
     {
         RefreshPlayers();
     }
@@ -97,20 +97,19 @@ public class EnemyFlowFieldManager : MonoBehaviour
         nextPlayerRefreshTime = Time.time + PlayerRefreshInterval;
         scratchPlayers.Clear();
 
-        if (PlayerCustomization.AllActiveInstances.Count == 0)
+        if (Player.AllActiveInstances.Count == 0)
         {
             GameObject localPlayer = LocalPlayer.Get();
-            PlayerStats localStats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
-            if (localStats != null && !localStats.IsDead)
-                scratchPlayers.Add(localStats);
+            Player localInstance = localPlayer != null ? localPlayer.GetComponent<Player>() : null;
+            if (localInstance != null && !localInstance.IsDead)
+                scratchPlayers.Add(localInstance);
         }
         else
         {
-            foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
+            foreach (Player player in Player.AllActiveInstances)
             {
-                PlayerStats stats = player.GetComponent<PlayerStats>();
-                if (stats != null && !stats.IsDead)
-                    scratchPlayers.Add(stats);
+                if (!player.IsDead)
+                    scratchPlayers.Add(player);
             }
         }
 
@@ -122,7 +121,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
         PlayersVersion++;
     }
 
-    private static bool SameContents(List<PlayerStats> a, List<PlayerStats> b)
+    private static bool SameContents(List<Player> a, List<Player> b)
     {
         if (a.Count != b.Count)
             return false;
@@ -140,12 +139,12 @@ public class EnemyFlowFieldManager : MonoBehaviour
     {
         float now = Time.time;
         staleKeys.Clear();
-        PlayerStats mostDue = null;
+        Player mostDue = null;
         float mostDueAge = 0f;
 
-        foreach (KeyValuePair<PlayerStats, EnemyFlowField> pair in fields)
+        foreach (KeyValuePair<Player, EnemyFlowField> pair in fields)
         {
-            PlayerStats player = pair.Key;
+            Player player = pair.Key;
             EnemyFlowField field = pair.Value;
             if (player == null || player.IsDead || now - field.LastRequestedAt > UnusedFieldLifetime)
             {
@@ -164,7 +163,7 @@ public class EnemyFlowFieldManager : MonoBehaviour
             }
         }
 
-        foreach (PlayerStats key in staleKeys)
+        foreach (Player key in staleKeys)
             fields.Remove(key);
 
         if (mostDue != null)

@@ -1,21 +1,22 @@
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-// Replicates class, color and name; subscribed in Awake so offline solo works too.
-public class PlayerCustomization : NetworkBehaviour
+public partial class Player
 {
-    private static readonly List<PlayerCustomization> ActiveInstances = new List<PlayerCustomization>();
+    private static readonly List<Player> ActiveInstances = new List<Player>();
 
-    public static IReadOnlyList<PlayerCustomization> AllActiveInstances => ActiveInstances;
+    public static IReadOnlyList<Player> AllActiveInstances => ActiveInstances;
 
-    public static event System.Action<PlayerCustomization> OnPlayerRegistered;
-    public static event System.Action<PlayerCustomization> OnPlayerUnregistered;
+    public static event Action<Player> OnPlayerRegistered;
+    public static event Action<Player> OnPlayerUnregistered;
 
-    public event System.Action<int, int> OnClassOrColorChanged;
-    public event System.Action<string> OnDisplayNameChanged;
-    public event System.Action<int> OnTeamChanged;
+    public event Action<int, int> OnClassOrColorChanged;
+    public event Action<string> OnDisplayNameChanged;
+    public event Action<int> OnTeamChanged;
+    public event Action<bool> OnReadyChanged;
 
     public string CurrentDisplayName { get; private set; }
 
@@ -38,11 +39,30 @@ public class PlayerCustomization : NetworkBehaviour
     public int TeamIndex => teamIndex.Value;
     public bool IsReady => isReady.Value;
 
-    public event System.Action<bool> OnReadyChanged;
-
+    [Header("Customization")]
     [SerializeField] private PlayerNameTag nameTag;
+    [SerializeField] private Camera previewCamera;
 
-    private void Awake()
+    private int layerBeforePreview;
+
+    // Toggled while the customization panel is open; also swaps to the CharacterPreview layer so its camera sees only this player.
+    public void SetPreviewCameraActive(bool active)
+    {
+        if (previewCamera != null)
+            previewCamera.gameObject.SetActive(active);
+
+        if (active)
+        {
+            layerBeforePreview = gameObject.layer;
+            gameObject.layer = LayerMask.NameToLayer("CharacterPreview");
+        }
+        else
+        {
+            gameObject.layer = layerBeforePreview;
+        }
+    }
+
+    private void AwakeCustomization()
     {
         classIndex.OnValueChanged += (_, _) => { ApplyVisuals(); OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value); };
         colorIndex.OnValueChanged += (_, _) => { ApplyVisuals(); OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value); };
@@ -51,7 +71,7 @@ public class PlayerCustomization : NetworkBehaviour
         isReady.OnValueChanged += (_, newValue) => OnReadyChanged?.Invoke(newValue);
     }
 
-    public override void OnNetworkSpawn()
+    private void SpawnCustomization()
     {
         ApplyVisuals();
         OnClassOrColorChanged?.Invoke(classIndex.Value, colorIndex.Value);
@@ -60,7 +80,7 @@ public class PlayerCustomization : NetworkBehaviour
         OnPlayerRegistered?.Invoke(this);
     }
 
-    public override void OnNetworkDespawn()
+    private void DespawnCustomization()
     {
         ActiveInstances.Remove(this);
         OnPlayerUnregistered?.Invoke(this);
@@ -69,19 +89,19 @@ public class PlayerCustomization : NetworkBehaviour
 
     private static void RefreshAllDisplayNames()
     {
-        var groups = new Dictionary<string, List<PlayerCustomization>>();
-        foreach (PlayerCustomization instance in ActiveInstances)
+        var groups = new Dictionary<string, List<Player>>();
+        foreach (Player instance in ActiveInstances)
         {
             string baseName = instance.playerName.Value.ToString();
-            if (!groups.TryGetValue(baseName, out List<PlayerCustomization> group))
+            if (!groups.TryGetValue(baseName, out List<Player> group))
             {
-                group = new List<PlayerCustomization>();
+                group = new List<Player>();
                 groups[baseName] = group;
             }
             group.Add(instance);
         }
 
-        foreach (List<PlayerCustomization> group in groups.Values)
+        foreach (List<Player> group in groups.Values)
         {
             group.Sort((a, b) => a.NetworkObjectId.CompareTo(b.NetworkObjectId));
             for (int i = 0; i < group.Count; i++)
@@ -92,7 +112,7 @@ public class PlayerCustomization : NetworkBehaviour
         }
     }
 
-    private void Start()
+    private void StartCustomization()
     {
         if (!this.IsLocallyControlled())
             return;

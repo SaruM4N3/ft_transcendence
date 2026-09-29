@@ -5,11 +5,11 @@ public class DeathProtectionZone : MonoBehaviour
 {
     void OnEnable()
     {
-        PlayerStats.DeathProtected = true;
+        Player.DeathProtected = true;
     }
 
     void OnDisable()
     {
-        PlayerStats.DeathProtected = false;
+        Player.DeathProtected = false;
     }
 }

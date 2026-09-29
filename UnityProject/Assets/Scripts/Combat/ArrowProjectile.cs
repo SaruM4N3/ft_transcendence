@@ -27,19 +27,22 @@ public class ArrowProjectile : MonoBehaviour, IAttackFX
         Destroy(gameObject, maxLifetime);
     }
 
-    // Stops on the first thing it hits on every peer, even though only the attacker's copy actually deals damage.
+    // Stops on the first solid thing it hits (walls included), even though only the attacker's copy deals damage. Trigger-only zones (interaction, etc.) are ignored.
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (other.isTrigger)
+            return;
+
         var damageable = other.GetComponentInParent<IDamageable>();
-        if (damageable == null)
-            return;
+        if (damageable != null)
+        {
+            var behaviour = damageable as MonoBehaviour;
+            if (behaviour != null && behaviour.gameObject == owner)
+                return;
 
-        var behaviour = damageable as MonoBehaviour;
-        if (behaviour != null && behaviour.gameObject == owner)
-            return;
-
-        if (hasHitbox)
-            damageable.RequestDamage(damage);
+            if (hasHitbox)
+                damageable.RequestDamage(damage);
+        }
 
         Destroy(gameObject);
     }

@@ -1,11 +1,11 @@
 using UnityEngine;
 
-// Turns a dead player into a roaming pig; polled so late joiners and revives are picked up too.
-public class PigForm : MonoBehaviour
+public partial class Player
 {
     private const int StartupGraceFrames = 2;
     private const float TransformFxLifetime = 1f;
 
+    [Header("Pig Form")]
     [SerializeField] private GameObject pigPrefab;
     [SerializeField] private float pigScale = 1.5f;
     [SerializeField] private GameObject transformFxPrefab;
@@ -14,14 +14,7 @@ public class PigForm : MonoBehaviour
     private static readonly int IdleHash = Animator.StringToHash("Idle");
     private static readonly int RunHash = Animator.StringToHash("Run");
     private static readonly int ExplosionSpellHash = Animator.StringToHash("Explosion Spell");
-    private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
-    private static readonly int LastInputXHash = Animator.StringToHash("LastInputX");
 
-    private PlayerStats stats;
-    private SpriteRenderer bodyRenderer;
-    private Animator bodyAnimator;
-    private Rigidbody2D rb;
-    private Collider2D bodyCollider;
     private int enemyMask;
 
     private GameObject pig;
@@ -33,28 +26,23 @@ public class PigForm : MonoBehaviour
     private int currentAnimationHash;
     private int startFrame;
 
-    void Awake()
+    private void AwakePigForm()
     {
-        stats = GetComponent<PlayerStats>();
-        bodyRenderer = GetComponent<SpriteRenderer>();
-        bodyAnimator = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody2D>();
-        bodyCollider = GetComponent<Collider2D>();
         enemyMask = LayerMask.GetMask("Enemy");
     }
 
-    void Start()
+    private void StartPigForm()
     {
         startFrame = Time.frameCount;
     }
 
-    // Health reads 0 until PlayerStats initialises it a frame after spawn, so the first frames are ignored.
-    void Update()
+    // Health reads 0 until stats initialise it a frame after spawn, so the first frames are ignored.
+    private void UpdatePigForm()
     {
-        if (stats == null || pigPrefab == null || Time.frameCount < startFrame + StartupGraceFrames)
+        if (pigPrefab == null || Time.frameCount < startFrame + StartupGraceFrames)
             return;
 
-        bool dead = stats.IsDead;
+        bool dead = IsDead;
         if (dead != isPig)
         {
             SetPig(dead);
@@ -77,8 +65,8 @@ public class PigForm : MonoBehaviour
         GameObject fx = Instantiate(transformFxPrefab, center + (Vector3)transformFxOffset, Quaternion.identity);
 
         SpriteRenderer fxRenderer = fx.GetComponent<SpriteRenderer>();
-        fxRenderer.sortingLayerID = bodyRenderer.sortingLayerID;
-        fxRenderer.sortingOrder = bodyRenderer.sortingOrder + 1;
+        fxRenderer.sortingLayerID = spriteRenderer.sortingLayerID;
+        fxRenderer.sortingOrder = spriteRenderer.sortingOrder + 1;
 
         fx.GetComponent<Animator>().Play(ExplosionSpellHash, 0, 0f);
         Destroy(fx, TransformFxLifetime);
@@ -92,14 +80,17 @@ public class PigForm : MonoBehaviour
         if (active && pig == null)
             CreatePig();
 
-        if (bodyRenderer != null)
-            bodyRenderer.enabled = !active;
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = !active;
 
         if (pig != null)
             pig.SetActive(active);
 
         if (rb != null)
             rb.excludeLayers = active ? rb.excludeLayers | enemyMask : rb.excludeLayers & ~enemyMask;
+
+        if (mountInteractRoot != null)
+            mountInteractRoot.SetActive(active);
 
         currentAnimationHash = 0;
     }
@@ -116,14 +107,13 @@ public class PigForm : MonoBehaviour
         pig.transform.position += bodyCenter - pigRenderer.bounds.center;
     }
 
-    // Reuses the body's own Animator params (already kept in sync across peers by NetworkAnimator) instead of
-    // re-deriving movement from a remote-observed Transform, which can read as moving even at rest.
+    // Reuses the body's own (NetworkAnimator-synced) params instead of a remote Transform, which can read as moving at rest.
     private void UpdatePigVisuals()
     {
-        bool isMoving = bodyAnimator != null && bodyAnimator.GetBool(IsWalkingHash);
-        if (bodyAnimator != null)
+        bool isMoving = animator != null && animator.GetBool(IsWalkingHash);
+        if (animator != null)
         {
-            float lastInputX = bodyAnimator.GetFloat(LastInputXHash);
+            float lastInputX = animator.GetFloat(LastInputXHash);
             if (Mathf.Abs(lastInputX) > 0.01f)
                 pigRenderer.flipX = lastInputX < 0f;
         }
@@ -135,7 +125,7 @@ public class PigForm : MonoBehaviour
             pigAnimator.Play(desired, 0, 0f);
         }
 
-        pigRenderer.sortingLayerID = bodyRenderer.sortingLayerID;
-        pigRenderer.sortingOrder = bodyRenderer.sortingOrder;
+        pigRenderer.sortingLayerID = spriteRenderer.sortingLayerID;
+        pigRenderer.sortingOrder = spriteRenderer.sortingOrder;
     }
 }

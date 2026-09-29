@@ -118,8 +118,8 @@ public class LoadingScreenManager : MonoBehaviour
         while (Time.unscaledTime < deadline)
         {
             GameObject localPlayer = LocalPlayer.Get();
-            PlayerStats stats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
-            if (stats == null || !stats.IsDead)
+            Player player = localPlayer != null ? localPlayer.GetComponent<Player>() : null;
+            if (player == null || !player.IsDead)
                 break;
             yield return null;
         }

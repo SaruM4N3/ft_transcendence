@@ -19,7 +19,7 @@ public class EnemyAI : NetworkBehaviour
     private float nextAttackTime;
     private float nextLeashCheckTime;
 
-    private PlayerStats target;
+    private Player target;
     private int seenPlayersVersion = -1;
     private float nextRetargetTime;
     private float nextSteerTime;
@@ -41,8 +41,7 @@ public class EnemyAI : NetworkBehaviour
     // Assigned at spawn time by whoever instantiates this enemy (see Enemy.Initialize); never baked into the prefab.
     public EnemyKit Kit { get => kit; set => kit = value; }
 
-    // Replicates which EnemyKit to use, so remote clients (who never go through WaveSpawner's direct
-    // Initialize call) can resolve and apply the same kit themselves once they see this object spawn.
+    // Replicates which EnemyKit to use, so remote clients (skipped by WaveSpawner's direct Initialize call) can resolve it too.
     private readonly NetworkVariable<int> kitIndex = new NetworkVariable<int>(
         -1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -63,9 +62,7 @@ public class EnemyAI : NetworkBehaviour
         EnemyFlowFieldManager.BodyOffset = bodyOffset;
     }
 
-    // Staggers timers so enemies don't all update on the same frame. Only the server ever reads them
-    // (FixedUpdate below is server-gated), so it's safe to skip this on a remote client whose kit
-    // hasn't arrived yet - it resolves kit via OnNetworkSpawn instead, see HandleKitIndexChanged.
+    // Staggers timers so enemies don't all update the same frame; safe to skip on a remote client, server-only anyway.
     void Start()
     {
         lastPosition = transform.position;
@@ -169,7 +166,7 @@ public class EnemyAI : NetworkBehaviour
     public Vector2 BodyCenter => rb.position + bodyOffset;
 
     // Range checks use collider centres, since pivots sit at different heights.
-    public static Vector2 TargetCenter(PlayerStats player)
+    public static Vector2 TargetCenter(Player player)
     {
         Collider2D collider = player.GetComponent<Collider2D>();
         return collider != null ? (Vector2)collider.bounds.center : (Vector2)player.transform.position;

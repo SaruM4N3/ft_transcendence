@@ -7,7 +7,7 @@ public class EnemyActions : NetworkBehaviour
     private EnemyKit kit;
 
     private EnemyAI ai;
-    private PlayerStats swingTarget;
+    private Player swingTarget;
     private float pendingHitTime;
 
     public bool IsWindingUp => pendingHitTime > 0f;
@@ -54,7 +54,7 @@ public class EnemyActions : NetworkBehaviour
     }
 
     // Damage lands attackHitDelay later; swing state is always written (not gated on IsSpawned) so offline solo play works too.
-    public void StartAttack(PlayerStats target)
+    public void StartAttack(Player target)
     {
         swingTarget = target;
         pendingHitTime = Time.time + kit.AttackHitDelay;

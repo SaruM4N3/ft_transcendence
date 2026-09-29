@@ -90,17 +90,16 @@ public class GameOverCheck : NetworkBehaviour
 
     private bool AllPlayersDead()
     {
-        if (PlayerCustomization.AllActiveInstances.Count == 0)
+        if (Player.AllActiveInstances.Count == 0)
         {
             GameObject localPlayer = LocalPlayer.Get();
-            PlayerStats localStats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
-            return localStats != null && localStats.CurrentHealth <= 0f;
+            Player localInstance = localPlayer != null ? localPlayer.GetComponent<Player>() : null;
+            return localInstance != null && localInstance.CurrentHealth <= 0f;
         }
 
-        foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
+        foreach (Player player in Player.AllActiveInstances)
         {
-            PlayerStats stats = player.GetComponent<PlayerStats>();
-            if (stats == null || stats.CurrentHealth > 0f)
+            if (player.CurrentHealth > 0f)
                 return false;
         }
         return true;

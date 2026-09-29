@@ -28,7 +28,7 @@ public class AllyIndicatorManager : MonoBehaviour
 
     private RectTransform canvasRect;
     private Sprite arrowSprite;
-    private readonly Dictionary<PlayerCustomization, IndicatorState> indicators = new Dictionary<PlayerCustomization, IndicatorState>();
+    private readonly Dictionary<Player, IndicatorState> indicators = new Dictionary<Player, IndicatorState>();
 
     private void Awake()
     {
@@ -38,17 +38,17 @@ public class AllyIndicatorManager : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerCustomization.OnPlayerRegistered += HandleRegistered;
-        PlayerCustomization.OnPlayerUnregistered += HandleUnregistered;
+        Player.OnPlayerRegistered += HandleRegistered;
+        Player.OnPlayerUnregistered += HandleUnregistered;
 
-        foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
+        foreach (Player player in Player.AllActiveInstances)
             HandleRegistered(player);
     }
 
     private void OnDisable()
     {
-        PlayerCustomization.OnPlayerRegistered -= HandleRegistered;
-        PlayerCustomization.OnPlayerUnregistered -= HandleUnregistered;
+        Player.OnPlayerRegistered -= HandleRegistered;
+        Player.OnPlayerUnregistered -= HandleUnregistered;
 
         foreach (IndicatorState indicator in indicators.Values)
             if (indicator.Rect != null)
@@ -56,7 +56,7 @@ public class AllyIndicatorManager : MonoBehaviour
         indicators.Clear();
     }
 
-    private void HandleRegistered(PlayerCustomization player)
+    private void HandleRegistered(Player player)
     {
         if (player == null || player.IsLocallyControlled() || indicators.ContainsKey(player))
             return;
@@ -76,7 +76,7 @@ public class AllyIndicatorManager : MonoBehaviour
         indicators.Add(player, new IndicatorState { Rect = rect });
     }
 
-    private void HandleUnregistered(PlayerCustomization player)
+    private void HandleUnregistered(Player player)
     {
         if (player == null || !indicators.TryGetValue(player, out IndicatorState indicator))
             return;
@@ -94,9 +94,9 @@ public class AllyIndicatorManager : MonoBehaviour
 
         Vector2 halfSize = canvasRect.rect.size * 0.5f - Vector2.one * EdgeMargin;
 
-        foreach (KeyValuePair<PlayerCustomization, IndicatorState> pair in indicators)
+        foreach (KeyValuePair<Player, IndicatorState> pair in indicators)
         {
-            PlayerCustomization ally = pair.Key;
+            Player ally = pair.Key;
             IndicatorState indicator = pair.Value;
             if (ally == null || indicator.Rect == null)
                 continue;
