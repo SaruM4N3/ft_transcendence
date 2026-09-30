@@ -89,9 +89,6 @@ public partial class Player
         if (rb != null)
             rb.excludeLayers = active ? rb.excludeLayers | enemyMask : rb.excludeLayers & ~enemyMask;
 
-        if (mountInteractRoot != null)
-            mountInteractRoot.SetActive(active);
-
         currentAnimationHash = 0;
     }
 

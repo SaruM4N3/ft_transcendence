@@ -35,6 +35,29 @@ public class ModeReadyCheck : NetworkBehaviour
         RequestReadyCheckServerRpc(sceneName);
     }
 
+    // Clears any in-progress check; call when returning to the Lobby so stale readiness doesn't survive the round-trip.
+    public void CancelReadyCheck()
+    {
+        if (!IsServer)
+            return;
+
+        pendingSceneName.Value = default;
+        ResetAllReady();
+    }
+
+    // Any client can back out of a pending check (e.g. closing the panel with Tab); otherwise pendingSceneName
+    // never clears and re-proposing the same mode is a no-op NetworkVariable write that never re-opens the panel.
+    public void RequestCancelReadyCheck()
+    {
+        RequestCancelReadyCheckServerRpc();
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestCancelReadyCheckServerRpc()
+    {
+        CancelReadyCheck();
+    }
+
     // Any client can propose a mode, not just the host.
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestReadyCheckServerRpc(FixedString64Bytes sceneName)

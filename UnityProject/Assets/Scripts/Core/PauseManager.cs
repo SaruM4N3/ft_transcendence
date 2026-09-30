@@ -80,7 +80,10 @@ public class PauseManager : MonoBehaviour
         SetPaused(false);
 
         if (hostBringsEveryoneBack)
+        {
+            ModeReadyCheck.Instance?.CancelReadyCheck();
             NetworkManager.Singleton.SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Single);
+        }
         else
             _ = LeaveSessionThenLoadLobbyAsync();
     }

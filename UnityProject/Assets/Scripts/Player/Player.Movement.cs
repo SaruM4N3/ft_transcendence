@@ -65,6 +65,15 @@ public partial class Player
             NetworkManager.SceneManager.OnLoadComplete -= HandleSceneLoadComplete;
     }
 
+    // 1st/2nd/3rd/4th client slot: x-1, y-1, x+1, y+1 - spreads the 4 co-op players off the single shared spawn point so they don't land stacked on each other.
+    private static readonly Vector2[] RespawnOffsetsByClientSlot =
+    {
+        new Vector2(-1f, 0f),
+        new Vector2(0f, -1f),
+        new Vector2(1f, 0f),
+        new Vector2(0f, 1f),
+    };
+
     private void HandleSceneLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
     {
         if (NetworkManager == null || clientId != NetworkManager.LocalClientId)
@@ -74,10 +83,15 @@ public partial class Player
         if (spawnPoint == null)
             return;
 
-        rb.position = spawnPoint.transform.position;
+        Vector2 offset = RespawnOffsetsByClientSlot[(int)(OwnerClientId % (ulong)RespawnOffsetsByClientSlot.Length)];
+        Vector3 position = spawnPoint.transform.position + (Vector3)offset;
+
+        rb.position = position;
         rb.linearVelocity = Vector2.zero;
-        transform.position = spawnPoint.transform.position;
+        transform.position = position;
     }
+
+    private bool wasBlocked;
 
     private void UpdateMovement()
     {
@@ -90,7 +104,18 @@ public partial class Player
         {
             rb.linearVelocity = Vector2.zero;
             animator.SetBool(IsWalkingHash, false);
+            wasBlocked = true;
             return;
+        }
+
+        // The Move action only calls back on a value change, so a direction held into/out of a block (menu, pause)
+        // never fires again on its own - re-sample the live input state once, instead of running with a stale moveInput.
+        if (wasBlocked)
+        {
+            wasBlocked = false;
+            InputAction moveAction = playerInput != null ? playerInput.actions.FindAction("Move") : null;
+            if (moveAction != null)
+                moveInput = moveAction.ReadValue<Vector2>();
         }
 
         // Dead (pig form): face where it's walking, not the mouse - there's nothing left to aim.

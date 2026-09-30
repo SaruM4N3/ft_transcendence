@@ -56,6 +56,9 @@ public class InteractPromptUI : MonoBehaviour
             return;
 
         promptRoot.gameObject.SetActive(true);
+        if (!promptRoot.gameObject.activeInHierarchy)
+            return;
+
         if (activeAnimation != null)
             StopCoroutine(activeAnimation);
         activeAnimation = StartCoroutine(Animate(opening: true));
@@ -73,7 +76,9 @@ public class InteractPromptUI : MonoBehaviour
 
     public void Hide()
     {
-        if (promptRoot == null || !promptRoot.gameObject.activeSelf)
+        // activeInHierarchy, not activeSelf: a deactivated parent (e.g. mountInteractRoot on revive) leaves
+        // this object's own flag true while StartCoroutine below would still fail.
+        if (promptRoot == null || !promptRoot.gameObject.activeInHierarchy)
             return;
 
         if (blinkAnimation != null)

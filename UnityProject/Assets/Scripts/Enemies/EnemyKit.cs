@@ -7,6 +7,9 @@ public class EnemyKit : ScriptableObject
     [Header("Health")]
     [SerializeField] private float maxHealth = 40f;
 
+    [Header("Rewards")]
+    [SerializeField] private int xpReward = 10;
+
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 2.5f;
 
@@ -33,6 +36,7 @@ public class EnemyKit : ScriptableObject
     [SerializeField] private RuntimeAnimatorController animatorController;
 
     public float MaxHealth => maxHealth;
+    public int XpReward => xpReward;
     public float MoveSpeed => moveSpeed;
     public float AttackRange => attackRange;
     public float AttackAngle => attackAngle;

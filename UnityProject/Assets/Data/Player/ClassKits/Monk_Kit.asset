@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e7453d5398a9eaa39dca01cb3e75e67, type: 3}
   m_Name: Monk_Kit
   m_EditorClassIdentifier: Assembly-CSharp::ClassKit
+  maxHealth: 95
+  healthRegenPerSecond: 2
+  maxMana: 75
+  manaRegenPerSecond: 2
   attackCooldown: 0.3
   specialCooldown: 1.5
   ultimateCooldown: 4

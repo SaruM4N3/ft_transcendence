@@ -8348,13 +8348,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterCustomizationMenu
   nameInputField: {fileID: 4680456093021041289}
   maxNameLength: 20
-  previewCharacter: {fileID: 0}
-  statsByClass:
-  - {fileID: 11400000, guid: 7d6f5932762fb63018814409aea91380, type: 2}
-  - {fileID: 11400000, guid: 224265acc5a47a17ab2c8b248dd7a1e6, type: 2}
-  - {fileID: 11400000, guid: 7902610d99765caa4b118fb4486aaeab, type: 2}
-  - {fileID: 11400000, guid: ae86ca027181d161e833d571de669138, type: 2}
-  - {fileID: 11400000, guid: b16f51070ed99a08ebeceb54cb20dca8, type: 2}
   kitsByClass:
   - {fileID: 11400000, guid: 590f376c4c7a40e0aa6b4132f95723bd, type: 2}
   - {fileID: 11400000, guid: a38b611367056637c94bebaeecc70c3f, type: 2}

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7486737222658169724}
   - component: {fileID: 6511621987206260319}
   m_Layer: 0
-  m_Name: NPC_Archer
+  m_Name: NPC_Multi
   m_TagString: NPC
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35,6 +35,7 @@ Transform:
   m_Children:
   - {fileID: 2788222836098834524}
   - {fileID: 1322604988417059845}
+  - {fileID: 273664067677613965}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4930089826982005308
@@ -268,6 +269,72 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!1001 &543039296987804680
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 840480235248228090}
+    m_Modifications:
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalScale.x
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2252388902906423256, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+      propertyPath: m_Name
+      value: Archery
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+--- !u!4 &273664067677613965 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 307655826200288133, guid: 137651c31de3db662b6e8c70478579b5, type: 3}
+  m_PrefabInstance: {fileID: 543039296987804680}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6583193698861906049
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -325,8 +392,12 @@ PrefabInstance:
       value: -120
       objectReference: {fileID: 0}
     - target: {fileID: 4281734878290004344, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
+      propertyPath: keyCapBlinkSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4281734878290004344, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
       propertyPath: keyCapBlinkMinAlpha
-      value: 0.35
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4496719599031391616, guid: ffffe254cf16bb8b29defdb48be8c5ff, type: 3}
       propertyPath: m_fontSize

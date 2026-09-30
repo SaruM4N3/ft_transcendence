@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-// Server-side wave spawner; waves fire on a fixed timer regardless of whether the previous one is cleared.
+// Server-side wave spawner; waves fire on a timer, but end that wait early once the current wave is fully cleared.
 public class WaveSpawner : NetworkBehaviour
 {
     [SerializeField] private GameObject enemyPrefab;
@@ -13,6 +13,7 @@ public class WaveSpawner : NetworkBehaviour
     [SerializeField] private int extraEnemiesPerPlayer = 2;
     [SerializeField] private float spawnRadius = 12f;
     [SerializeField] private float timeBetweenWaves = 5f;
+    [SerializeField] private float clearCheckInterval = 0.5f;
     [SerializeField] private int maxSpawnPointAttempts = 30;
     [SerializeField] private float spawnClearance = 1f;
 
@@ -86,7 +87,23 @@ public class WaveSpawner : NetworkBehaviour
             int count = baseEnemiesPerWave + (waveNumber - 1) * extraEnemiesPerWave + (playerCount - 1) * extraEnemiesPerPlayer;
             SpawnWave(count);
 
-            yield return new WaitForSeconds(timeBetweenWaves);
+            yield return WaitForNextWave();
+        }
+    }
+
+    // Waits out timeBetweenWaves, but ends early the moment every enemy from the current wave is dead.
+    private IEnumerator WaitForNextWave()
+    {
+        WaitForSeconds checkDelay = new WaitForSeconds(clearCheckInterval);
+        float elapsed = 0f;
+
+        while (elapsed < timeBetweenWaves)
+        {
+            if (FindObjectsByType<EnemyStats>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length == 0)
+                yield break;
+
+            yield return checkDelay;
+            elapsed += clearCheckInterval;
         }
     }
 

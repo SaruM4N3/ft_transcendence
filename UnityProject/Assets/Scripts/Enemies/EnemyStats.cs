@@ -18,6 +18,9 @@ public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
 
     public event Action<float, float> OnHealthChanged;
 
+    // Fired once, server/offline-authoritative side only, right before the enemy despawns.
+    public static event Action<int> OnEnemyKilled;
+
     void Awake()
     {
         currentHealth.OnValueChanged += (_, newValue) => OnHealthChanged?.Invoke(newValue, kit.MaxHealth);
@@ -54,6 +57,8 @@ public class EnemyStats : NetworkBehaviour, IDamageable, IHealthStats
         currentHealth.Value = Mathf.Max(0f, currentHealth.Value - amount);
         if (currentHealth.Value > 0f)
             return;
+
+        OnEnemyKilled?.Invoke(kit.XpReward);
 
         if (NetworkObject.IsSpawned)
             NetworkObject.Despawn(true);

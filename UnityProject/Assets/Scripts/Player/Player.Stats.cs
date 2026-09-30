@@ -7,10 +7,6 @@ using UnityEngine.SceneManagement;
 
 public partial class Player
 {
-    [Header("Stats")]
-    [SerializeField] private ClassStats defaultStats;
-
-    private ClassStats activeStats;
     private float maxHealth;
     private float maxMana;
 
@@ -33,7 +29,8 @@ public partial class Player
 
     private void AwakeStats()
     {
-        RefreshActiveStats();
+        RefreshActiveKit();
+        RefreshStatsFromKit();
         CurrentMana = maxMana;
         currentHealth.OnValueChanged += (previousValue, newValue) =>
         {
@@ -92,32 +89,28 @@ public partial class Player
 
     private void UpdateStats()
     {
-        if (!this.IsLocallyControlled() || activeStats == null || IsDead)
+        if (!this.IsLocallyControlled() || activeKit == null || IsDead)
             return;
 
         if (CurrentHealth < maxHealth)
-            Heal(activeStats.HealthRegenPerSecond * Time.deltaTime);
+            Heal(activeKit.HealthRegenPerSecond * Time.deltaTime);
         if (CurrentMana < maxMana)
-            RestoreMana(activeStats.ManaRegenPerSecond * Time.deltaTime);
+            RestoreMana(activeKit.ManaRegenPerSecond * Time.deltaTime);
     }
 
     private void HandleClassChanged()
     {
-        RefreshActiveStats();
+        RefreshActiveKit();
+        RefreshStatsFromKit();
         CurrentMana = Mathf.Min(CurrentMana, maxMana);
         if (this.IsLocallyControlled())
             currentHealth.Value = Mathf.Min(currentHealth.Value, maxHealth);
     }
 
-    private void RefreshActiveStats()
+    private void RefreshStatsFromKit()
     {
-        ClassStats stats = CharacterCustomizationMenu.Instance != null
-            ? CharacterCustomizationMenu.Instance.GetStats(ClassIndex)
-            : null;
-        activeStats = stats != null ? stats : defaultStats;
-
-        maxHealth = activeStats != null ? activeStats.MaxHealth : 100f;
-        maxMana = activeStats != null ? activeStats.MaxMana : 50f;
+        maxHealth = activeKit != null ? activeKit.MaxHealth : 100f;
+        maxMana = activeKit != null ? activeKit.MaxMana : 50f;
     }
 
     public void TakeDamage(float amount)

@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e7453d5398a9eaa39dca01cb3e75e67, type: 3}
   m_Name: Warrior_Kit
   m_EditorClassIdentifier: Assembly-CSharp::ClassKit
+  maxHealth: 120
+  healthRegenPerSecond: 1.5
+  maxMana: 40
+  manaRegenPerSecond: 1
   attackCooldown: 0.5
   specialCooldown: 2
   ultimateCooldown: 5

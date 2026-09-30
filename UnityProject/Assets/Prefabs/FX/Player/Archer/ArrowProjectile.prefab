@@ -111,7 +111,7 @@ CircleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 16
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -143,9 +143,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28dc26d41c9a5f318a29b475903aabb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrowProjectile
-  speed: 12
-  damage: 12
-  maxLifetime: 2
 --- !u!50 &9220501207994766593
 Rigidbody2D:
   serializedVersion: 5

@@ -170,6 +170,6 @@ public partial class Player
         Vector3 spawnPos = transform.position + (Vector3)(dir * activeKit.AttackFxDistance);
 
         GameObject fx = Instantiate(prefab, spawnPos, Quaternion.Euler(0f, 0f, angle));
-        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit.Damage);
+        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit);
     }
 }

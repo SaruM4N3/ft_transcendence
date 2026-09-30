@@ -75,7 +75,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
     public static event System.Action<Sprite> OnBackgroundChanged;
     public static event System.Action<string> OnNameChanged;
 
-    [SerializeField] private ClassStats[] statsByClass;
     [SerializeField] private ClassKit[] kitsByClass;
     [SerializeField] private ColorVariant[] colorVariants;
     [SerializeField] private Sprite[] backgroundSpritesByColor;
@@ -99,20 +98,12 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public Sprite GetPortrait(int classIndex, int colorIndex)
     {
-        if (classIndex < 0 || classIndex >= statsByClass.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return null;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return null;
 
         return colorVariants[colorIndex].portraitSpritesByClass[classIndex];
-    }
-
-    public ClassStats GetStats(int classIndex)
-    {
-        if (classIndex < 0 || classIndex >= statsByClass.Length)
-            return null;
-
-        return statsByClass[classIndex];
     }
 
     public ClassKit GetKit(int classIndex)
@@ -148,7 +139,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public void SelectClass(int index)
     {
-        if (index < 0 || index >= statsByClass.Length)
+        if (index < 0 || index >= kitsByClass.Length)
             return;
 
         GameObject player = LocalPlayer.Get();
@@ -188,7 +179,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
     {
         int classIndex = CurrentClassIndex(player);
         int colorIndex = CurrentColorIndex(player);
-        if (classIndex < 0 || classIndex >= statsByClass.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return;
@@ -204,7 +195,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public bool ApplyVisuals(GameObject player, int classIndex, int colorIndex)
     {
-        if (classIndex < 0 || classIndex >= statsByClass.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return false;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return false;

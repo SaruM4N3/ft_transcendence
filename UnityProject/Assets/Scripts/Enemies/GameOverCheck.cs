@@ -81,6 +81,10 @@ public class GameOverCheck : NetworkBehaviour
             return;
 
         isLoading = true;
+
+        if (sceneName == lobbySceneName)
+            ModeReadyCheck.Instance?.CancelReadyCheck();
+
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         if (isNetworked)
             NetworkManager.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);

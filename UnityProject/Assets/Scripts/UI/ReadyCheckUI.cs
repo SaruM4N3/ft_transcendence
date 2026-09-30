@@ -54,6 +54,8 @@ public class ReadyCheckUI : MonoBehaviour
     {
         Player.OnPlayerRegistered += HandlePlayerRegistered;
         Player.OnPlayerUnregistered += HandlePlayerUnregistered;
+        if (menuPanel != null)
+            menuPanel.OnClosed += HandlePanelClosed;
     }
 
     private void OnDisable()
@@ -63,9 +65,23 @@ public class ReadyCheckUI : MonoBehaviour
         subscribedInstance = null;
         Player.OnPlayerRegistered -= HandlePlayerRegistered;
         Player.OnPlayerUnregistered -= HandlePlayerUnregistered;
+        if (menuPanel != null)
+            menuPanel.OnClosed -= HandlePanelClosed;
 
         ClearRows();
         RebuildTeamButtons(null);
+    }
+
+    // Tab has no dedicated Cancel button to go through, so closing the panel early (isOpen still true) must
+    // itself clear the pending check server-side, or pendingSceneName never resets and re-proposing the same
+    // mode is a same-value NetworkVariable write that silently never reopens this panel.
+    private void HandlePanelClosed()
+    {
+        if (!isOpen)
+            return;
+
+        isOpen = false;
+        ModeReadyCheck.Instance?.RequestCancelReadyCheck();
     }
 
     // Polls until the dynamically spawned ModeReadyCheck exists.

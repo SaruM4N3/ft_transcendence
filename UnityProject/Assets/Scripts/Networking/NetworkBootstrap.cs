@@ -1,9 +1,13 @@
 using System.Reflection;
 using TMPro;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 // Wires the Lobby's Host/Join buttons to Netcode over Unity Relay.
 public class NetworkBootstrap : MonoBehaviour
@@ -89,6 +93,7 @@ public class NetworkBootstrap : MonoBehaviour
 
         try
         {
+            SyncTransportWebSockets();
             await ServicesAuth.EnsureSignedInAsync();
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
@@ -155,6 +160,7 @@ public class NetworkBootstrap : MonoBehaviour
 
         try
         {
+            SyncTransportWebSockets();
             await ServicesAuth.EnsureSignedInAsync();
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
@@ -181,6 +187,19 @@ public class NetworkBootstrap : MonoBehaviour
         {
             SetJoinControlsInteractable(true);
         }
+    }
+
+    // Relay allocates a WebSocket or raw-UDP endpoint based on the target platform; UnityTransport's checkbox must match or StartHost/StartClient throws.
+    private static void SyncTransportWebSockets()
+    {
+        if (NetworkManager.Singleton.NetworkConfig.NetworkTransport is not UnityTransport transport)
+            return;
+
+#if UNITY_EDITOR
+        transport.UseWebSockets = EditorUserBuildSettings.activeBuildTarget == BuildTarget.WebGL;
+#else
+        transport.UseWebSockets = Application.platform == RuntimePlatform.WebGLPlayer;
+#endif
     }
 
     private void SetJoinControlsInteractable(bool interactable)

@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e7453d5398a9eaa39dca01cb3e75e67, type: 3}
   m_Name: Lancer_Kit
   m_EditorClassIdentifier: Assembly-CSharp::ClassKit
+  maxHealth: 110
+  healthRegenPerSecond: 1.2
+  maxMana: 45
+  manaRegenPerSecond: 1
   attackCooldown: 0.65
   specialCooldown: 2
   ultimateCooldown: 5
