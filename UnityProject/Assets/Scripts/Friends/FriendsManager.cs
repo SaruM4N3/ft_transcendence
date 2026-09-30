@@ -97,6 +97,21 @@ public static class FriendsManager
         }
     }
 
+    // True if that friend is already a member of the current session (so they shouldn't be re-invited).
+    public static bool IsMemberOfCurrentSession(string memberId)
+    {
+        foreach (var pair in MultiplayerService.Instance.Sessions)
+        {
+            if (pair.Value.State != SessionState.Connected)
+                continue;
+
+            foreach (var player in pair.Value.Players)
+                if (player.Id == memberId)
+                    return true;
+        }
+        return false;
+    }
+
     // Name without the "#1234" suffix.
     public static string ShortName(string fullName)
     {

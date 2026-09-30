@@ -6,6 +6,9 @@ public class MenuPanel : MonoBehaviour
 {
     public static MenuPanel CurrentOpen { get; private set; }
 
+    // Fires once when this panel actually stops being the open one, however that happened (animated Close, or a forced external deactivation).
+    public event System.Action OnClosed;
+
     [SerializeField] private float animationDuration = 0.15f;
     [SerializeField] private float closedScale = 0.85f;
 
@@ -35,6 +38,19 @@ public class MenuPanel : MonoBehaviour
         if (activeAnimation != null)
             StopCoroutine(activeAnimation);
         activeAnimation = StartCoroutine(Animate(opening: false));
+    }
+
+    // Safety net: Unity kills the fade coroutine if this object is deactivated externally mid-animation, which would otherwise strand CurrentOpen/IsPaused.
+    private void OnDisable()
+    {
+        activeAnimation = null;
+
+        if (CurrentOpen == this)
+        {
+            CurrentOpen = null;
+            PauseManager.SetExternalPause(false);
+            OnClosed?.Invoke();
+        }
     }
 
     // Unscaled time, so speed is independent of Time.timeScale.

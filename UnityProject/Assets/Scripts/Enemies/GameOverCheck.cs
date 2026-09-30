@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -13,20 +14,45 @@ public class GameOverCheck : NetworkBehaviour
 
     private bool offlineGameOver;
     private bool isLoading;
+    private bool sceneReady;
     private float readyTime;
 
     public bool IsGameOver => IsSpawned ? gameOver.Value : offlineGameOver;
 
     public bool CanChoose => this.HasServerAuthority();
 
+    // Networked: waits for every client's scene load to finish before evaluating wipes, so stale health can't false-trigger it.
     void Start()
     {
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isNetworked && NetworkManager.Singleton.SceneManager != null)
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += HandleLoadEventCompleted;
+        else
+            ArmReadiness();
+    }
+
+    public override void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
+        base.OnDestroy();
+    }
+
+    private void HandleLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= HandleLoadEventCompleted;
+        ArmReadiness();
+    }
+
+    private void ArmReadiness()
+    {
+        sceneReady = true;
         readyTime = Time.time + startupGracePeriod;
     }
 
     void Update()
     {
-        if (!this.HasServerAuthority() || IsGameOver || Time.time < readyTime)
+        if (!this.HasServerAuthority() || IsGameOver || !sceneReady || Time.time < readyTime)
             return;
 
         if (!AllPlayersDead())
@@ -55,6 +81,10 @@ public class GameOverCheck : NetworkBehaviour
             return;
 
         isLoading = true;
+
+        if (sceneName == lobbySceneName)
+            ModeReadyCheck.Instance?.CancelReadyCheck();
+
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
         if (isNetworked)
             NetworkManager.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
@@ -64,17 +94,16 @@ public class GameOverCheck : NetworkBehaviour
 
     private bool AllPlayersDead()
     {
-        if (PlayerCustomization.AllActiveInstances.Count == 0)
+        if (Player.AllActiveInstances.Count == 0)
         {
             GameObject localPlayer = LocalPlayer.Get();
-            PlayerStats localStats = localPlayer != null ? localPlayer.GetComponent<PlayerStats>() : null;
-            return localStats != null && localStats.CurrentHealth <= 0f;
+            Player localInstance = localPlayer != null ? localPlayer.GetComponent<Player>() : null;
+            return localInstance != null && localInstance.CurrentHealth <= 0f;
         }
 
-        foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
+        foreach (Player player in Player.AllActiveInstances)
         {
-            PlayerStats stats = player.GetComponent<PlayerStats>();
-            if (stats == null || stats.CurrentHealth > 0f)
+            if (player.CurrentHealth > 0f)
                 return false;
         }
         return true;

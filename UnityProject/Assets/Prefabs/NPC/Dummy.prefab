@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1143705275013530088}
   - component: {fileID: 2834628139695140877}
   - component: {fileID: 354315569371017348}
+  - component: {fileID: 3682439372670318323}
   m_Layer: 0
   m_Name: Dummy
   m_TagString: Untagged
@@ -50,8 +51,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf5656eefc4629334aad3909a4b25878, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DummyStats
-  maxHealth: 100
-  regenPerSecond: 50
+  maxHealth: 200
+  regenPerSecond: 100
   regenDelay: 1
 --- !u!58 &5755502410878318089
 CircleCollider2D:
@@ -145,6 +146,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpriteHitFlash
   flashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
   duration: 0.15
+--- !u!114 &3682439372670318323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3147960152489137094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d93dfeb6ff7c3abd7b4b885fd74e72be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageNumberSpawner
+  damageNumberPrefab: {fileID: 1363164118058132356, guid: b62b04b50060d6d08accea0da4101a45, type: 3}
+  spawnOffset: {x: 0, y: 0.5, z: 0}
 --- !u!1 &3702139626077986535
 GameObject:
   m_ObjectHideFlags: 0
@@ -311,6 +326,10 @@ PrefabInstance:
     - target: {fileID: 3626916397498700004, guid: 718fa0dd33d89fc47aaa9582934f61b4, type: 3}
       propertyPath: m_SortingLayer
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: 718fa0dd33d89fc47aaa9582934f61b4, type: 3}
+      propertyPath: m_SortingOrder
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 3626916397498700004, guid: 718fa0dd33d89fc47aaa9582934f61b4, type: 3}
       propertyPath: m_SortingLayerID

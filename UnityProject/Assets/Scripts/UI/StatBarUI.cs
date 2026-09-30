@@ -19,17 +19,17 @@ public class StatBarUI : MonoBehaviour
     void OnEnable()
     {
         if (stat == Stat.Health)
-            PlayerStats.OnHealthChanged += SetFill;
+            Player.OnHealthChanged += SetFill;
         else
-            PlayerStats.OnManaChanged += SetFill;
+            Player.OnManaChanged += SetFill;
     }
 
     void OnDisable()
     {
         if (stat == Stat.Health)
-            PlayerStats.OnHealthChanged -= SetFill;
+            Player.OnHealthChanged -= SetFill;
         else
-            PlayerStats.OnManaChanged -= SetFill;
+            Player.OnManaChanged -= SetFill;
     }
 
     private void SetFill(float current, float max)

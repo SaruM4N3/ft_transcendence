@@ -13,7 +13,7 @@ public class GameOverUI : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button lobbyButton;
     [SerializeField] private TMP_Text waitingText;
-    [SerializeField] private float showDelay = 1.5f;
+    [SerializeField] private float showDelay = 0.3f;
     [SerializeField] private float fadeDuration = 0.25f;
 
     private GameOverCheck check;
@@ -38,20 +38,21 @@ public class GameOverUI : MonoBehaviour
         IsShowing = false;
     }
 
-    // Waits a beat after the wipe so the last death is visible before the screen appears.
+    // Waits a beat after the wipe, then shows; polled so a restart's fresh GameOverCheck is picked up automatically.
     void Update()
     {
-        if (shown)
-            return;
-
         if (check == null)
-        {
             check = FindAnyObjectByType<GameOverCheck>();
-            if (check == null)
-                return;
+
+        bool isOver = check != null && check.IsGameOver;
+        if (!isOver)
+        {
+            if (shown || triggerTime >= 0f)
+                Reset();
+            return;
         }
 
-        if (!check.IsGameOver)
+        if (shown)
             return;
 
         if (triggerTime < 0f)
@@ -59,6 +60,18 @@ public class GameOverUI : MonoBehaviour
 
         if (Time.unscaledTime - triggerTime >= showDelay)
             Show();
+    }
+
+    // Restart/ReturnToLobby spawn a fresh GameOverCheck with gameOver back at false; close and re-arm for it.
+    private void Reset()
+    {
+        shown = false;
+        IsShowing = false;
+        triggerTime = -1f;
+        panel.SetActive(false);
+        PauseManager.SetExternalPause(false);
+        restartButton.interactable = true;
+        lobbyButton.interactable = true;
     }
 
     private void Show()

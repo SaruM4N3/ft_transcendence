@@ -28,8 +28,8 @@ public class PhantomPlayerCleanup : NetworkBehaviour
     {
         yield return null;
 
-        List<PlayerCustomization> players = PlayerCustomization.AllActiveInstances.ToList();
-        foreach (PlayerCustomization player in players)
+        List<Player> players = Player.AllActiveInstances.ToList();
+        foreach (Player player in players)
         {
             NetworkObject networkObject = player.GetComponent<NetworkObject>();
             if (networkObject != null && networkObject.IsSpawned && !networkObject.IsPlayerObject)

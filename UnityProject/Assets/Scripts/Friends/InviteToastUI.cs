@@ -3,6 +3,7 @@ using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // Shows a friend's invite with Join/Dismiss; stays on an always-active object.
@@ -50,11 +51,12 @@ public class InviteToastUI : MonoBehaviour
 
     private void Show(FriendInvite invite)
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
-            return;
+        bool alreadyInSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
 
         pendingCode = invite.SessionCode;
-        messageText.text = $"{FriendsManager.ShortName(invite.SenderName)} invited you to play";
+        messageText.text = alreadyInSession
+            ? $"{FriendsManager.ShortName(invite.SenderName)} invited you - joining will leave your current game"
+            : $"{FriendsManager.ShortName(invite.SenderName)} invited you to play";
         content.SetActive(true);
 
         if (hideRoutine != null)
@@ -78,10 +80,22 @@ public class InviteToastUI : MonoBehaviour
         content.SetActive(false);
     }
 
+    // Closes an existing session first so the invite always wins; shows the loading screen manually since LoadScene() would race the reload.
     private async void Join()
     {
         string code = pendingCode;
         Hide();
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            await SessionDisconnectHandler.LeaveSessionsAsync();
+            NetworkBootstrap.PendingJoinCode = code;
+
+            LoadingScreenManager.Show("Joining session...");
+            SceneManager.LoadSceneAsync("Lobby");
+            return;
+        }
+
         await bootstrap.JoinWithCodeAsync(code);
     }
 }

@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-// Server-side wave spawner; the next wave starts when the current one is cleared.
+// Server-side wave spawner; waves fire on a timer, but end that wait early once the current wave is fully cleared.
 public class WaveSpawner : NetworkBehaviour
 {
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private EnemyKit[] enemyKits;
     [SerializeField] private int baseEnemiesPerWave = 3;
     [SerializeField] private int extraEnemiesPerWave = 2;
+    [SerializeField] private int extraEnemiesPerPlayer = 2;
     [SerializeField] private float spawnRadius = 12f;
     [SerializeField] private float timeBetweenWaves = 5f;
+    [SerializeField] private float clearCheckInterval = 0.5f;
     [SerializeField] private int maxSpawnPointAttempts = 30;
     [SerializeField] private float spawnClearance = 1f;
 
-    private readonly List<NetworkObject> aliveEnemies = new List<NetworkObject>();
     private readonly NetworkVariable<int> currentWave = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<double> startServerTime = new NetworkVariable<double>(
@@ -73,20 +75,35 @@ public class WaveSpawner : NetworkBehaviour
 
     private IEnumerator RunWaves()
     {
+        MarkStartTime();
+
         while (true)
         {
-            if (waveNumber == 0)
-                MarkStartTime();
-
             waveNumber++;
             if (IsSpawned)
                 currentWave.Value = waveNumber;
 
-            int count = baseEnemiesPerWave + (waveNumber - 1) * extraEnemiesPerWave;
+            int playerCount = Mathf.Max(1, Player.AllActiveInstances.Count);
+            int count = baseEnemiesPerWave + (waveNumber - 1) * extraEnemiesPerWave + (playerCount - 1) * extraEnemiesPerPlayer;
             SpawnWave(count);
 
-            yield return new WaitUntil(AllEnemiesDead);
-            yield return new WaitForSeconds(timeBetweenWaves);
+            yield return WaitForNextWave();
+        }
+    }
+
+    // Waits out timeBetweenWaves, but ends early the moment every enemy from the current wave is dead.
+    private IEnumerator WaitForNextWave()
+    {
+        WaitForSeconds checkDelay = new WaitForSeconds(clearCheckInterval);
+        float elapsed = 0f;
+
+        while (elapsed < timeBetweenWaves)
+        {
+            if (FindObjectsByType<EnemyStats>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length == 0)
+                yield break;
+
+            yield return checkDelay;
+            elapsed += clearCheckInterval;
         }
     }
 
@@ -98,10 +115,10 @@ public class WaveSpawner : NetworkBehaviour
             offlineStartTime = Time.time;
     }
 
-    private bool AllEnemiesDead()
+    // Public so EnemyAI can resolve the same kit by index on every peer (see EnemyAI.ApplyKitFromIndex).
+    public EnemyKit GetKit(int index)
     {
-        aliveEnemies.RemoveAll(enemy => enemy == null);
-        return aliveEnemies.Count == 0;
+        return index >= 0 && index < enemyKits.Length ? enemyKits[index] : null;
     }
 
     private void SpawnWave(int count)
@@ -110,30 +127,48 @@ public class WaveSpawner : NetworkBehaviour
 
         for (int i = 0; i < count; i++)
         {
+            // Only one enemy type for now.
+            const int kitIndex = 0;
             GameObject instance = Instantiate(enemyPrefab, FindSpawnPosition(), Quaternion.identity);
+            instance.GetComponent<Enemy>().Initialize(GetKit(kitIndex));
+
             NetworkObject netObj = instance.GetComponent<NetworkObject>();
             if (isNetworked)
+            {
+                // Set before Spawn() so it's part of the initial state remote clients receive.
+                instance.GetComponent<EnemyAI>().SetNetworkedKitIndex(kitIndex);
                 netObj.Spawn(true);
-            aliveEnemies.Add(netObj);
+            }
         }
     }
 
-    // Falls back to the spawner's own position if no valid point is found.
-    private Vector3 FindSpawnPosition()
+    // Falls back to the spawner's own position if no valid point is found; public so EnemyAI can reuse it to recycle stray enemies.
+    public Vector3 FindSpawnPosition()
     {
         ProceduralMapGenerator mapGenerator = FindAnyObjectByType<ProceduralMapGenerator>();
+        Vector3 center = GetSpawnCenter();
 
         for (int attempt = 0; attempt < maxSpawnPointAttempts; attempt++)
         {
             float angle = Random.Range(0f, Mathf.PI * 2f);
             Vector2 offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * spawnRadius;
-            Vector3 candidate = transform.position + (Vector3)offset;
+            Vector3 candidate = center + (Vector3)offset;
 
             if (IsValidSpawnPoint(candidate, mapGenerator))
                 return candidate;
         }
 
-        return transform.position;
+        return center;
+    }
+
+    // Spawns just off a random living player's screen instead of the spawner's own (map-center) position.
+    private Vector3 GetSpawnCenter()
+    {
+        EnemyFlowFieldManager manager = EnemyFlowFieldManager.Instance;
+        manager.RefreshPlayers();
+        IReadOnlyList<Player> living = manager.LivingPlayers;
+
+        return living.Count > 0 ? living[Random.Range(0, living.Count)].transform.position : transform.position;
     }
 
     // The collider sits above the pivot, so spawn checks test the body position.

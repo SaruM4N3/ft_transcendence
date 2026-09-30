@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,15 +17,25 @@ public class InteractableZone : MonoBehaviour
         GetComponent<Collider2D>().isTrigger = true;
     }
 
+    // Filters out remote players - the zone registry is shared, so their movement must not affect it.
+    private static bool IsLocalPlayer(Collider2D other)
+    {
+        if (!other.CompareTag("Player"))
+            return false;
+
+        NetworkObject networkObject = other.GetComponentInParent<NetworkObject>();
+        return networkObject == null || !networkObject.IsSpawned || networkObject.IsOwner;
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (IsLocalPlayer(other))
             InteractionManager.Register(this);
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (IsLocalPlayer(other))
             InteractionManager.Unregister(this);
     }
 

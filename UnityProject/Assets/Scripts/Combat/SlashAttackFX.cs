@@ -2,24 +2,27 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Local one-shot slash FX; only the attacker's copy keeps a live hitbox.
-public class SlashAttackFX : MonoBehaviour
+public class SlashAttackFX : MonoBehaviour, IAttackFX
 {
     public static event System.Action<GameObject, Vector3> OnHitLanded;
 
     [SerializeField] private Sprite[] frames;
     [SerializeField] private float frameRate = 24f;
-    [SerializeField] private float damage = 15f;
 
     private SpriteRenderer spriteRenderer;
     private Collider2D hitbox;
     private GameObject owner;
+    private float damage;
     private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
     private int frameIndex;
     private float frameTimer;
 
-    public void Init(GameObject attacker, bool hasHitbox)
+    // Tracks the attacker for its whole lifetime, so a player moving mid-swing doesn't outrun it.
+    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit)
     {
         owner = attacker;
+        damage = kit.Damage;
+        transform.SetParent(attacker.transform);
         if (!hasHitbox && hitbox != null)
             hitbox.enabled = false;
     }

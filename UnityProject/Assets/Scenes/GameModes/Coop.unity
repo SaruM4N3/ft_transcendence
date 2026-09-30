@@ -193,12 +193,91 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveSpawner
   ShowTopMostFoldoutHeaderGroup: 1
   enemyPrefab: {fileID: 8760497899193580633, guid: 80684958157020e5b9d23c35045e0a68, type: 3}
-  baseEnemiesPerWave: 3
-  extraEnemiesPerWave: 2
-  spawnRadius: 12
-  timeBetweenWaves: 5
+  enemyKits:
+  - {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
+  baseEnemiesPerWave: 5
+  extraEnemiesPerWave: 5
+  extraEnemiesPerPlayer: 5
+  spawnRadius: 15
+  timeBetweenWaves: 20
+  clearCheckInterval: 0.5
   maxSpawnPointAttempts: 10
   spawnClearance: 1
+--- !u!1 &17904480
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 17904482}
+  - component: {fileID: 17904481}
+  - component: {fileID: 17904483}
+  m_Layer: 0
+  m_Name: XPManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &17904481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17904480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 4270138428
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!4 &17904482
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17904480}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &17904483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17904480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87f21129a3eea1a5a9858b5239b48b4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XPManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  baseXpPerLevel: 50
+  xpPerLevelIncrement: 25
 --- !u!1 &806263490
 GameObject:
   m_ObjectHideFlags: 0
@@ -606,7 +685,7 @@ GameObject:
   - component: {fileID: 5862188989347873495}
   - component: {fileID: 116902524505461006}
   - component: {fileID: 7862570649548776720}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: WaterTilemap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1059,6 +1138,10 @@ PrefabInstance:
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 772891792533613119, guid: c4bd213f5ffca3709985146d0af26b5c, type: 2}
+    - target: {fileID: 3191399807049263265, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3302347315360888540, guid: 6c4e26c7d68940637b4ac5f3dfda573a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -7.2
@@ -1157,8 +1240,8 @@ MonoBehaviour:
   waterBackgroundTilemap: {fileID: 3116289660912037479}
   coastFoamTilemap: {fileID: 6630250672137080087}
   player: {fileID: 8664487228250979934, guid: 0c5fd484e0ae59378a6141dc3c220519, type: 3}
-  chunkSize: 2
-  viewDistanceInChunks: 1
+  chunkSize: 4
+  viewDistanceInChunks: 2
   maxChunkGenerationsPerFrame: 2
   seed: 15
   spawnSafeRadius: 5
@@ -1264,3 +1347,4 @@ SceneRoots:
   - {fileID: 971538329}
   - {fileID: 14559106}
   - {fileID: 806263492}
+  - {fileID: 17904482}

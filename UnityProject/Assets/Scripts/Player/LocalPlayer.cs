@@ -13,9 +13,9 @@ public static class LocalPlayer
         return GameObject.FindWithTag("Player");
     }
 
-    public static PlayerCustomization GetCustomization()
+    public static Player GetPlayer()
     {
         GameObject player = Get();
-        return player != null ? player.GetComponent<PlayerCustomization>() : null;
+        return player != null ? player.GetComponent<Player>() : null;
     }
 }

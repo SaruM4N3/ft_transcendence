@@ -1,9 +1,13 @@
 using System.Reflection;
 using TMPro;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 // Wires the Lobby's Host/Join buttons to Netcode over Unity Relay.
 public class NetworkBootstrap : MonoBehaviour
@@ -21,11 +25,21 @@ public class NetworkBootstrap : MonoBehaviour
     private Quaternion hostSpawnRotation;
     private GameObject detachedCameraHolder;
 
+    // Set by InviteToastUI before reloading Lobby, so the fresh scene picks up the join automatically.
+    public static string PendingJoinCode;
+
     // Start runs after every Awake, so NetworkManager.Singleton is set.
     private void Start()
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
         NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+
+        if (!string.IsNullOrEmpty(PendingJoinCode))
+        {
+            string code = PendingJoinCode;
+            PendingJoinCode = null;
+            _ = JoinWithCodeAsync(code);
+        }
     }
 
     private void OnDestroy()
@@ -75,9 +89,11 @@ public class NetworkBootstrap : MonoBehaviour
         if (hostButton != null)
             hostButton.interactable = false;
         SetJoinControlsInteractable(false);
+        LoadingScreenManager.Show("Creating session...");
 
         try
         {
+            SyncTransportWebSockets();
             await ServicesAuth.EnsureSignedInAsync();
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
@@ -112,6 +128,7 @@ public class NetworkBootstrap : MonoBehaviour
             if (hostButton != null)
                 hostButton.interactable = true;
             SetJoinControlsInteractable(true);
+            LoadingScreenManager.Hide();
             return false;
         }
     }
@@ -136,12 +153,14 @@ public class NetworkBootstrap : MonoBehaviour
 
         SetJoinControlsInteractable(false);
         SetJoinStatus("Searching for the lobby...", isError: false);
+        LoadingScreenManager.Show("Joining session...");
 
         if (hostButton != null)
             hostButton.interactable = false;
 
         try
         {
+            SyncTransportWebSockets();
             await ServicesAuth.EnsureSignedInAsync();
 
             (int classIndex, int colorIndex, string playerName, Vector3 position, Quaternion rotation) customization = CaptureOfflinePlayerState();
@@ -161,12 +180,26 @@ public class NetworkBootstrap : MonoBehaviour
             SetJoinStatus("Couldn't find that lobby - check the code and try again.", isError: true);
             if (hostButton != null)
                 hostButton.interactable = true;
+            LoadingScreenManager.Hide();
             return false;
         }
         finally
         {
             SetJoinControlsInteractable(true);
         }
+    }
+
+    // Relay allocates a WebSocket or raw-UDP endpoint based on the target platform; UnityTransport's checkbox must match or StartHost/StartClient throws.
+    private static void SyncTransportWebSockets()
+    {
+        if (NetworkManager.Singleton.NetworkConfig.NetworkTransport is not UnityTransport transport)
+            return;
+
+#if UNITY_EDITOR
+        transport.UseWebSockets = EditorUserBuildSettings.activeBuildTarget == BuildTarget.WebGL;
+#else
+        transport.UseWebSockets = Application.platform == RuntimePlatform.WebGLPlayer;
+#endif
     }
 
     private void SetJoinControlsInteractable(bool interactable)
@@ -195,7 +228,7 @@ public class NetworkBootstrap : MonoBehaviour
         if (offlinePlayer == null)
             return (0, 0, string.Empty, Vector3.zero, Quaternion.identity);
 
-        PlayerCustomization customization = offlinePlayer.GetComponent<PlayerCustomization>();
+        Player customization = offlinePlayer.GetComponent<Player>();
         (int classIndex, int colorIndex, string playerName) current = customization != null
             ? (customization.ClassIndex, customization.ColorIndex, customization.PlayerName)
             : (0, 0, string.Empty);
@@ -208,10 +241,12 @@ public class NetworkBootstrap : MonoBehaviour
         return (current.classIndex, current.colorIndex, current.playerName, position, rotation);
     }
 
-    // Reapplies the offline player's customization to the auto-spawned player.
+    // Reapplies the offline player's customization once spawned and hides the loading screen; timed out so a dropped connection doesn't strand it.
     private System.Collections.IEnumerator RestoreLocalCustomizationWhenSpawned(int classIndex, int colorIndex, string playerName)
     {
-        while (NetworkManager.Singleton.LocalClient == null || NetworkManager.Singleton.LocalClient.PlayerObject == null)
+        float deadline = Time.unscaledTime + 15f;
+        while ((NetworkManager.Singleton.LocalClient == null || NetworkManager.Singleton.LocalClient.PlayerObject == null)
+            && Time.unscaledTime < deadline)
             yield return null;
 
         if (detachedCameraHolder != null)
@@ -220,12 +255,15 @@ public class NetworkBootstrap : MonoBehaviour
             detachedCameraHolder = null;
         }
 
-        PlayerCustomization customization = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerCustomization>();
+        NetworkObject playerObject = NetworkManager.Singleton.LocalClient?.PlayerObject;
+        Player customization = playerObject != null ? playerObject.GetComponent<Player>() : null;
         if (customization != null)
         {
             customization.SetSelection(classIndex, colorIndex);
             if (!string.IsNullOrEmpty(playerName))
                 customization.SetName(playerName);
         }
+
+        LoadingScreenManager.Hide();
     }
 }

@@ -9,7 +9,7 @@ public class SpriteHitFlash : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
     private IHealthStats stats;
-    private float lastHealth = -1f;
+    private float lastHealth;
     private Coroutine running;
 
     void Awake()
@@ -21,7 +21,17 @@ public class SpriteHitFlash : MonoBehaviour
     void OnEnable()
     {
         if (stats != null)
+        {
             stats.OnHealthChanged += HandleHealthChanged;
+            StartCoroutine(CaptureBaselineNextFrame());
+        }
+    }
+
+    // Deferred a frame: OnEnable can run before a sibling component's Awake sets the real starting health.
+    private IEnumerator CaptureBaselineNextFrame()
+    {
+        yield return null;
+        lastHealth = stats.CurrentHealth;
     }
 
     void OnDisable()
@@ -35,7 +45,7 @@ public class SpriteHitFlash : MonoBehaviour
 
     private void HandleHealthChanged(float current, float max)
     {
-        if (lastHealth >= 0f && current < lastHealth)
+        if (current < lastHealth)
             Flash();
         lastHealth = current;
     }

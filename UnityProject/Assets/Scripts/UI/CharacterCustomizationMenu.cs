@@ -16,7 +16,6 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     [SerializeField] private TMP_InputField nameInputField;
     [SerializeField] private int maxNameLength = 20;
-    [SerializeField] private GameObject previewCharacter;
 
     private void Awake()
     {
@@ -26,21 +25,28 @@ public class CharacterCustomizationMenu : MonoBehaviour
             nameInputField.onEndEdit.AddListener(SetPlayerName);
     }
 
+    // Renders the real local player (not a separate doll) into CharacterPreviewRT while the panel is open.
     private void OnEnable()
     {
         GameObject player = LocalPlayer.Get();
         if (player == null)
             return;
 
-        if (nameInputField != null)
-        {
-            PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
-            if (customization != null)
-                nameInputField.text = customization.PlayerName;
-        }
+        Player customization = player.GetComponent<Player>();
 
-        if (previewCharacter != null)
-            ApplyVisuals(previewCharacter, CurrentClassIndex(player), CurrentColorIndex(player));
+        if (nameInputField != null && customization != null)
+            nameInputField.text = customization.PlayerName;
+
+        customization?.SetPreviewCameraActive(true);
+    }
+
+    private void OnDisable()
+    {
+        GameObject player = LocalPlayer.Get();
+        if (player == null)
+            return;
+
+        player.GetComponent<Player>()?.SetPreviewCameraActive(false);
     }
 
     public void SetPlayerName(string value)
@@ -55,7 +61,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (player == null)
             return;
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         if (customization != null)
             customization.SetName(value);
 
@@ -69,8 +75,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
     public static event System.Action<Sprite> OnBackgroundChanged;
     public static event System.Action<string> OnNameChanged;
 
-    [SerializeField] private GameObject[] classPresets;
-    [SerializeField] private ClassStats[] statsByClass;
+    [SerializeField] private ClassKit[] kitsByClass;
     [SerializeField] private ColorVariant[] colorVariants;
     [SerializeField] private Sprite[] backgroundSpritesByColor;
 
@@ -93,7 +98,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
 
     public Sprite GetPortrait(int classIndex, int colorIndex)
     {
-        if (classIndex < 0 || classIndex >= classPresets.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return null;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return null;
@@ -101,12 +106,12 @@ public class CharacterCustomizationMenu : MonoBehaviour
         return colorVariants[colorIndex].portraitSpritesByClass[classIndex];
     }
 
-    public ClassStats GetStats(int classIndex)
+    public ClassKit GetKit(int classIndex)
     {
-        if (classIndex < 0 || classIndex >= statsByClass.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return null;
 
-        return statsByClass[classIndex];
+        return kitsByClass[classIndex];
     }
 
     public Sprite GetCurrentBackground()
@@ -128,13 +133,13 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (player == null)
             return string.Empty;
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         return customization != null ? customization.PlayerName : string.Empty;
     }
 
     public void SelectClass(int index)
     {
-        if (index < 0 || index >= classPresets.Length || classPresets[index] == null)
+        if (index < 0 || index >= kitsByClass.Length)
             return;
 
         GameObject player = LocalPlayer.Get();
@@ -161,14 +166,11 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (!ApplyVisuals(player, classIndex, colorIndex))
             return;
 
-        if (previewCharacter != null)
-            ApplyVisuals(previewCharacter, classIndex, colorIndex);
-
         OnPortraitChanged?.Invoke(colorVariants[colorIndex].portraitSpritesByClass[classIndex]);
         if (colorIndex < backgroundSpritesByColor.Length)
             OnBackgroundChanged?.Invoke(backgroundSpritesByColor[colorIndex]);
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         if (customization != null)
             customization.SetSelection(classIndex, colorIndex);
     }
@@ -177,7 +179,7 @@ public class CharacterCustomizationMenu : MonoBehaviour
     {
         int classIndex = CurrentClassIndex(player);
         int colorIndex = CurrentColorIndex(player);
-        if (classIndex < 0 || classIndex >= classPresets.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return;
@@ -186,14 +188,14 @@ public class CharacterCustomizationMenu : MonoBehaviour
         if (colorIndex < backgroundSpritesByColor.Length)
             OnBackgroundChanged?.Invoke(backgroundSpritesByColor[colorIndex]);
 
-        PlayerCustomization customization = player.GetComponent<PlayerCustomization>();
+        Player customization = player.GetComponent<Player>();
         if (customization != null && !string.IsNullOrEmpty(customization.PlayerName))
             OnNameChanged?.Invoke(customization.PlayerName);
     }
 
     public bool ApplyVisuals(GameObject player, int classIndex, int colorIndex)
     {
-        if (classIndex < 0 || classIndex >= classPresets.Length)
+        if (classIndex < 0 || classIndex >= kitsByClass.Length)
             return false;
         if (colorIndex < 0 || colorIndex >= colorVariants.Length)
             return false;
@@ -215,9 +217,10 @@ public class CharacterCustomizationMenu : MonoBehaviour
         AnimatorOverrideController overrideController = current as AnimatorOverrideController;
         RuntimeAnimatorController baseController = overrideController != null ? overrideController.runtimeAnimatorController : current;
 
-        for (int i = 0; i < classPresets.Length; i++)
+        RuntimeAnimatorController[] baseControllersByClass = colorVariants[0].controllersByClass;
+        for (int i = 0; i < baseControllersByClass.Length; i++)
         {
-            if (classPresets[i].GetComponent<Animator>().runtimeAnimatorController == baseController)
+            if (baseControllersByClass[i] == baseController)
                 return i;
         }
 

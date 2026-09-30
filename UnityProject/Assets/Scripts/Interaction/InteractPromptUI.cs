@@ -23,8 +23,7 @@ public class InteractPromptUI : MonoBehaviour
 
     private void Awake()
     {
-        if (keyLabel != null)
-            keyLabel.text = keyGlyph;
+        RefreshKeyLabel();
 
         if (promptRoot != null)
         {
@@ -48,6 +47,8 @@ public class InteractPromptUI : MonoBehaviour
 
     public void Show(string text)
     {
+        RefreshKeyLabel();
+
         if (actionLabel != null)
             actionLabel.text = text;
 
@@ -55,6 +56,9 @@ public class InteractPromptUI : MonoBehaviour
             return;
 
         promptRoot.gameObject.SetActive(true);
+        if (!promptRoot.gameObject.activeInHierarchy)
+            return;
+
         if (activeAnimation != null)
             StopCoroutine(activeAnimation);
         activeAnimation = StartCoroutine(Animate(opening: true));
@@ -63,9 +67,18 @@ public class InteractPromptUI : MonoBehaviour
             blinkAnimation = StartCoroutine(BlinkKeyCap());
     }
 
+    // Reflects the player's current Interact keybind, including rebinds; falls back to keyGlyph if unresolved.
+    private void RefreshKeyLabel()
+    {
+        if (keyLabel != null)
+            keyLabel.text = KeybindOverrides.GetKeyboardDisplay("Interact") ?? keyGlyph;
+    }
+
     public void Hide()
     {
-        if (promptRoot == null || !promptRoot.gameObject.activeSelf)
+        // activeInHierarchy, not activeSelf: a deactivated parent (e.g. mountInteractRoot on revive) leaves
+        // this object's own flag true while StartCoroutine below would still fail.
+        if (promptRoot == null || !promptRoot.gameObject.activeInHierarchy)
             return;
 
         if (blinkAnimation != null)
