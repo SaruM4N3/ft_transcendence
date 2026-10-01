@@ -89,6 +89,9 @@ public partial class Player
         if (rb != null)
             rb.excludeLayers = active ? rb.excludeLayers | enemyMask : rb.excludeLayers & ~enemyMask;
 
+        if (mountInteractRoot != null)
+            mountInteractRoot.SetActive(active);
+
         currentAnimationHash = 0;
     }
 
@@ -123,6 +126,6 @@ public partial class Player
         }
 
         pigRenderer.sortingLayerID = spriteRenderer.sortingLayerID;
-        pigRenderer.sortingOrder = spriteRenderer.sortingOrder;
+        pigRenderer.sortingOrder = sortingLayerAuto != null ? sortingLayerAuto.CurrentSortingOrder : spriteRenderer.sortingOrder;
     }
 }

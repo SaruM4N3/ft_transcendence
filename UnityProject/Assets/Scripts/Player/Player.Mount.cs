@@ -140,7 +140,12 @@ public partial class Player
         if (sortingLayerAuto != null)
             sortingLayerAuto.enabled = parentPlayer == null;
 
-        if (parentPlayer != null && spriteRenderer != null && parentPlayer.spriteRenderer != null)
-            spriteRenderer.sortingOrder = parentPlayer.spriteRenderer.sortingOrder + mountedSortingOrderBump;
+        if (parentPlayer == null || spriteRenderer == null || parentPlayer.spriteRenderer == null)
+            return;
+
+        int pigSortingOrder = parentPlayer.sortingLayerAuto != null
+            ? parentPlayer.sortingLayerAuto.CurrentSortingOrder
+            : parentPlayer.spriteRenderer.sortingOrder;
+        spriteRenderer.sortingOrder = pigSortingOrder + mountedSortingOrderBump;
     }
 }

@@ -16,6 +16,9 @@ public class SortingLayer_Auto : MonoBehaviour
 
     public Vector3 SortPivotWorldPosition => transform.TransformPoint(sortPivotOffset);
 
+    // Pure, not a cached field - safe to read from another object's LateUpdate regardless of execution order.
+    public int CurrentSortingOrder => Mathf.RoundToInt(SortPivotWorldPosition.y * -100) + sortingOffset;
+
     public void AddSortingOffset(int extra)
     {
         sortingOffset += extra;
@@ -28,7 +31,7 @@ public class SortingLayer_Auto : MonoBehaviour
 
     void LateUpdate()
     {
-        spriteRenderer.sortingOrder = Mathf.RoundToInt(SortPivotWorldPosition.y * -100) + sortingOffset;
+        spriteRenderer.sortingOrder = CurrentSortingOrder;
     }
 
     void OnDrawGizmosSelected()
