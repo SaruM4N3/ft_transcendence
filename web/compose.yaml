@@ -46,6 +46,7 @@ services:
 
   app:
     build: ./backend/sveltekit
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy

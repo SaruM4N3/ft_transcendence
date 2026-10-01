@@ -1,0 +1,12 @@
+import pg from 'pg';
+import { env } from '$env/dynamic/private';
+
+const { Pool } = pg;
+
+export const pool = new Pool({
+    host: env.POSTGRES_HOST || 'db',
+    port: Number(env.POSTGRES_PORT || 5432),
+    user: env.POSTGRES_USER,
+    password: env.POSTGRES_PASSWORD,
+    database: env.POSTGRES_DB
+});
