@@ -19,10 +19,11 @@ MonoBehaviour:
   attackCooldown: 0.75
   attackFxPrefab: {fileID: 8561813417502051360, guid: cdcba958b8be78ae8a9cfcc3b63754ef, type: 3}
   attackFxDistance: 1
-  attackDamage: 12
+  attackDamage: 20
   attackMoveLockDuration: 0.5
   attackMoveSpeedMultiplier: 0.75
   attackAnimSpeed: 2.5
+  attackSize: 1.3
   hasProjectile: 1
   projectileSpeed: 12
   projectileMaxDistance: 24
@@ -34,4 +35,12 @@ MonoBehaviour:
   specialMoveLockDuration: 0.3
   specialMoveSpeedMultiplier: 0.35
   specialAnimSpeed: 1
+  specialSize: 1
   ultimateCooldown: 5
+  ultimateFxPrefab: {fileID: 0}
+  ultimateFxDistance: 1
+  ultimateDamage: 15
+  ultimateMoveLockDuration: 0.3
+  ultimateMoveSpeedMultiplier: 0.35
+  ultimateAnimSpeed: 1
+  ultimateSize: 1

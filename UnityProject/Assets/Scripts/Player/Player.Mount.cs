@@ -31,6 +31,7 @@ public partial class Player
         localPlayer.StartMounting(this);
     }
 
+    // Real Netcode parenting instead of copying position each frame; only the server reparents, and LateUpdateMount applies the offset once that replicates back (writing it immediately would snap under the stale old parent).
     private void StartMounting(Player pig)
     {
         if (!this.IsLocallyControlled() || isMounted || pig == null || !pig.IsDead)
@@ -43,12 +44,8 @@ public partial class Player
         if (rb != null)
             rb.bodyType = RigidbodyType2D.Kinematic;
 
-        // Real Netcode parenting (zero relative lag) instead of copying position each frame; only the server may reparent.
         if (NetworkObject.IsSpawned)
         {
-            // Don't set localPosition yet: the parent hasn't changed on this client until the server's reparent
-            // replicates back, and writing it now (under the old parent) causes a visible stray snap for non-host
-            // clients. LateUpdateMount() applies the offset once transform.parent actually matches the pig.
             RequestMountParentServerRpc(pig.NetworkObject);
         }
         else
@@ -77,11 +74,10 @@ public partial class Player
         mountElapsed = 0f;
     }
 
+    // worldPositionStays must be true: false would reinterpret the rider's old world position as a local offset from the pig, teleporting them for one frame before LateUpdateMount corrects it.
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestMountParentServerRpc(NetworkObjectReference pigRef)
     {
-        // worldPositionStays must be true: false would reinterpret the rider's old world position as a
-        // local offset from the pig, teleporting them far away for one frame before LateUpdateMount corrects it.
         if (pigRef.TryGet(out NetworkObject pigNetworkObject))
             NetworkObject.TrySetParent(pigNetworkObject, worldPositionStays: true);
     }
@@ -108,6 +104,7 @@ public partial class Player
             Physics2D.IgnoreCollision(bodyCollider, collisionIgnoredWith.bodyCollider, true);
     }
 
+    // Unparents before reviving: both go out as separate RPCs, and the revive effect could otherwise land on observers before the unparent does, dragging the rider along behind the now-moving revived player.
     private void UpdateMount()
     {
         if (!isMounted || !this.IsLocallyControlled())
@@ -122,9 +119,6 @@ public partial class Player
         mountElapsed += Time.deltaTime;
         if (mountElapsed >= mountDurationSeconds)
         {
-            // Unparent before reviving: both go out as separate RPCs from this client, and the revive's
-            // effect (pig regains control) can otherwise land on observers before the unparent does,
-            // visibly dragging the rider along behind the now-moving revived player.
             Player pigToRevive = mountedPig;
             StopMounting();
             pigToRevive.RequestRevive();
@@ -144,8 +138,7 @@ public partial class Player
         }
     }
 
-    // Hides the "press E to revive" zone/prompt once someone is actually riding; runs for every observer off the
-    // replicated transform.parent, not a local-only flag - same reasoning as UpdateMountCollisionIgnore.
+    // Hides the "press E to revive" prompt once someone is riding; runs off the replicated transform.parent, not a local-only flag, same as UpdateMountCollisionIgnore.
     private void UpdateMountInteractVisibility()
     {
         if (mountInteractRoot == null || !IsDead)

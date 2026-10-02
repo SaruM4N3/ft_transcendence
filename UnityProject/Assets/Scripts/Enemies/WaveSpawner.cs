@@ -121,13 +121,13 @@ public class WaveSpawner : NetworkBehaviour
         return index >= 0 && index < enemyKits.Length ? enemyKits[index] : null;
     }
 
+    // Only one enemy kit exists currently; SetNetworkedKitIndex must run before Spawn() so remote clients get it in the initial state.
     private void SpawnWave(int count)
     {
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
 
         for (int i = 0; i < count; i++)
         {
-            // Only one enemy type for now.
             const int kitIndex = 0;
             GameObject instance = Instantiate(enemyPrefab, FindSpawnPosition(), Quaternion.identity);
             instance.GetComponent<Enemy>().Initialize(GetKit(kitIndex));
@@ -135,7 +135,6 @@ public class WaveSpawner : NetworkBehaviour
             NetworkObject netObj = instance.GetComponent<NetworkObject>();
             if (isNetworked)
             {
-                // Set before Spawn() so it's part of the initial state remote clients receive.
                 instance.GetComponent<EnemyAI>().SetNetworkedKitIndex(kitIndex);
                 netObj.Spawn(true);
             }

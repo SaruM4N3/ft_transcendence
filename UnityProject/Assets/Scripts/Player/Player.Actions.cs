@@ -85,6 +85,8 @@ public partial class Player
     {
         if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < specialReadyTime)
             return;
+        if (!TrySpendMana(activeKit.SpecialManaCost))
+            return;
 
         animator.SetFloat(SpecialAnimSpeedHash, activeKit.SpecialAnimSpeed);
         animator.SetTrigger(SpecialHash);
@@ -98,6 +100,8 @@ public partial class Player
     public void Ultimate(InputAction.CallbackContext ctx)
     {
         if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < ultimateReadyTime)
+            return;
+        if (!TrySpendMana(activeKit.UltimateManaCost))
             return;
 
         animator.SetFloat(UltimateAnimSpeedHash, activeKit.UltimateAnimSpeed);
@@ -121,6 +125,20 @@ public partial class Player
         AbilityType.Special => activeKit.SpecialFxDistance,
         AbilityType.Ultimate => activeKit.UltimateFxDistance,
         _ => activeKit.AttackFxDistance,
+    };
+
+    private float GetSize(AbilityType ability) => ability switch
+    {
+        AbilityType.Special => activeKit.SpecialSize,
+        AbilityType.Ultimate => activeKit.UltimateSize,
+        _ => activeKit.AttackSize,
+    };
+
+    private bool GetIgnoreAimRotation(AbilityType ability) => ability switch
+    {
+        AbilityType.Special => activeKit.SpecialIgnoreAimRotation,
+        AbilityType.Ultimate => activeKit.UltimateIgnoreAimRotation,
+        _ => activeKit.AttackIgnoreAimRotation,
     };
 
     private void SpawnAbilityFx(AbilityType ability)
@@ -150,8 +168,7 @@ public partial class Player
         SpawnLocalFx(angle, hasHitbox, ability);
     }
 
-    // Position is computed locally from the attacker's current transform, not sent over RPC - a client's round-trip
-    // latency would otherwise bake a stale offset into the spawn point, making the FX look detached from the start.
+    // Position is computed locally from the attacker's current transform, not sent over RPC - round-trip latency would otherwise bake a stale offset into the spawn point.
     private void SpawnLocalFx(float angle, bool hasHitbox, AbilityType ability)
     {
         GameObject prefab = GetFxPrefab(ability);
@@ -160,8 +177,10 @@ public partial class Player
 
         Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
         Vector3 spawnPos = transform.position + (Vector3)(dir * GetFxDistance(ability));
+        Quaternion rotation = GetIgnoreAimRotation(ability) ? Quaternion.identity : Quaternion.Euler(0f, 0f, angle);
 
-        GameObject fx = Instantiate(prefab, spawnPos, Quaternion.Euler(0f, 0f, angle));
+        GameObject fx = Instantiate(prefab, spawnPos, rotation);
+        fx.transform.localScale *= GetSize(ability);
         fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit, ability);
     }
 }

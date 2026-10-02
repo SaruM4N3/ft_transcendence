@@ -74,10 +74,9 @@ public class InteractPromptUI : MonoBehaviour
             keyLabel.text = KeybindOverrides.GetKeyboardDisplay("Interact") ?? keyGlyph;
     }
 
+    // activeInHierarchy, not activeSelf: a deactivated parent leaves this object's own flag true while StartCoroutine below would still fail.
     public void Hide()
     {
-        // activeInHierarchy, not activeSelf: a deactivated parent (e.g. mountInteractRoot on revive) leaves
-        // this object's own flag true while StartCoroutine below would still fail.
         if (promptRoot == null || !promptRoot.gameObject.activeInHierarchy)
             return;
 

@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 
-// Per-class combat timing/FX a class is defined by. Fields are grouped per-ability so each of
-// Attack/Special/Ultimate is self-contained; ClassKitEditor hides the Projectile fields unless hasProjectile is set.
+// Per-class combat timing/FX; fields are grouped per-ability so each of Attack/Special/Ultimate is self-contained.
 [CreateAssetMenu(fileName = "ClassKit", menuName = "Transcendence/Class Kit")]
 public class ClassKit : ScriptableObject
 {
@@ -23,6 +22,9 @@ public class ClassKit : ScriptableObject
     [SerializeField] private float attackMoveLockDuration = 0.3f;
     [SerializeField] private float attackMoveSpeedMultiplier = 0.35f;
     [SerializeField] private float attackAnimSpeed = 1f;
+    [SerializeField] private float attackSize = 1f;
+    [SerializeField] private bool attackIgnoreAimRotation;
+    [SerializeField] private bool attackFollowCaster = true;
 
     [Header("Attack Projectile")]
     [SerializeField] private bool hasProjectile;
@@ -32,21 +34,29 @@ public class ClassKit : ScriptableObject
 
     [Header("Special")]
     [SerializeField] private float specialCooldown = 2f;
+    [SerializeField] private float specialManaCost;
     [SerializeField] private GameObject specialFxPrefab;
     [SerializeField] private float specialFxDistance = 1f;
     [SerializeField] private float specialDamage = 15f;
     [SerializeField] private float specialMoveLockDuration = 0.3f;
     [SerializeField] private float specialMoveSpeedMultiplier = 0.35f;
     [SerializeField] private float specialAnimSpeed = 1f;
+    [SerializeField] private float specialSize = 1f;
+    [SerializeField] private bool specialIgnoreAimRotation;
+    [SerializeField] private bool specialFollowCaster = true;
 
     [Header("Ultimate")]
     [SerializeField] private float ultimateCooldown = 5f;
+    [SerializeField] private float ultimateManaCost;
     [SerializeField] private GameObject ultimateFxPrefab;
     [SerializeField] private float ultimateFxDistance = 1f;
     [SerializeField] private float ultimateDamage = 15f;
     [SerializeField] private float ultimateMoveLockDuration = 0.3f;
     [SerializeField] private float ultimateMoveSpeedMultiplier = 0.35f;
     [SerializeField] private float ultimateAnimSpeed = 1f;
+    [SerializeField] private float ultimateSize = 1f;
+    [SerializeField] private bool ultimateIgnoreAimRotation;
+    [SerializeField] private bool ultimateFollowCaster = true;
 
     public float MaxHealth => maxHealth;
     public float HealthRegenPerSecond => healthRegenPerSecond;
@@ -60,6 +70,9 @@ public class ClassKit : ScriptableObject
     public float AttackMoveLockDuration => attackMoveLockDuration;
     public float AttackMoveSpeedMultiplier => attackMoveSpeedMultiplier;
     public float AttackAnimSpeed => attackAnimSpeed;
+    public float AttackSize => attackSize;
+    public bool AttackIgnoreAimRotation => attackIgnoreAimRotation;
+    public bool AttackFollowCaster => attackFollowCaster;
 
     public bool HasProjectile => hasProjectile;
     public float ProjectileSpeed => projectileSpeed;
@@ -67,18 +80,26 @@ public class ClassKit : ScriptableObject
     public int PierceCount => pierceCount;
 
     public float SpecialCooldown => specialCooldown;
+    public float SpecialManaCost => specialManaCost;
     public GameObject SpecialFxPrefab => specialFxPrefab;
     public float SpecialFxDistance => specialFxDistance;
     public float SpecialDamage => specialDamage;
     public float SpecialMoveLockDuration => specialMoveLockDuration;
     public float SpecialMoveSpeedMultiplier => specialMoveSpeedMultiplier;
     public float SpecialAnimSpeed => specialAnimSpeed;
+    public float SpecialSize => specialSize;
+    public bool SpecialIgnoreAimRotation => specialIgnoreAimRotation;
+    public bool SpecialFollowCaster => specialFollowCaster;
 
     public float UltimateCooldown => ultimateCooldown;
+    public float UltimateManaCost => ultimateManaCost;
     public GameObject UltimateFxPrefab => ultimateFxPrefab;
     public float UltimateFxDistance => ultimateFxDistance;
     public float UltimateDamage => ultimateDamage;
     public float UltimateMoveLockDuration => ultimateMoveLockDuration;
     public float UltimateMoveSpeedMultiplier => ultimateMoveSpeedMultiplier;
     public float UltimateAnimSpeed => ultimateAnimSpeed;
+    public float UltimateSize => ultimateSize;
+    public bool UltimateIgnoreAimRotation => ultimateIgnoreAimRotation;
+    public bool UltimateFollowCaster => ultimateFollowCaster;
 }

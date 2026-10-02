@@ -17,17 +17,19 @@ public class SlashAttackFX : MonoBehaviour, IAttackFX
     private int frameIndex;
     private float frameTimer;
 
-    // Tracks the attacker for its whole lifetime, so a player moving mid-swing doesn't outrun it.
+    // Follow-caster tracks the attacker for its whole lifetime instead of staying at its world spawn position.
     public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability)
     {
         owner = attacker;
-        damage = ability switch
+        bool followCaster;
+        (damage, followCaster) = ability switch
         {
-            AbilityType.Special => kit.SpecialDamage,
-            AbilityType.Ultimate => kit.UltimateDamage,
-            _ => kit.AttackDamage,
+            AbilityType.Special => (kit.SpecialDamage, kit.SpecialFollowCaster),
+            AbilityType.Ultimate => (kit.UltimateDamage, kit.UltimateFollowCaster),
+            _ => (kit.AttackDamage, kit.AttackFollowCaster),
         };
-        transform.SetParent(attacker.transform);
+        if (followCaster)
+            transform.SetParent(attacker.transform);
         if (!hasHitbox && hitbox != null)
             hitbox.enabled = false;
     }

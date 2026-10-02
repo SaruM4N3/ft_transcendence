@@ -14,14 +14,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClassKit
   maxHealth: 120
   healthRegenPerSecond: 1.5
-  maxMana: 40
-  manaRegenPerSecond: 1
-  attackCooldown: 0.5
-  specialCooldown: 2
-  ultimateCooldown: 5
-  attackFxPrefab: {fileID: 7559628715613984797, guid: 0211bf62865831f9b90567f260708fee, type: 3}
-  attackFxDistance: 1
+  maxMana: 60
+  manaRegenPerSecond: 2
+  attackCooldown: 0.7
+  attackFxPrefab: {fileID: 2950713147391728551, guid: 03676747502a51cbd8b33fb46557150e, type: 3}
+  attackFxDistance: 0.8
+  attackDamage: 15
   attackMoveLockDuration: 0.25
   attackMoveSpeedMultiplier: 0.75
   attackAnimSpeed: 2.5
+  attackSize: 1.4
+  attackIgnoreAimRotation: 0
+  attackFollowCaster: 1
+  hasProjectile: 0
+  projectileSpeed: 12
+  projectileMaxDistance: 10
+  pierceCount: 1
+  specialCooldown: 5
+  specialManaCost: 20
+  specialFxPrefab: {fileID: 5746027779926496099, guid: 93353710a3ca808dbb3841221af00b41, type: 3}
+  specialFxDistance: 0
+  specialDamage: 40
+  specialMoveLockDuration: 0.3
+  specialMoveSpeedMultiplier: 0.35
   specialAnimSpeed: 2
+  specialSize: 2
+  specialIgnoreAimRotation: 0
+  specialFollowCaster: 1
+  ultimateCooldown: 5
+  ultimateManaCost: 0
+  ultimateFxPrefab: {fileID: 0}
+  ultimateFxDistance: 1
+  ultimateDamage: 15
+  ultimateMoveLockDuration: 0.3
+  ultimateMoveSpeedMultiplier: 0.35
+  ultimateAnimSpeed: 1
+  ultimateSize: 1
+  ultimateIgnoreAimRotation: 0
+  ultimateFollowCaster: 1

@@ -45,8 +45,7 @@ public class ModeReadyCheck : NetworkBehaviour
         ResetAllReady();
     }
 
-    // Any client can back out of a pending check (e.g. closing the panel with Tab); otherwise pendingSceneName
-    // never clears and re-proposing the same mode is a no-op NetworkVariable write that never re-opens the panel.
+    // Any client can back out of a pending check; otherwise pendingSceneName never clears and re-proposing the same mode is a no-op write that never re-opens the panel.
     public void RequestCancelReadyCheck()
     {
         RequestCancelReadyCheckServerRpc();
