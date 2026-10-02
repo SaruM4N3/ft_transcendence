@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -6,6 +7,7 @@ public class XPManager : NetworkBehaviour
 {
     [SerializeField] private int baseXpPerLevel = 50;
     [SerializeField] private int xpPerLevelIncrement = 25;
+    [SerializeField] private float xpGainDelay = 0f;
 
     private readonly NetworkVariable<int> totalXP = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -56,6 +58,20 @@ public class XPManager : NetworkBehaviour
     }
 
     private void HandleEnemyKilled(int xpAmount)
+    {
+        if (xpGainDelay <= 0f)
+            GrantXP(xpAmount);
+        else
+            StartCoroutine(GrantXPDelayed(xpAmount, xpGainDelay));
+    }
+
+    private IEnumerator GrantXPDelayed(int xpAmount, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        GrantXP(xpAmount);
+    }
+
+    private void GrantXP(int xpAmount)
     {
         if (IsSpawned)
             totalXP.Value += xpAmount;

@@ -276,8 +276,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XPManager
   ShowTopMostFoldoutHeaderGroup: 1
-  baseXpPerLevel: 50
-  xpPerLevelIncrement: 25
+  baseXpPerLevel: 100
+  xpPerLevelIncrement: 100
+  xpGainDelay: 1
 --- !u!1 &208363087
 GameObject:
   m_ObjectHideFlags: 0
