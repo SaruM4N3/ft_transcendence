@@ -124,8 +124,6 @@ public partial class Player
         UpdateFacing(aimDir);
         UpdateMoveSpeedMult();
 
-        StopGuardingIfCannotFight();
-
         // Mounted on a pig to revive it: can still aim/attack, but UpdateMount drives position instead.
         if (isMounted)
         {
@@ -155,7 +153,7 @@ public partial class Player
         if (IsBlocked)
             return;
 
-        animator.SetBool(IsWalkingHash, !IsGuarding && hasDirection);
+        animator.SetBool(IsWalkingHash, hasDirection);
     }
 
     public void Run(InputAction.CallbackContext ctx)

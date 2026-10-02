@@ -89,6 +89,7 @@ public partial class Player : NetworkBehaviour, IDamageable
         UpdateMovement();
         UpdateMountCollisionIgnore();
         UpdateMount();
+        UpdateMountInteractVisibility();
         UpdateStats();
         UpdatePigForm();
         UpdateActions();

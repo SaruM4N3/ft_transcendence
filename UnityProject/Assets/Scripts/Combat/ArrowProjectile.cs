@@ -16,11 +16,16 @@ public class ArrowProjectile : MonoBehaviour, IAttackFX
     private Rigidbody2D rb;
     private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
 
-    public void Init(GameObject attacker, bool hasHitboxValue, ClassKit kit)
+    public void Init(GameObject attacker, bool hasHitboxValue, ClassKit kit, AbilityType ability)
     {
         owner = attacker;
         hasHitbox = hasHitboxValue;
-        damage = kit.Damage;
+        damage = ability switch
+        {
+            AbilityType.Special => kit.SpecialDamage,
+            AbilityType.Ultimate => kit.UltimateDamage,
+            _ => kit.AttackDamage,
+        };
         speed = kit.ProjectileSpeed;
         maxDistance = kit.ProjectileMaxDistance;
         pierceCount = kit.PierceCount;

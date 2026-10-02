@@ -18,10 +18,15 @@ public class SlashAttackFX : MonoBehaviour, IAttackFX
     private float frameTimer;
 
     // Tracks the attacker for its whole lifetime, so a player moving mid-swing doesn't outrun it.
-    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit)
+    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability)
     {
         owner = attacker;
-        damage = kit.Damage;
+        damage = ability switch
+        {
+            AbilityType.Special => kit.SpecialDamage,
+            AbilityType.Ultimate => kit.UltimateDamage,
+            _ => kit.AttackDamage,
+        };
         transform.SetParent(attacker.transform);
         if (!hasHitbox && hitbox != null)
             hitbox.enabled = false;

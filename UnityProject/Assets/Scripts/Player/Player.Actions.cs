@@ -12,34 +12,31 @@ public partial class Player
 
     private ClassKit activeKit;
 
-    private bool isGuarding;
     private bool isAttackHeld;
     private float attackReadyTime;
     private float specialReadyTime;
     private float ultimateReadyTime;
-    private float attackMoveLockEndTime;
-
-    public bool IsGuarding => isGuarding;
+    private float moveLockEndTime;
+    private float moveLockSpeedMultiplier;
 
     public float MovementSpeedMultiplier
     {
         get
         {
-            if (isGuarding)
-                return 0f;
-            return Time.time < attackMoveLockEndTime ? activeKit.AttackMoveSpeedMultiplier : 1f;
+            return Time.time < moveLockEndTime ? moveLockSpeedMultiplier : 1f;
         }
     }
 
     // Dead players (pigs) can still move but not fight.
     private bool CanFight => !IsBlocked && !IsDead;
 
-    private static readonly int IsGuardingHash = Animator.StringToHash("IsGuarding");
     // Animator parameter strings stay as-is (LightAttack/HeavyAttack) - only the C#-facing names change.
     private static readonly int AttackHash = Animator.StringToHash("LightAttack");
     private static readonly int SpecialHash = Animator.StringToHash("HeavyAttack");
+    private static readonly int UltimateHash = Animator.StringToHash("Ultimate");
     private static readonly int AttackAnimSpeedHash = Animator.StringToHash("AttackAnimSpeed");
     private static readonly int SpecialAnimSpeedHash = Animator.StringToHash("SpecialAnimSpeed");
+    private static readonly int UltimateAnimSpeedHash = Animator.StringToHash("UltimateAnimSpeed");
 
     private void AwakeActions()
     {
@@ -78,9 +75,10 @@ public partial class Player
         animator.SetFloat(AttackAnimSpeedHash, activeKit.AttackAnimSpeed);
         animator.SetTrigger(AttackHash);
         attackReadyTime = Time.time + activeKit.AttackCooldown;
-        attackMoveLockEndTime = Time.time + activeKit.AttackMoveLockDuration;
+        moveLockEndTime = Time.time + activeKit.AttackMoveLockDuration;
+        moveLockSpeedMultiplier = activeKit.AttackMoveSpeedMultiplier;
         OnAbilityUsed?.Invoke(AbilityType.Attack, activeKit.AttackCooldown);
-        SpawnAttackFx();
+        SpawnAbilityFx(AbilityType.Attack);
     }
 
     public void Special(InputAction.CallbackContext ctx)
@@ -91,85 +89,79 @@ public partial class Player
         animator.SetFloat(SpecialAnimSpeedHash, activeKit.SpecialAnimSpeed);
         animator.SetTrigger(SpecialHash);
         specialReadyTime = Time.time + activeKit.SpecialCooldown;
-        attackMoveLockEndTime = Time.time + activeKit.AttackMoveLockDuration;
+        moveLockEndTime = Time.time + activeKit.SpecialMoveLockDuration;
+        moveLockSpeedMultiplier = activeKit.SpecialMoveSpeedMultiplier;
         OnAbilityUsed?.Invoke(AbilityType.Special, activeKit.SpecialCooldown);
+        SpawnAbilityFx(AbilityType.Special);
     }
 
     public void Ultimate(InputAction.CallbackContext ctx)
     {
-        if (!this.IsLocallyControlled())
+        if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < ultimateReadyTime)
             return;
 
-        bool wantsGuard = !ctx.canceled;
-
-        if (wantsGuard && (!CanFight || Time.time < ultimateReadyTime))
-            return;
-
-        if (ctx.canceled && !isGuarding)
-            return;
-
-        isGuarding = wantsGuard;
-
-        animator.SetBool(IsGuardingHash, isGuarding);
-        animator.SetBool(IsWalkingHash, !isGuarding && HasMoveInput);
-
-        if (ctx.canceled)
-        {
-            ultimateReadyTime = Time.time + activeKit.UltimateCooldown;
-            OnAbilityUsed?.Invoke(AbilityType.Ultimate, activeKit.UltimateCooldown);
-        }
+        animator.SetFloat(UltimateAnimSpeedHash, activeKit.UltimateAnimSpeed);
+        animator.SetTrigger(UltimateHash);
+        ultimateReadyTime = Time.time + activeKit.UltimateCooldown;
+        moveLockEndTime = Time.time + activeKit.UltimateMoveLockDuration;
+        moveLockSpeedMultiplier = activeKit.UltimateMoveSpeedMultiplier;
+        OnAbilityUsed?.Invoke(AbilityType.Ultimate, activeKit.UltimateCooldown);
+        SpawnAbilityFx(AbilityType.Ultimate);
     }
 
-    // Drops the guard when it can no longer be held, e.g. on death.
-    public void StopGuardingIfCannotFight()
+    private GameObject GetFxPrefab(AbilityType ability) => ability switch
     {
-        if (!isGuarding || CanFight)
-            return;
+        AbilityType.Special => activeKit.SpecialFxPrefab,
+        AbilityType.Ultimate => activeKit.UltimateFxPrefab,
+        _ => activeKit.AttackFxPrefab,
+    };
 
-        isGuarding = false;
-        animator.SetBool(IsGuardingHash, false);
-        animator.SetBool(IsWalkingHash, HasMoveInput);
-    }
-
-    private void SpawnAttackFx()
+    private float GetFxDistance(AbilityType ability) => ability switch
     {
-        if (activeKit.AttackFxPrefab == null)
+        AbilityType.Special => activeKit.SpecialFxDistance,
+        AbilityType.Ultimate => activeKit.UltimateFxDistance,
+        _ => activeKit.AttackFxDistance,
+    };
+
+    private void SpawnAbilityFx(AbilityType ability)
+    {
+        if (GetFxPrefab(ability) == null)
             return;
 
         float angle = AimAngleDegrees;
 
         if (NetworkObject.IsSpawned)
-            SpawnAttackFxServerRpc(angle);
+            SpawnAbilityFxServerRpc(angle, ability);
         else
-            SpawnLocalFx(angle, hasHitbox: true);
+            SpawnLocalFx(angle, hasHitbox: true, ability);
     }
 
     [ServerRpc]
-    private void SpawnAttackFxServerRpc(float angle)
+    private void SpawnAbilityFxServerRpc(float angle, AbilityType ability)
     {
-        SpawnAttackFxClientRpc(angle, OwnerClientId);
+        SpawnAbilityFxClientRpc(angle, OwnerClientId, ability);
     }
 
-    // Spawns the attack FX on every client; only the attacker's copy deals damage.
+    // Spawns the ability FX on every client; only the attacker's copy deals damage.
     [ClientRpc]
-    private void SpawnAttackFxClientRpc(float angle, ulong attackerClientId)
+    private void SpawnAbilityFxClientRpc(float angle, ulong attackerClientId, AbilityType ability)
     {
         bool hasHitbox = NetworkManager.Singleton.LocalClientId == attackerClientId;
-        SpawnLocalFx(angle, hasHitbox);
+        SpawnLocalFx(angle, hasHitbox, ability);
     }
 
     // Position is computed locally from the attacker's current transform, not sent over RPC - a client's round-trip
     // latency would otherwise bake a stale offset into the spawn point, making the FX look detached from the start.
-    private void SpawnLocalFx(float angle, bool hasHitbox)
+    private void SpawnLocalFx(float angle, bool hasHitbox, AbilityType ability)
     {
-        GameObject prefab = activeKit.AttackFxPrefab;
+        GameObject prefab = GetFxPrefab(ability);
         if (prefab == null)
             return;
 
         Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
-        Vector3 spawnPos = transform.position + (Vector3)(dir * activeKit.AttackFxDistance);
+        Vector3 spawnPos = transform.position + (Vector3)(dir * GetFxDistance(ability));
 
         GameObject fx = Instantiate(prefab, spawnPos, Quaternion.Euler(0f, 0f, angle));
-        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit);
+        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit, ability);
     }
 }

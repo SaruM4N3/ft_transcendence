@@ -45,12 +45,18 @@ public partial class Player
 
         // Real Netcode parenting (zero relative lag) instead of copying position each frame; only the server may reparent.
         if (NetworkObject.IsSpawned)
+        {
+            // Don't set localPosition yet: the parent hasn't changed on this client until the server's reparent
+            // replicates back, and writing it now (under the old parent) causes a visible stray snap for non-host
+            // clients. LateUpdateMount() applies the offset once transform.parent actually matches the pig.
             RequestMountParentServerRpc(pig.NetworkObject);
+        }
         else
+        {
             transform.SetParent(pig.transform, worldPositionStays: false);
-
-        transform.localPosition = mountedOffset;
-        transform.localRotation = Quaternion.identity;
+            transform.localPosition = mountedOffset;
+            transform.localRotation = Quaternion.identity;
+        }
     }
 
     private void StopMounting()
@@ -74,8 +80,10 @@ public partial class Player
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestMountParentServerRpc(NetworkObjectReference pigRef)
     {
+        // worldPositionStays must be true: false would reinterpret the rider's old world position as a
+        // local offset from the pig, teleporting them far away for one frame before LateUpdateMount corrects it.
         if (pigRef.TryGet(out NetworkObject pigNetworkObject))
-            NetworkObject.TrySetParent(pigNetworkObject, worldPositionStays: false);
+            NetworkObject.TrySetParent(pigNetworkObject, worldPositionStays: true);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -114,8 +122,12 @@ public partial class Player
         mountElapsed += Time.deltaTime;
         if (mountElapsed >= mountDurationSeconds)
         {
-            mountedPig.RequestRevive();
+            // Unparent before reviving: both go out as separate RPCs from this client, and the revive's
+            // effect (pig regains control) can otherwise land on observers before the unparent does,
+            // visibly dragging the rider along behind the now-moving revived player.
+            Player pigToRevive = mountedPig;
             StopMounting();
+            pigToRevive.RequestRevive();
         }
     }
 
@@ -130,6 +142,28 @@ public partial class Player
             transform.localPosition = mountedOffset;
             transform.localRotation = Quaternion.identity;
         }
+    }
+
+    // Hides the "press E to revive" zone/prompt once someone is actually riding; runs for every observer off the
+    // replicated transform.parent, not a local-only flag - same reasoning as UpdateMountCollisionIgnore.
+    private void UpdateMountInteractVisibility()
+    {
+        if (mountInteractRoot == null || !IsDead)
+            return;
+
+        bool shouldShow = !HasRider();
+        if (mountInteractRoot.activeSelf != shouldShow)
+            mountInteractRoot.SetActive(shouldShow);
+    }
+
+    private bool HasRider()
+    {
+        foreach (Player candidate in AllActiveInstances)
+        {
+            if (candidate != this && candidate.transform.parent == transform)
+                return true;
+        }
+        return false;
     }
 
     // Local rendering only, runs for every observer; auto Y-sort is unreliable this close, so pin just in front of the pig instead.
