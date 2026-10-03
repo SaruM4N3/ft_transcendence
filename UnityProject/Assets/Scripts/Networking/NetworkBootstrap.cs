@@ -5,9 +5,6 @@ using Unity.Netcode.Transports.UTP;
 using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.UI;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 // Wires the Lobby's Host/Join buttons to Netcode over Unity Relay.
 public class NetworkBootstrap : MonoBehaviour
@@ -189,17 +186,13 @@ public class NetworkBootstrap : MonoBehaviour
         }
     }
 
-    // Relay allocates a WebSocket or raw-UDP endpoint based on the target platform; UnityTransport's checkbox must match or StartHost/StartClient throws.
+    // Relay allocates a WebSocket or raw-UDP endpoint based on RelayProtocol.Default (WSS for WebGL, DTLS otherwise - see Unity.Services.Multiplayer); UnityTransport's checkbox must match whatever the SDK actually requested, or StartHost/StartClient throws. Deriving it from that same enum instead of a second, independent platform check keeps the two from ever disagreeing.
     private static void SyncTransportWebSockets()
     {
         if (NetworkManager.Singleton.NetworkConfig.NetworkTransport is not UnityTransport transport)
             return;
 
-#if UNITY_EDITOR
-        transport.UseWebSockets = EditorUserBuildSettings.activeBuildTarget == BuildTarget.WebGL;
-#else
-        transport.UseWebSockets = Application.platform == RuntimePlatform.WebGLPlayer;
-#endif
+        transport.UseWebSockets = RelayProtocol.Default == RelayProtocol.WSS;
     }
 
     private void SetJoinControlsInteractable(bool interactable)
