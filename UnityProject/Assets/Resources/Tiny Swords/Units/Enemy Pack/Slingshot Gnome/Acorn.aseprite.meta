@@ -127,8 +127,8 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: Frame_0
     originalName: 
-    pivot: {x: 0.5, y: -1.3157895}
-    alignment: 9
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
     rect:
@@ -148,8 +148,8 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 4}
   - name: Frame_1
     originalName: 
-    pivot: {x: 0.5, y: -1.4705882}
-    alignment: 9
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
     rect:
@@ -169,8 +169,8 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 31}
   - name: Frame_2
     originalName: 
-    pivot: {x: 0.4666667, y: -1.4444444}
-    alignment: 9
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
     rect:
@@ -190,8 +190,8 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 56}
   - name: Frame_3
     originalName: 
-    pivot: {x: 0.42857146, y: -1.7333335}
-    alignment: 9
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
     rect:
@@ -211,8 +211,8 @@ ScriptedImporter:
     uvTransform: {x: 4, y: 106}
   - name: Frame_4
     originalName: 
-    pivot: {x: 0.53333336, y: -1.5625}
-    alignment: 9
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
     rect:

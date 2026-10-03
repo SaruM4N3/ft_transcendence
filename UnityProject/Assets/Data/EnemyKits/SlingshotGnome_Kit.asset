@@ -10,32 +10,32 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a66c09d7042c9ffa9f15490369cf586, type: 3}
-  m_Name: Skeleton_Kit
+  m_Name: SlingshotGnome_Kit
   m_EditorClassIdentifier: Assembly-CSharp::EnemyKit
   tier: 1
-  maxHealth: 40
-  xpReward: 10
-  moveSpeed: 3
-  attackRange: 1.75
-  attackAngle: 70
-  damage: 10
-  attackCooldown: 1
+  maxHealth: 28
+  xpReward: 12
+  moveSpeed: 2.8
+  attackRange: 6.5
+  attackAngle: 20
+  damage: 9
+  attackCooldown: 1.6
   attackHitDelay: 0.5
   attackAnimationDuration: 0.5
   attackMoveSpeedMultiplier: 0
-  hitRangeTolerance: 1.25
-  isRanged: 0
-  projectilePrefab: {fileID: 0}
-  projectileFrames: []
-  projectileFrameRate: 16
-  projectileArcHeight: 0.8
+  hitRangeTolerance: 1.1
+  isRanged: 1
+  projectilePrefab: {fileID: 7623626265396232753, guid: 9af1802faaa57f152babb807e6139c79, type: 3}
+  projectileSpeed: 6
+  projectileMaxDistance: 20
+  projectileArcHeight: 0
   retargetInterval: 0.25
   steerInterval: 0.1
   directChaseRange: 8
   lineOfSightInterval: 0.3
   maxDistanceFromPlayers: 40
   leashCheckInterval: 2
-  enemyPrefab: {fileID: 372990595272446690, guid: ef9f11efbcc78184e8ab3f399514446d, type: 3}
+  enemyPrefab: {fileID: 6884631229968775644, guid: 9ab3a9221529a424e83adc8238e30337, type: 3}
   idleStateName: Idle
   runStateName: Run
-  attackStateName: Attack
+  attackStateName: Shoot

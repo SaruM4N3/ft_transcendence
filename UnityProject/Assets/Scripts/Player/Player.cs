@@ -93,6 +93,7 @@ public partial class Player : NetworkBehaviour, IDamageable
         UpdateStats();
         UpdatePigForm();
         UpdateActions();
+        UpdateShield();
     }
 
     void LateUpdate()

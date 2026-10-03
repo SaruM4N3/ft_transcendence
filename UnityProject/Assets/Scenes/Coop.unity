@@ -195,6 +195,9 @@ MonoBehaviour:
   enemyPrefab: {fileID: 8760497899193580633, guid: 80684958157020e5b9d23c35045e0a68, type: 3}
   enemyKits:
   - {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
+  - {fileID: 11400000, guid: 56d98aedfa0d96f61bbf3636404de244, type: 2}
+  - {fileID: 11400000, guid: b068366b39b2d0dd9a3b6427d6237654, type: 2}
+  tierUnlockWave: 0100000004000000
   baseEnemiesPerWave: 5
   extraEnemiesPerWave: 5
   extraEnemiesPerPlayer: 5
@@ -1396,7 +1399,7 @@ MonoBehaviour:
   viewDistanceInChunks: 2
   maxChunkGenerationsPerFrame: 2
   seed: 15
-  spawnSafeRadius: 5
+  spawnSafeRadius: 2
   biomeNoiseScale: 0.1
   biomeTiles:
   - {fileID: 11400000, guid: fe10effbe23c4a03ac99d50817ef8a7d, type: 2}

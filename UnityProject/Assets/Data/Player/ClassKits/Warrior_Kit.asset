@@ -23,7 +23,7 @@ MonoBehaviour:
   attackMoveLockDuration: 0.25
   attackMoveSpeedMultiplier: 0.75
   attackAnimSpeed: 2.5
-  attackSize: 1.4
+  attackSize: 1.5
   attackIgnoreAimRotation: 0
   attackFollowCaster: 1
   hasProjectile: 0
@@ -42,13 +42,21 @@ MonoBehaviour:
   specialIgnoreAimRotation: 0
   specialFollowCaster: 1
   ultimateCooldown: 5
-  ultimateManaCost: 0
-  ultimateFxPrefab: {fileID: 0}
+  ultimateManaCost: 40
+  ultimateFxPrefab: {fileID: 2543181571912392695, guid: 25ba05138bee6b5cd838262031469df2, type: 3}
   ultimateFxDistance: 1
-  ultimateDamage: 15
+  ultimateDamage: 0
   ultimateMoveLockDuration: 0.3
-  ultimateMoveSpeedMultiplier: 0.35
+  ultimateMoveSpeedMultiplier: 1
   ultimateAnimSpeed: 1
-  ultimateSize: 1
+  ultimateSize: 2
   ultimateIgnoreAimRotation: 0
   ultimateFollowCaster: 1
+  hasShield: 1
+  shieldHoldDuration: 10
+  shieldHealth: 150
+  shieldKnockbackForce: 1
+  shieldKnockbackDuration: 1
+  shieldPushInterval: 0.2
+  shieldTurnSpeed: 100
+  shieldHoldAnimation: 1

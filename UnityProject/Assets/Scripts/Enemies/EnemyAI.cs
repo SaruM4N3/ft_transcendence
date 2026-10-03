@@ -18,6 +18,8 @@ public class EnemyAI : NetworkBehaviour
     private Vector2 bodyOffset;
     private float nextAttackTime;
     private float nextLeashCheckTime;
+    private float knockbackEndTime;
+    private Vector2 knockbackVelocity;
 
     private Player target;
     private int seenPlayersVersion = -1;
@@ -34,9 +36,10 @@ public class EnemyAI : NetworkBehaviour
 
     private static PhysicsMaterial2D slipperyMaterial;
 
-    private static readonly int IdleHash = Animator.StringToHash("Idle");
-    private static readonly int RunHash = Animator.StringToHash("Run");
-    private static readonly int AttackHash = Animator.StringToHash("Attack");
+    // Resolved per-kit in ApplyVisual, since Aseprite-generated controllers don't all share the same state names.
+    private int idleHash;
+    private int runHash;
+    private int attackHash;
 
     // Assigned at spawn time by whoever instantiates this enemy (see Enemy.Initialize); never baked into the prefab.
     public EnemyKit Kit { get => kit; set => kit = value; }
@@ -118,6 +121,12 @@ public class EnemyAI : NetworkBehaviour
         if (!this.HasServerAuthority())
             return;
 
+        if (Time.time < knockbackEndTime)
+        {
+            rb.linearVelocity = knockbackVelocity;
+            return;
+        }
+
         EnemyFlowFieldManager manager = EnemyFlowFieldManager.Instance;
         if (target == null || target.IsDead || seenPlayersVersion != manager.PlayersVersion || Time.time >= nextRetargetTime)
             ChooseTarget(manager);
@@ -164,6 +173,13 @@ public class EnemyAI : NetworkBehaviour
 
     // The collider is offset from the pivot; queries must start at the real body.
     public Vector2 BodyCenter => rb.position + bodyOffset;
+
+    // Overrides steering for a short window, e.g. a shield push; server-only caller.
+    public void ApplyKnockback(Vector2 velocity, float duration)
+    {
+        knockbackVelocity = velocity;
+        knockbackEndTime = Time.time + duration;
+    }
 
     // Range checks use collider centres, since pivots sit at different heights.
     public static Vector2 TargetCenter(Player player)
@@ -227,13 +243,12 @@ public class EnemyAI : NetworkBehaviour
         return slipperyMaterial;
     }
 
-    // Applies the kit's sprite/controller to the already-cached child renderer/animator.
-    public void ApplyVisual(Sprite sprite, RuntimeAnimatorController controller)
+    // Sprite/Animator are baked into the kit's own prefab variant now, not swapped at runtime - this just resolves state-name hashes, since Aseprite-generated controllers don't all share the same state names.
+    public void CacheAnimationHashes()
     {
-        if (spriteRenderer != null)
-            spriteRenderer.sprite = sprite;
-        if (animator != null)
-            animator.runtimeAnimatorController = controller;
+        idleHash = Animator.StringToHash(kit.IdleStateName);
+        runHash = Animator.StringToHash(kit.RunStateName);
+        attackHash = Animator.StringToHash(kit.AttackStateName);
     }
 
     // Called by EnemyActions so the shared Animator/state tracking stays in one place.
@@ -243,8 +258,8 @@ public class EnemyAI : NetworkBehaviour
             return;
 
         attackVisualEndTime = Time.time + duration;
-        currentAnimationHash = AttackHash;
-        animator.Play(AttackHash, 0, 0f);
+        currentAnimationHash = attackHash;
+        animator.Play(attackHash, 0, 0f);
     }
 
     // Faces movement and picks Attack/Run/Idle, playing only on state change.
@@ -270,9 +285,9 @@ public class EnemyAI : NetworkBehaviour
 
         int desired;
         if (Time.time < attackVisualEndTime)
-            desired = AttackHash;
+            desired = attackHash;
         else
-            desired = Time.time - lastMovedTime < 0.15f ? RunHash : IdleHash;
+            desired = Time.time - lastMovedTime < 0.15f ? runHash : idleHash;
 
         if (desired == currentAnimationHash)
             return;

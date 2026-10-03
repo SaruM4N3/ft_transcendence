@@ -6,8 +6,8 @@ using UnityEngine;
 // Server-side wave spawner; waves fire on a timer, but end that wait early once the current wave is fully cleared.
 public class WaveSpawner : NetworkBehaviour
 {
-    [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private EnemyKit[] enemyKits;
+    [SerializeField] private int[] tierUnlockWave = { 1, 4 };
     [SerializeField] private int baseEnemiesPerWave = 3;
     [SerializeField] private int extraEnemiesPerWave = 2;
     [SerializeField] private int extraEnemiesPerPlayer = 2;
@@ -25,6 +25,7 @@ public class WaveSpawner : NetworkBehaviour
     private int waveNumber;
     private float offlineStartTime;
     private bool wavesStarted;
+    private readonly List<int> unlockedKitIndices = new List<int>();
 
     public int CurrentWave => IsSpawned ? currentWave.Value : waveNumber;
 
@@ -121,16 +122,18 @@ public class WaveSpawner : NetworkBehaviour
         return index >= 0 && index < enemyKits.Length ? enemyKits[index] : null;
     }
 
-    // Only one enemy kit exists currently; SetNetworkedKitIndex must run before Spawn() so remote clients get it in the initial state.
+    // Each enemy independently rolls a random kit from whatever tiers are unlocked this wave; SetNetworkedKitIndex must run before Spawn() so remote clients get it in the initial state.
     private void SpawnWave(int count)
     {
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        RefreshUnlockedKitIndices();
 
         for (int i = 0; i < count; i++)
         {
-            const int kitIndex = 0;
-            GameObject instance = Instantiate(enemyPrefab, FindSpawnPosition(), Quaternion.identity);
-            instance.GetComponent<Enemy>().Initialize(GetKit(kitIndex));
+            int kitIndex = unlockedKitIndices[Random.Range(0, unlockedKitIndices.Count)];
+            EnemyKit kit = GetKit(kitIndex);
+            GameObject instance = Instantiate(kit.EnemyPrefab, FindSpawnPosition(), Quaternion.identity);
+            instance.GetComponent<Enemy>().Initialize(kit);
 
             NetworkObject netObj = instance.GetComponent<NetworkObject>();
             if (isNetworked)
@@ -139,6 +142,22 @@ public class WaveSpawner : NetworkBehaviour
                 netObj.Spawn(true);
             }
         }
+    }
+
+    // A kit's tier unlocks once waveNumber reaches tierUnlockWave[tier-1]; tiers past that array are never unlocked. Falls back to kit 0 if nothing qualifies yet.
+    private void RefreshUnlockedKitIndices()
+    {
+        unlockedKitIndices.Clear();
+        for (int i = 0; i < enemyKits.Length; i++)
+        {
+            int tier = Mathf.Max(1, enemyKits[i].Tier);
+            int unlockWave = tier <= tierUnlockWave.Length ? tierUnlockWave[tier - 1] : int.MaxValue;
+            if (waveNumber >= unlockWave)
+                unlockedKitIndices.Add(i);
+        }
+
+        if (unlockedKitIndices.Count == 0)
+            unlockedKitIndices.Add(0);
     }
 
     // Falls back to the spawner's own position if no valid point is found; public so EnemyAI can reuse it to recycle stray enemies.
@@ -170,11 +189,12 @@ public class WaveSpawner : NetworkBehaviour
         return living.Count > 0 ? living[Random.Range(0, living.Count)].transform.position : transform.position;
     }
 
-    // The collider sits above the pivot, so spawn checks test the body position.
+    // The collider sits above the pivot, so spawn checks test the body position; all enemy variants share the same base collider setup, so any kit's prefab is representative.
     private Vector2 GetEnemyBodyOffset()
     {
-        CircleCollider2D circle = enemyPrefab.GetComponent<CircleCollider2D>();
-        return circle != null ? circle.offset * (Vector2)enemyPrefab.transform.localScale : Vector2.zero;
+        GameObject prefab = enemyKits.Length > 0 ? enemyKits[0].EnemyPrefab : null;
+        CircleCollider2D circle = prefab != null ? prefab.GetComponent<CircleCollider2D>() : null;
+        return circle != null ? circle.offset * (Vector2)prefab.transform.localScale : Vector2.zero;
     }
 
     // Valid when the point and its four sides are land with no static collider.

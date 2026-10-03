@@ -23,6 +23,8 @@ public partial class Player
     {
         get
         {
+            if (isShieldActive.Value)
+                return activeKit != null ? activeKit.UltimateMoveSpeedMultiplier : 1f;
             return Time.time < moveLockEndTime ? moveLockSpeedMultiplier : 1f;
         }
     }
@@ -99,6 +101,12 @@ public partial class Player
 
     public void Ultimate(InputAction.CallbackContext ctx)
     {
+        if (activeKit != null && activeKit.HasShield)
+        {
+            UltimateShield(ctx);
+            return;
+        }
+
         if (!this.IsLocallyControlled() || !ctx.performed || !CanFight || Time.time < ultimateReadyTime)
             return;
         if (!TrySpendMana(activeKit.UltimateManaCost))

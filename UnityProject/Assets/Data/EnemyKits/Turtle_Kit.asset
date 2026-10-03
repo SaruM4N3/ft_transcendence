@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a66c09d7042c9ffa9f15490369cf586, type: 3}
-  m_Name: Skeleton_Kit
+  m_Name: Turtle_Kit
   m_EditorClassIdentifier: Assembly-CSharp::EnemyKit
-  tier: 1
-  maxHealth: 40
-  xpReward: 10
-  moveSpeed: 3
-  attackRange: 1.75
-  attackAngle: 70
-  damage: 10
-  attackCooldown: 1
-  attackHitDelay: 0.5
-  attackAnimationDuration: 0.5
+  tier: 2
+  maxHealth: 180
+  xpReward: 25
+  moveSpeed: 1.2
+  attackRange: 1.9
+  attackAngle: 90
+  damage: 14
+  attackCooldown: 1.4
+  attackHitDelay: 0.6
+  attackAnimationDuration: 0.6
   attackMoveSpeedMultiplier: 0
   hitRangeTolerance: 1.25
   isRanged: 0
@@ -35,7 +35,7 @@ MonoBehaviour:
   lineOfSightInterval: 0.3
   maxDistanceFromPlayers: 40
   leashCheckInterval: 2
-  enemyPrefab: {fileID: 372990595272446690, guid: ef9f11efbcc78184e8ab3f399514446d, type: 3}
+  enemyPrefab: {fileID: 8046858570631607442, guid: a9b738e11351bfa6fa5dc2eeb77a76a1, type: 3}
   idleStateName: Idle
-  runStateName: Run
+  runStateName: Walk
   attackStateName: Attack

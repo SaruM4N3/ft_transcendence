@@ -58,6 +58,17 @@ public class ClassKit : ScriptableObject
     [SerializeField] private bool ultimateIgnoreAimRotation;
     [SerializeField] private bool ultimateFollowCaster = true;
 
+    [Header("Ultimate Shield")]
+    [SerializeField] private bool hasShield;
+    [SerializeField] private float shieldHoldDuration = 10f;
+    [SerializeField] private float shieldHealth = 150f;
+    [SerializeField] private float shieldKnockbackForce = 8f;
+    [SerializeField] private float shieldKnockbackDuration = 0.25f;
+    [SerializeField] private float shieldPushInterval = 0.5f;
+    [SerializeField] private float shieldTurnSpeed = 120f;
+    // When true, the character's Ultimate cast animation loops/holds instead of auto-returning to Idle/Walk, for as long as the shield is up - needs a "ShieldHeld" bool param on that class's Animator Controller to have any effect.
+    [SerializeField] private bool shieldHoldAnimation;
+
     public float MaxHealth => maxHealth;
     public float HealthRegenPerSecond => healthRegenPerSecond;
     public float MaxMana => maxMana;
@@ -102,4 +113,13 @@ public class ClassKit : ScriptableObject
     public float UltimateSize => ultimateSize;
     public bool UltimateIgnoreAimRotation => ultimateIgnoreAimRotation;
     public bool UltimateFollowCaster => ultimateFollowCaster;
+
+    public bool HasShield => hasShield;
+    public float ShieldHoldDuration => shieldHoldDuration;
+    public float ShieldHealth => shieldHealth;
+    public float ShieldKnockbackForce => shieldKnockbackForce;
+    public float ShieldKnockbackDuration => shieldKnockbackDuration;
+    public float ShieldPushInterval => shieldPushInterval;
+    public float ShieldTurnSpeed => shieldTurnSpeed;
+    public bool ShieldHoldAnimation => shieldHoldAnimation;
 }
