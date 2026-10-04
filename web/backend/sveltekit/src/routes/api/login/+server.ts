@@ -1,8 +1,9 @@
 import { verify } from '@node-rs/argon2';
 import { pool } from '$lib/server/db.js';
+import { randomBytes } from 'node:crypto';
 import type { RequestEvent } from '@sveltejs/kit';
 
-export async function POST({ request }: RequestEvent) {
+export async function POST({ request, cookies }: RequestEvent) {
     try {
         const { identifier, password } = await request.json();
 
@@ -65,6 +66,24 @@ export async function POST({ request }: RequestEvent) {
             );
         }
 
+        const sessionId = randomBytes(32).toString('hex');
+        const now = new Date();
+        const expireAt = new Date(now.getTime()+(7*24*60*60*1000));
+
+        await pool.query(
+            `INSERT INTO sessions (id , user_id, expires_at)
+             VALUES ($1, $2, $3)`,
+             [sessionId, existingUser.id, expireAt]
+        );
+
+        cookies.set('session', sessionId, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 7 * 24 * 60 * 60
+        });
+        
         return new Response(
             JSON.stringify({
                 success: true,
@@ -81,6 +100,7 @@ export async function POST({ request }: RequestEvent) {
                 }
             }
         );
+
     } catch (error) {
         console.error('Login failed:', error);
 
