@@ -1,15 +1,25 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
+    import { goto } from '$app/navigation';
 
-	let { children, data } = $props();
+    let { data, children } = $props();
+
+    async function logout() {
+        const response = await fetch('/api/logout', {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            await goto('/login');
+        }
+    }
 </script>
-
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
 
 {#if data.user}
     <p>Welcome {data.user.display_name}</p>
+
+    <button onclick={logout}>
+        Logout
+    </button>
 {:else}
     <p>You are not logged in.</p>
 {/if}
