@@ -1,46 +1,20 @@
-import type { RequestEvent } from '@sveltejs/kit';
-import { pool } from '$lib/server/db.js';
+import { json } from '@sveltejs/kit';
+import { SESSION_COOKIE, deleteSession } from '$lib/server/session.js';
+import type { RequestHandler } from './$types';
 
-export async function POST({ cookies }: RequestEvent) {
+export const POST: RequestHandler = async ({ cookies }) => {
     try {
-        const sessionId = cookies.get('session');
+        const token = cookies.get(SESSION_COOKIE);
 
-        if (sessionId) {
-            await pool.query(
-                `DELETE FROM sessions WHERE id = $1`,
-                [sessionId]
-            );
+        if (token) {
+            await deleteSession(token);
         }
 
-        cookies.delete('session', {
-            path: '/'
-        });
+        cookies.delete(SESSION_COOKIE, { path: '/' });
 
-        return new Response(
-            JSON.stringify({
-                success: true
-            }),
-            {
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        return json({ success: true });
     } catch (error) {
         console.error('Logout failed:', error);
-
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: 'Logout failed'
-            }),
-            {
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        return json({ success: false, error: 'Logout failed' }, { status: 500 });
     }
-}
+};

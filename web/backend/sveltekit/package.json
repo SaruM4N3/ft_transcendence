@@ -23,7 +23,6 @@
 	},
 	"dependencies": {
 		"@node-rs/argon2": "^2.2.1",
-		"bcrypt": "^6.0.0",
 		"pg": "^8.23.1"
 	}
 }

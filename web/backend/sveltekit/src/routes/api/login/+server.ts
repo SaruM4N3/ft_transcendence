@@ -1,121 +1,51 @@
-import { verify } from '@node-rs/argon2';
+import { json } from '@sveltejs/kit';
+import { hash, verify } from '@node-rs/argon2';
 import { pool } from '$lib/server/db.js';
-import { randomBytes } from 'node:crypto';
-import type { RequestEvent } from '@sveltejs/kit';
+import { createSession } from '$lib/server/session.js';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request, cookies }: RequestEvent) {
+const DUMMY_HASH = await hash('dummy-password');
+
+export const POST: RequestHandler = async ({ request, cookies }) => {
+    let body: { identifier?: unknown; password?: unknown };
     try {
-        const { identifier, password } = await request.json();
+        body = await request.json();
+    } catch {
+        return json({ success: false, error: 'Invalid JSON' }, { status: 400 });
+    }
 
-        if (!identifier || !password) {
-            return new Response(
-                JSON.stringify({
-                    success: false,
-                    error: 'Missing required fields'
-                }),
-                {
-                    status: 400,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-        }
+    const { identifier, password } = body;
+    if (typeof identifier !== 'string' || typeof password !== 'string'
+        || !identifier || !password) {
+        return json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    }
 
-        const result = await pool.query(
+    try {
+        const { rows } = await pool.query(
             `SELECT id, email, display_name, password_hash
              FROM users
              WHERE email = $1 OR display_name = $1`,
-            [identifier]
+            [identifier.trim()]
         );
+        const user = rows[0];
 
-        const existingUser = result.rows[0];
+        const valid = await verify(user ? user.password_hash : DUMMY_HASH, password);
 
-        if (!existingUser) {
-            return new Response(
-                JSON.stringify({
-                    success: false,
-                    error: 'Incorrect email/display name or password'
-                }),
-                {
-                    status: 401,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
+        if (!user || !valid) {
+            return json(
+                { success: false, error: 'Incorrect email/display name or password' },
+                { status: 401 }
             );
         }
 
-        const validPassword = await verify(
-            existingUser.password_hash,
-            password
-        );
+        await createSession(user.id, cookies);
 
-        if (!validPassword) {
-            return new Response(
-                JSON.stringify({
-                    success: false,
-                    error: 'Incorrect email/display name or password'
-                }),
-                {
-                    status: 401,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-        }
-
-        const sessionId = randomBytes(32).toString('hex');
-        const now = new Date();
-        const expireAt = new Date(now.getTime()+(7*24*60*60*1000));
-
-        await pool.query(
-            `INSERT INTO sessions (id , user_id, expires_at)
-             VALUES ($1, $2, $3)`,
-             [sessionId, existingUser.id, expireAt]
-        );
-
-        cookies.set('session', sessionId, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60
+        return json({
+            success: true,
+            user: { id: user.id, email: user.email, display_name: user.display_name }
         });
-        
-        return new Response(
-            JSON.stringify({
-                success: true,
-                user: {
-                    id: existingUser.id,
-                    email: existingUser.email,
-                    display_name: existingUser.display_name
-                }
-            }),
-            {
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-
     } catch (error) {
         console.error('Login failed:', error);
-
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: 'Login failed'
-            }),
-            {
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        return json({ success: false, error: 'Login failed' }, { status: 500 });
     }
-}
-
+};
