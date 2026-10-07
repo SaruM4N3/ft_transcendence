@@ -2,11 +2,12 @@ import { json } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { pool } from '$lib/server/db.js';
 import type { RequestHandler } from './$types';
+import { createSession } from '$lib/server/session.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_RE = /^[A-Za-z0-9_-]{3,20}$/; // no '@', so a name can never look like an email
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
     let body: { email?: unknown; password?: unknown; display_name?: unknown };
     try {
         body = await request.json();
@@ -49,6 +50,7 @@ export const POST: RequestHandler = async ({ request }) => {
             [cleanEmail, password_hash, cleanName]
         );
 
+        await createSession(rows[0].id, cookies);
         return json({ success: true, user: rows[0] }, { status: 201 });
     } catch (error) {
         const e = error as { code?: string; constraint?: string };

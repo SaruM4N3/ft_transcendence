@@ -1,74 +1,58 @@
-<script>
-    let email = '';
-    let display_name = '';
-    let password = '';
+<script lang="ts">
+    import { goto } from '$app/navigation';
 
-    let error = '';
-    let success = '';
+    let email = $state('');
+    let display_name = $state('');
+    let password = $state('');
+    let error = $state('');
+    let loading = $state(false);
 
-    async function register() {
+    async function submit(event: SubmitEvent) {
+        event.preventDefault();
         error = '';
-        success = '';
+        loading = true;
 
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email,
-                display_name,
-                password
-            })
-        });
+        try {
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, display_name, password })
+            });
 
-        const data = await response.json();
+            if (res.status === 429) {
+                error = 'Too many attempts, please wait a moment.';
+                return;
+            }
 
-        if (!response.ok) {
-            error = data.error;
-            return;
+            const data = await res.json();
+
+            if (!res.ok) {
+                error = data.error ?? 'Something went wrong';
+                return;
+            }
+
+            await goto('/game', { invalidateAll: true });
+        } catch {
+            error = 'Could not reach the server, please try again.';
+        } finally {
+            loading = false;
         }
-
-        success = 'Account created successfully!';
     }
 </script>
 
-<h2>Create an account</h2>
+<form onsubmit={submit}>
+    <input type="email" bind:value={email} placeholder="Email"
+           autocomplete="email" required />
+    <input type="text" bind:value={display_name} placeholder="Display name"
+           autocomplete="nickname" required />
+    <input type="password" bind:value={password} placeholder="Password (8-128 characters)"
+           autocomplete="new-password" required />
 
-<form on:submit|preventDefault={register}>
-    <label for="email">Email:</label><br>
-    <input
-        type="email"
-        id="email"
-        bind:value={email}
-        autocomplete="off"
-        required
-    ><br>
+    {#if error}
+        <p class="error" role="alert">{error}</p>
+    {/if}
 
-    <label for="display_name">Display name:</label><br>
-    <input
-        type="text"
-        id="display_name"
-        bind:value={display_name}
-        autocomplete="off"
-        required
-    ><br>
-
-    <label for="password">Password:</label><br>
-    <input
-        type="password"
-        id="password"
-        bind:value={password}
-        required
-    ><br>
-
-    <button type="submit">Register</button>
+    <button type="submit" disabled={loading}>
+        {loading ? 'Creating account...' : 'Sign up'}
+    </button>
 </form>
-
-{#if error}
-    <p>{error}</p>
-{/if}
-
-{#if success}
-    <p>{success}</p>
-{/if}

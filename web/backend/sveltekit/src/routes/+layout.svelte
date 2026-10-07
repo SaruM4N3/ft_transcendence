@@ -9,7 +9,7 @@
         });
 
         if (response.ok) {
-            await goto('/login');
+            await goto('/login', { invalidateAll: true });
         }
     }
 </script>

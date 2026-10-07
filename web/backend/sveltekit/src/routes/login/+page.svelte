@@ -1,67 +1,63 @@
-<script>
+<script lang="ts">
+    import { goto } from '$app/navigation';
+
     let identifier = $state('');
     let password = $state('');
-
     let error = $state('');
-    let success = $state('');
+    let loading = $state(false);
 
-    async function login() {
+    async function submit(event: SubmitEvent) {
+        event.preventDefault();
         error = '';
-        success = '';
+        loading = true;
 
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                identifier,
-                password
-            })
-        });
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, password })
+            });
 
-        const data = await response.json();
+            if (res.status === 429) {
+                error = 'Too many attempts, please wait a moment.';
+                return;
+            }
 
-        if (!response.ok) {
-            error = data.error;
-            return;
+            const data = await res.json();
+
+            if (!res.ok) {
+                error = data.error ?? 'Something went wrong';
+                return;
+            }
+
+            await goto('/game', { invalidateAll: true });
+        } catch {
+            error = 'Could not reach the server, please try again.';
+        } finally {
+            loading = false;
         }
-
-        success = 'Login successful!';
     }
 </script>
 
-<h2>Login</h2>
+<form onsubmit={submit}>
+    <input type="text" bind:value={identifier} placeholder="Email or display name"
+           autocomplete="username" required />
+    <input type="password" bind:value={password} placeholder="Password"
+           autocomplete="current-password" required />
 
-<form onsubmit={(event) => {
-    event.preventDefault();
-    login();
-}}>
-    <label for="identifier">Email or display name:</label><br>
-    <input
-        type="text"
-        id="identifier"
-        bind:value={identifier}
-        autocomplete="username"
-        required
-    ><br>
+    {#if error}
+        <p class="error" role="alert">{error}</p>
+    {/if}
 
-    <label for="password">Password:</label><br>
-    <input
-        type="password"
-        id="password"
-        bind:value={password}
-        autocomplete="current-password"
-        required
-    ><br>
-
-    <button type="submit">Login</button>
+    <button type="submit" disabled={loading}>
+        {loading ? 'Logging in...' : 'Log in'}
+    </button>
 </form>
 
-{#if error}
-    <p>{error}</p>
-{/if}
-
-{#if success}
-    <p>{success}</p>
-{/if}
+<style>
+    .error {
+        color: #b00020;
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+</style>
