@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Lobby.unity
     guid: 5366760e60e45eead8b0aea328934264
   - enabled: 1
-    path: Assets/Scenes/GameModes/Coop.unity
+    path: Assets/Scenes/Coop.unity
     guid: d800aca622ca1253297a3ac0875f3604
   - enabled: 1
     path: Assets/Scenes/Test/MapGenTest.unity

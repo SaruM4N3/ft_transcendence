@@ -39,6 +39,12 @@ public class InteractableZone : MonoBehaviour
             InteractionManager.Unregister(this);
     }
 
+    // SetActive(false) on this object or a parent never fires OnTriggerExit2D, which would otherwise leave this zone stuck in the registry forever.
+    private void OnDisable()
+    {
+        InteractionManager.Unregister(this);
+    }
+
     public void ShowPrompt()
     {
         if (promptUI != null)

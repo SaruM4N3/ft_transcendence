@@ -31,6 +31,7 @@ public partial class Player
         localPlayer.StartMounting(this);
     }
 
+    // Real Netcode parenting instead of copying position each frame; only the server reparents, and LateUpdateMount applies the offset once that replicates back (writing it immediately would snap under the stale old parent).
     private void StartMounting(Player pig)
     {
         if (!this.IsLocallyControlled() || isMounted || pig == null || !pig.IsDead)
@@ -43,14 +44,16 @@ public partial class Player
         if (rb != null)
             rb.bodyType = RigidbodyType2D.Kinematic;
 
-        // Real Netcode parenting (zero relative lag) instead of copying position each frame; only the server may reparent.
         if (NetworkObject.IsSpawned)
+        {
             RequestMountParentServerRpc(pig.NetworkObject);
+        }
         else
+        {
             transform.SetParent(pig.transform, worldPositionStays: false);
-
-        transform.localPosition = mountedOffset;
-        transform.localRotation = Quaternion.identity;
+            transform.localPosition = mountedOffset;
+            transform.localRotation = Quaternion.identity;
+        }
     }
 
     private void StopMounting()
@@ -71,11 +74,12 @@ public partial class Player
         mountElapsed = 0f;
     }
 
+    // worldPositionStays must be true: false would reinterpret the rider's old world position as a local offset from the pig, teleporting them for one frame before LateUpdateMount corrects it.
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestMountParentServerRpc(NetworkObjectReference pigRef)
     {
         if (pigRef.TryGet(out NetworkObject pigNetworkObject))
-            NetworkObject.TrySetParent(pigNetworkObject, worldPositionStays: false);
+            NetworkObject.TrySetParent(pigNetworkObject, worldPositionStays: true);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -100,6 +104,7 @@ public partial class Player
             Physics2D.IgnoreCollision(bodyCollider, collisionIgnoredWith.bodyCollider, true);
     }
 
+    // Unparents before reviving: both go out as separate RPCs, and the revive effect could otherwise land on observers before the unparent does, dragging the rider along behind the now-moving revived player.
     private void UpdateMount()
     {
         if (!isMounted || !this.IsLocallyControlled())
@@ -114,8 +119,9 @@ public partial class Player
         mountElapsed += Time.deltaTime;
         if (mountElapsed >= mountDurationSeconds)
         {
-            mountedPig.RequestRevive();
+            Player pigToRevive = mountedPig;
             StopMounting();
+            pigToRevive.RequestRevive();
         }
     }
 
@@ -132,6 +138,27 @@ public partial class Player
         }
     }
 
+    // Hides the "press E to revive" prompt once someone is riding; runs off the replicated transform.parent, not a local-only flag, same as UpdateMountCollisionIgnore.
+    private void UpdateMountInteractVisibility()
+    {
+        if (mountInteractRoot == null || !IsDead)
+            return;
+
+        bool shouldShow = !HasRider();
+        if (mountInteractRoot.activeSelf != shouldShow)
+            mountInteractRoot.SetActive(shouldShow);
+    }
+
+    private bool HasRider()
+    {
+        foreach (Player candidate in AllActiveInstances)
+        {
+            if (candidate != this && candidate.transform.parent == transform)
+                return true;
+        }
+        return false;
+    }
+
     // Local rendering only, runs for every observer; auto Y-sort is unreliable this close, so pin just in front of the pig instead.
     private void LateUpdateMountSorting()
     {
@@ -140,7 +167,12 @@ public partial class Player
         if (sortingLayerAuto != null)
             sortingLayerAuto.enabled = parentPlayer == null;
 
-        if (parentPlayer != null && spriteRenderer != null && parentPlayer.spriteRenderer != null)
-            spriteRenderer.sortingOrder = parentPlayer.spriteRenderer.sortingOrder + mountedSortingOrderBump;
+        if (parentPlayer == null || spriteRenderer == null || parentPlayer.spriteRenderer == null)
+            return;
+
+        int pigSortingOrder = parentPlayer.sortingLayerAuto != null
+            ? parentPlayer.sortingLayerAuto.CurrentSortingOrder
+            : parentPlayer.spriteRenderer.sortingOrder;
+        spriteRenderer.sortingOrder = pigSortingOrder + mountedSortingOrderBump;
     }
 }

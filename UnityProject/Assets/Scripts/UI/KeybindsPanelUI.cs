@@ -28,8 +28,6 @@ public class KeybindsPanelUI : MonoBehaviour
     [SerializeField] private Row[] rows;
     [SerializeField] private GameObject waitingPrompt;
     [SerializeField] private TMP_Text statusText;
-    [SerializeField] private Button backButton;
-    [SerializeField] private GameObject settingsPanel;
 
     private InputActionRebindingExtensions.RebindingOperation activeRebind;
 
@@ -42,9 +40,6 @@ public class KeybindsPanelUI : MonoBehaviour
             captured.secondaryButton.onClick.AddListener(() => StartRebind(captured, Slot.Secondary));
             captured.gamepadButton.onClick.AddListener(() => StartRebind(captured, Slot.Gamepad));
         }
-
-        if (backButton != null)
-            backButton.onClick.AddListener(GoBack);
     }
 
     private void OnEnable()
@@ -62,14 +57,6 @@ public class KeybindsPanelUI : MonoBehaviour
     public void CancelActiveRebind()
     {
         activeRebind?.Cancel();
-    }
-
-    private void GoBack()
-    {
-        activeRebind?.Cancel();
-        if (settingsPanel != null)
-            settingsPanel.SetActive(true);
-        gameObject.SetActive(false);
     }
 
     private InputActionAsset CurrentAsset()

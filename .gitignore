@@ -55,3 +55,7 @@ CLAUDE.md
 
 # Project reference materials (subject PDF, drafts, local notes)
 .datas/
+
+# Obsidian: share vault config/plugins/named layout, keep live per-person state local
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json

@@ -17,15 +17,38 @@ MonoBehaviour:
   maxMana: 65
   manaRegenPerSecond: 1.5
   attackCooldown: 0.75
-  specialCooldown: 2
-  ultimateCooldown: 5
   attackFxPrefab: {fileID: 8561813417502051360, guid: cdcba958b8be78ae8a9cfcc3b63754ef, type: 3}
   attackFxDistance: 1
-  damage: 12
-  projectileSpeed: 12
-  projectileMaxDistance: 24
-  pierceCount: 3
+  attackDamage: 20
   attackMoveLockDuration: 0.5
   attackMoveSpeedMultiplier: 0.75
   attackAnimSpeed: 2.5
+  attackSize: 1.3
+  attackIgnoreAimRotation: 0
+  attackFollowCaster: 1
+  hasProjectile: 1
+  projectileSpeed: 12
+  projectileMaxDistance: 24
+  pierceCount: 3
+  specialCooldown: 2
+  specialManaCost: 0
+  specialFxPrefab: {fileID: 0}
+  specialFxDistance: 1
+  specialDamage: 15
+  specialMoveLockDuration: 0.3
+  specialMoveSpeedMultiplier: 0.35
   specialAnimSpeed: 1
+  specialSize: 1
+  specialIgnoreAimRotation: 0
+  specialFollowCaster: 1
+  ultimateCooldown: 5
+  ultimateManaCost: 0
+  ultimateFxPrefab: {fileID: 0}
+  ultimateFxDistance: 1
+  ultimateDamage: 15
+  ultimateMoveLockDuration: 0.3
+  ultimateMoveSpeedMultiplier: 0.35
+  ultimateAnimSpeed: 1
+  ultimateSize: 1
+  ultimateIgnoreAimRotation: 0
+  ultimateFollowCaster: 1

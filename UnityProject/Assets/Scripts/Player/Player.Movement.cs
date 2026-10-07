@@ -93,6 +93,7 @@ public partial class Player
 
     private bool wasBlocked;
 
+    // The Move action only calls back on a value change, so re-sample live input once after unblocking instead of running with a stale moveInput.
     private void UpdateMovement()
     {
         FlipTowards(animator.GetFloat(LastInputXHash));
@@ -108,8 +109,6 @@ public partial class Player
             return;
         }
 
-        // The Move action only calls back on a value change, so a direction held into/out of a block (menu, pause)
-        // never fires again on its own - re-sample the live input state once, instead of running with a stale moveInput.
         if (wasBlocked)
         {
             wasBlocked = false;
@@ -118,15 +117,11 @@ public partial class Player
                 moveInput = moveAction.ReadValue<Vector2>();
         }
 
-        // Dead (pig form): face where it's walking, not the mouse - there's nothing left to aim.
         Vector2 aimDir = IsDead ? GetMovementFacingDirection() : GetMouseAimDirection();
         aimAngle.Value = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
         UpdateFacing(aimDir);
         UpdateMoveSpeedMult();
 
-        StopGuardingIfCannotFight();
-
-        // Mounted on a pig to revive it: can still aim/attack, but UpdateMount drives position instead.
         if (isMounted)
         {
             rb.linearVelocity = Vector2.zero;
@@ -155,7 +150,7 @@ public partial class Player
         if (IsBlocked)
             return;
 
-        animator.SetBool(IsWalkingHash, !IsGuarding && hasDirection);
+        animator.SetBool(IsWalkingHash, hasDirection);
     }
 
     public void Run(InputAction.CallbackContext ctx)

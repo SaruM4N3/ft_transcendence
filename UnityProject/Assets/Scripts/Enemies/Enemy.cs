@@ -27,13 +27,13 @@ public class Enemy : MonoBehaviour
     public DamageNumberSpawner DamageNumbers => damageNumbers;
     public NetworkTransform NetworkTransform => networkTransform;
 
-    // Assigns the per-type kit and applies its visual; called by whoever spawns this enemy (see WaveSpawner).
+    // Assigns the per-type kit; called by whoever spawns this enemy (see WaveSpawner). Visuals come from the kit's own prefab variant, not applied here.
     public void Initialize(EnemyKit kit)
     {
         ai.Kit = kit;
         actions.Kit = kit;
         stats.Kit = kit;
-        ai.ApplyVisual(kit.Sprite, kit.AnimatorController);
+        ai.CacheAnimationHashes();
     }
 
     private void Reset()

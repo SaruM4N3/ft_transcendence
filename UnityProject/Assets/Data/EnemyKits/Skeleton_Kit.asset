@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a66c09d7042c9ffa9f15490369cf586, type: 3}
   m_Name: Skeleton_Kit
   m_EditorClassIdentifier: Assembly-CSharp::EnemyKit
-  xpReward: 10
+  tier: 1
   maxHealth: 40
+  xpReward: 10
   moveSpeed: 3
   attackRange: 1.75
   attackAngle: 70
@@ -23,11 +24,18 @@ MonoBehaviour:
   attackAnimationDuration: 0.5
   attackMoveSpeedMultiplier: 0
   hitRangeTolerance: 1.25
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
+  projectileFrames: []
+  projectileFrameRate: 16
+  projectileArcHeight: 0.8
   retargetInterval: 0.25
   steerInterval: 0.1
   directChaseRange: 8
   lineOfSightInterval: 0.3
   maxDistanceFromPlayers: 40
   leashCheckInterval: 2
-  sprite: {fileID: -6630793407684982308, guid: 901c9676808633c25bbf90646e4da299, type: 3}
-  animatorController: {fileID: -3866818618918020108, guid: 901c9676808633c25bbf90646e4da299, type: 3}
+  enemyPrefab: {fileID: 372990595272446690, guid: ef9f11efbcc78184e8ab3f399514446d, type: 3}
+  idleStateName: Idle
+  runStateName: Run
+  attackStateName: Attack

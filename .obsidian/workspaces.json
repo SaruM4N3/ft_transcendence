@@ -1,0 +1,362 @@
+{
+  "workspaces": {
+    "ft_transcendence": {
+      "main": {
+        "id": "8d62b232a0f2b222",
+        "type": "split",
+        "children": [
+          {
+            "id": "a7e3a6076135166c",
+            "type": "tabs",
+            "children": [
+              {
+                "id": "37d4d73867f27666",
+                "type": "leaf",
+                "state": {
+                  "type": "markdown",
+                  "state": {
+                    "file": "Notes/Game/Game Overview.md",
+                    "mode": "source",
+                    "source": false
+                  },
+                  "icon": "lucide-file",
+                  "title": "Game Overview"
+                }
+              }
+            ]
+          }
+        ],
+        "direction": "vertical"
+      },
+      "left": {
+        "id": "88914036cf56ed04",
+        "type": "split",
+        "children": [
+          {
+            "id": "33d247d7a636b642",
+            "type": "tabs",
+            "children": [
+              {
+                "id": "45f936c59ce5c603",
+                "type": "leaf",
+                "state": {
+                  "type": "file-explorer",
+                  "state": {
+                    "sortOrder": "alphabetical",
+                    "autoReveal": false,
+                    "showSearch": false,
+                    "searchQuery": ""
+                  },
+                  "icon": "lucide-folder-closed",
+                  "title": "Files"
+                }
+              },
+              {
+                "id": "cdc1b799c3ea39e0",
+                "type": "leaf",
+                "state": {
+                  "type": "search",
+                  "state": {
+                    "query": "",
+                    "matchingCase": false,
+                    "explainSearch": false,
+                    "collapseAll": false,
+                    "extraContext": false,
+                    "sortOrder": "alphabetical"
+                  },
+                  "icon": "lucide-search",
+                  "title": "Search"
+                }
+              },
+              {
+                "id": "c511752d714f381d",
+                "type": "leaf",
+                "state": {
+                  "type": "bookmarks",
+                  "state": {
+                    "showSearch": false,
+                    "searchQuery": ""
+                  },
+                  "icon": "lucide-bookmark",
+                  "title": "Bookmarks"
+                }
+              }
+            ]
+          }
+        ],
+        "direction": "horizontal",
+        "width": 200
+      },
+      "right": {
+        "id": "e8025ead52ba045b",
+        "type": "split",
+        "children": [
+          {
+            "id": "63acdad5e34f4d43",
+            "type": "tabs",
+            "children": [
+              {
+                "id": "1c71fa9ed50837f2",
+                "type": "leaf",
+                "state": {
+                  "type": "localgraph",
+                  "state": {
+                    "file": "Notes/Game/Game Overview.md",
+                    "options": {
+                      "collapse-filter": true,
+                      "search": "",
+                      "localJumps": 2,
+                      "localBacklinks": true,
+                      "localForelinks": true,
+                      "localInterlinks": true,
+                      "showTags": false,
+                      "showAttachments": true,
+                      "hideUnresolved": false,
+                      "collapse-color-groups": true,
+                      "colorGroups": [
+                        {
+                          "query": "path:Notes/Game -path:Notes/Game/Enemies -path:Notes/Game/Combat -path:Notes/Game/Core -path:Notes/Game/Friends -path:Notes/Game/Interaction -path:Notes/Game/Networking -path:Notes/Game/Player -path:Notes/Game/Terrain -path:Notes/Game/UI",
+                          "color": {
+                            "a": 1,
+                            "rgb": 14712638
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Web -path:Notes/Web/Server -path:Notes/Web/Frontend -path:Notes/Web/Infra",
+                          "color": {
+                            "a": 1,
+                            "rgb": 4120767
+                          }
+                        },
+                        {
+                          "query": "path:Notes -path:Notes/Game -path:Notes/Web",
+                          "color": {
+                            "a": 1,
+                            "rgb": 12533472
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Enemies",
+                          "color": {
+                            "a": 1,
+                            "rgb": 12574782
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Combat",
+                          "color": {
+                            "a": 1,
+                            "rgb": 8380478
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Core",
+                          "color": {
+                            "a": 1,
+                            "rgb": 4120703
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Friends",
+                          "color": {
+                            "a": 1,
+                            "rgb": 14696127
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Interaction",
+                          "color": {
+                            "a": 1,
+                            "rgb": 4079328
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Networking",
+                          "color": {
+                            "a": 1,
+                            "rgb": 4120638
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Player",
+                          "color": {
+                            "a": 1,
+                            "rgb": 14695998
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/Terrain",
+                          "color": {
+                            "a": 1,
+                            "rgb": 4112352
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Game/UI",
+                          "color": {
+                            "a": 1,
+                            "rgb": 14729022
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Web/Server",
+                          "color": {
+                            "a": 1,
+                            "rgb": 8339168
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Web/Frontend",
+                          "color": {
+                            "a": 1,
+                            "rgb": 4095968
+                          }
+                        },
+                        {
+                          "query": "path:Notes/Web/Infra",
+                          "color": {
+                            "a": 1,
+                            "rgb": 14696063
+                          }
+                        }
+                      ],
+                      "collapse-display": false,
+                      "showArrow": false,
+                      "textFadeMultiplier": -0.8,
+                      "nodeSizeMultiplier": 1,
+                      "lineSizeMultiplier": 1,
+                      "collapse-forces": false,
+                      "centerStrength": 0.4,
+                      "repelStrength": 15,
+                      "linkStrength": 1,
+                      "linkDistance": 100,
+                      "scale": 0.1316872427983537,
+                      "close": true
+                    }
+                  },
+                  "icon": "lucide-git-fork",
+                  "title": "Local graph"
+                }
+              },
+              {
+                "id": "d3eb60e5a8ef9453",
+                "type": "leaf",
+                "state": {
+                  "type": "git-history-graph",
+                  "state": {},
+                  "icon": "git-branch",
+                  "title": "Git graph"
+                }
+              },
+              {
+                "id": "9b968c6fb50aa135",
+                "type": "leaf",
+                "state": {
+                  "type": "backlink",
+                  "state": {
+                    "collapseAll": false,
+                    "extraContext": false,
+                    "sortOrder": "alphabetical",
+                    "showSearch": false,
+                    "searchQuery": "",
+                    "backlinkCollapsed": false,
+                    "unlinkedCollapsed": true
+                  },
+                  "icon": "links-coming-in",
+                  "title": "Backlinks"
+                }
+              },
+              {
+                "id": "20df8aefff6b954c",
+                "type": "leaf",
+                "state": {
+                  "type": "outgoing-link",
+                  "state": {
+                    "file": "Notes/Game/UI.md",
+                    "linksCollapsed": false,
+                    "unlinkedCollapsed": true
+                  },
+                  "icon": "links-going-out",
+                  "title": "Outgoing links"
+                }
+              },
+              {
+                "id": "27e731def3a9e372",
+                "type": "leaf",
+                "state": {
+                  "type": "tag",
+                  "state": {
+                    "sortOrder": "frequency",
+                    "useHierarchy": true,
+                    "showSearch": false,
+                    "searchQuery": ""
+                  },
+                  "icon": "lucide-tags",
+                  "title": "Tags"
+                }
+              },
+              {
+                "id": "5f704d4e241f0443",
+                "type": "leaf",
+                "state": {
+                  "type": "all-properties",
+                  "state": {
+                    "sortOrder": "frequency",
+                    "showSearch": false,
+                    "searchQuery": ""
+                  },
+                  "icon": "lucide-archive",
+                  "title": "All properties"
+                }
+              },
+              {
+                "id": "0f7ad2965096b34a",
+                "type": "leaf",
+                "state": {
+                  "type": "outline",
+                  "state": {
+                    "file": "Notes/Web/Web Overview.md",
+                    "followCursor": false,
+                    "showSearch": false,
+                    "searchQuery": ""
+                  },
+                  "icon": "lucide-list",
+                  "title": "Outline"
+                }
+              },
+              {
+                "id": "83e8f1cd26ed79a3",
+                "type": "leaf",
+                "state": {
+                  "type": "git-history-source-control",
+                  "state": {},
+                  "icon": "git-branch",
+                  "title": "Source control"
+                }
+              }
+            ]
+          }
+        ],
+        "direction": "horizontal",
+        "width": 629.5
+      },
+      "left-ribbon": {
+        "hiddenItems": {
+          "workspaces:Manage workspace layouts": false,
+          "switcher:Open quick switcher": false,
+          "graph:Open graph view": false,
+          "canvas:Create new canvas": false,
+          "daily-notes:Open today's daily note": false,
+          "templates:Insert template": false,
+          "command-palette:Open command palette": false,
+          "bases:Create new base": false,
+          "git-history:Git history": false,
+          "git-history:Open terminal": false
+        }
+      },
+      "active": "45f936c59ce5c603",
+      "mtime": "2026-10-07T06:11:38+02:00"
+    }
+  },
+  "active": "ft_transcendence"
+}

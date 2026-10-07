@@ -9,6 +9,8 @@ public class EnemyActions : NetworkBehaviour
     private EnemyAI ai;
     private Player swingTarget;
     private float pendingHitTime;
+    // Set by the ranged projectile's own hitbox if it hits a shield mid-flight; ResolveHit checks it instead of the position-based shield check melee uses, since a flying shot's range can exceed a shield's radius.
+    private bool rangedShotBlocked;
 
     public bool IsWindingUp => pendingHitTime > 0f;
 
@@ -53,11 +55,16 @@ public class EnemyActions : NetworkBehaviour
             PlayAttackAnimation();
     }
 
-    // Damage lands attackHitDelay later; swing state is always written (not gated on IsSpawned) so offline solo play works too.
+    // Damage lands attackHitDelay later for melee; for ranged it lands exactly when a shot travelling at ProjectileSpeed would reach the target's current position, so the hit stays in sync with the actual flying sprite instead of an unrelated fixed delay.
     public void StartAttack(Player target)
     {
         swingTarget = target;
-        pendingHitTime = Time.time + kit.AttackHitDelay;
+        rangedShotBlocked = false;
+
+        float hitDelay = kit.AttackHitDelay;
+        if (kit.IsRanged && kit.ProjectileSpeed > 0f)
+            hitDelay = Vector2.Distance(ai.BodyCenter, EnemyAI.TargetCenter(target)) / kit.ProjectileSpeed;
+        pendingHitTime = Time.time + hitDelay;
 
         Vector2 direction = (EnemyAI.TargetCenter(target) - ai.BodyCenter).normalized;
         swingAngleDegrees.Value = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -82,6 +89,16 @@ public class EnemyActions : NetworkBehaviour
         if (Vector2.Angle(swingDirection, toVictim) > kit.AttackAngle * 0.5f)
             return;
 
+        if (kit.IsRanged)
+        {
+            if (rangedShotBlocked)
+                return;
+        }
+        else if (Player.TryAbsorbWithShield(ai.BodyCenter, EnemyAI.TargetCenter(swingTarget), kit.Damage))
+        {
+            return;
+        }
+
         swingTarget.RequestDamage(kit.Damage);
     }
 
@@ -97,6 +114,13 @@ public class EnemyActions : NetworkBehaviour
     private void PlayAttackAnimation(Vector2 direction)
     {
         ai.PlayAttackVisual(kit.AttackAnimationDuration);
+
+        if (kit.IsRanged)
+        {
+            RangedAttackVisual.Show(kit.ProjectilePrefab, ai.BodyCenter, direction, kit.ProjectileSpeed, kit.ProjectileMaxDistance, kit.ProjectileArcHeight, kit.Damage, this.HasServerAuthority(), () => rangedShotBlocked = true);
+            return;
+        }
+
         AttackTelegraph.Show(transform, ai.BodyCenter, direction, kit.AttackAngle, kit.AttackRange * kit.HitRangeTolerance, kit.AttackHitDelay);
     }
 }

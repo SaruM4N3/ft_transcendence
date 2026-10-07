@@ -1,12 +1,13 @@
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-// Server-side shared XP/level tracker for a Coop run; every kill adds to one pool shared by the whole party.
-// The XP required per level scales with player count, so the shared bar isn't easier to fill with more players.
+// Server-side shared XP/level tracker for a Coop run; XP required per level scales with player count so the shared bar isn't easier to fill with more players.
 public class XPManager : NetworkBehaviour
 {
     [SerializeField] private int baseXpPerLevel = 50;
     [SerializeField] private int xpPerLevelIncrement = 25;
+    [SerializeField] private float xpGainDelay = 0f;
 
     private readonly NetworkVariable<int> totalXP = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -39,8 +40,7 @@ public class XPManager : NetworkBehaviour
         Unsubscribe();
     }
 
-    // Guarded so an early defensive OnNetworkDespawn (in-scene-placed NetworkObjects get this even offline, before
-    // Start() has subscribed) can't wipe out the offline subscription, while real despawn/destroy still cleans up.
+    // Guarded so an early defensive OnNetworkDespawn (fires even offline, before Start() subscribes) can't wipe out the offline subscription.
     private void Subscribe()
     {
         if (subscribed)
@@ -59,14 +59,27 @@ public class XPManager : NetworkBehaviour
 
     private void HandleEnemyKilled(int xpAmount)
     {
+        if (xpGainDelay <= 0f)
+            GrantXP(xpAmount);
+        else
+            StartCoroutine(GrantXPDelayed(xpAmount, xpGainDelay));
+    }
+
+    private IEnumerator GrantXPDelayed(int xpAmount, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        GrantXP(xpAmount);
+    }
+
+    private void GrantXP(int xpAmount)
+    {
         if (IsSpawned)
             totalXP.Value += xpAmount;
         else
             offlineXP += xpAmount;
     }
 
-    // Walks the level curve fresh each call - cheap for the level counts a single run reaches, and always
-    // correct even if player count changed since the last call (joins/leaves mid-run).
+    // Walks the level curve fresh each call - cheap at these level counts, and stays correct if player count changed mid-run.
     public void GetProgress(out int level, out int xpIntoLevel, out int xpForLevel)
     {
         int playerCount = Mathf.Max(1, Player.AllActiveInstances.Count);

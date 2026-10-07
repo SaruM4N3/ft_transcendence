@@ -72,9 +72,7 @@ public class ReadyCheckUI : MonoBehaviour
         RebuildTeamButtons(null);
     }
 
-    // Tab has no dedicated Cancel button to go through, so closing the panel early (isOpen still true) must
-    // itself clear the pending check server-side, or pendingSceneName never resets and re-proposing the same
-    // mode is a same-value NetworkVariable write that silently never reopens this panel.
+    // Tab has no Cancel button, so closing the panel early must itself clear the pending check server-side, or pendingSceneName never resets and reopening the panel silently no-ops.
     private void HandlePanelClosed()
     {
         if (!isOpen)

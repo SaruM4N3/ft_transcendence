@@ -313,7 +313,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStats
   ShowTopMostFoldoutHeaderGroup: 1
-  kit: {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
 --- !u!114 &5835712461897076585
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -327,7 +326,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   ShowTopMostFoldoutHeaderGroup: 1
-  kit: {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
 --- !u!114 &1403939639179829679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,7 +413,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyActions
   ShowTopMostFoldoutHeaderGroup: 1
-  kit: {fileID: 11400000, guid: cd9faa1c4aa7fb6ee9759c0dc8c05fc1, type: 2}
 --- !u!114 &3634697355849425219
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -444,7 +441,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -2253911629886400664, guid: 901c9676808633c25bbf90646e4da299, type: 3}
       propertyPath: m_Name
-      value: Skull
+      value: Visual
       objectReference: {fileID: 0}
     - target: {fileID: 3626916397498700004, guid: 901c9676808633c25bbf90646e4da299, type: 3}
       propertyPath: m_SortingLayer
