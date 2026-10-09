@@ -64,9 +64,17 @@ Other shortcuts from the `Makefile` (repository root):
 | `make clean` | `down` and remove volumes                               |
 | `make fclean`| `clean` and remove built images                        |
 
-<!-- TODO: once a database/auth stack is added, document `.env` / `.env.example` setup here (the
-     subject requires secrets to live in a gitignored `.env` with a committed `.env.example`) and any
-     migration commands needed before first boot. -->
+Copy `web/.env.example` to `web/.env` and set a local database password. Compose runs Prisma
+migrations before starting the app. To create a new migration after editing the schema, run:
+
+```sh
+cd web/backend/sveltekit
+npm run db:migrate:dev -- --name describe_the_change
+```
+
+Prisma Client is generated during the Docker build. For local development, run `npm run db:generate`
+after changing the schema. `npm run db:migrate:deploy` applies committed migrations without
+creating new ones.
 
 ### Opening the game source (optional, for game development only)
 
@@ -153,23 +161,28 @@ GitHub Actions run automatically on every push/PR that touches the relevant part
 
 ## Technical Stack
 
-- **Frontend & backend**: not yet chosen/implemented. `web/` currently serves a static page via a
-  plain `node:http` server (`web/server.js`) — this is a placeholder, not the final stack.
-- **Database**: not yet implemented.
-- **Authentication**: not yet implemented.
+- **Frontend & backend**: SvelteKit with TypeScript, providing the web UI and server endpoints.
+- **Database**: PostgreSQL 17 with Prisma ORM 7 for the schema, typed queries, and migrations.
+- **Authentication**: email/display-name and password accounts, Argon2 password hashes, and
+  server-side sessions stored in PostgreSQL.
 - **Deployment**: Docker Compose (`web/compose.yaml`), with an nginx reverse proxy (`web/nginx/`)
   terminating HTTPS via a self-signed certificate generated on first boot.
 - **Game**: Unity 6000.5.6f1 (source lives in `UnityProject/`; only its WebGL build output is meant to
   be consumed by the web app).
 
-<!-- TODO: replace the "not yet chosen/implemented" lines above once the team picks a frontend
-     framework, backend framework, database, and auth solution, and add a one-line justification for
-     each major choice (the subject explicitly asks for this). -->
+SvelteKit gives the project one TypeScript framework for server routes and pages. Prisma provides
+typed PostgreSQL queries and versioned schema migrations, while PostgreSQL stores account and
+session data.
 
 ## Database Schema
 
-<!-- TODO: no database exists yet. Once one is added, document it here: a visual/textual schema,
-     tables and their relationships, and key fields/data types for each. -->
+The Prisma schema is in `web/backend/sveltekit/prisma/schema.prisma`.
+
+- `users`: UUID primary key, unique email, password hash, unique display name, and creation time.
+- `sessions`: hashed token primary key, expiration time, and a user UUID foreign key. Deleting a
+  user cascades to their sessions.
+- Email and display-name uniqueness is case insensitive, enforced by PostgreSQL functional unique
+  indexes in the initial migration.
 
 ## Features List
 

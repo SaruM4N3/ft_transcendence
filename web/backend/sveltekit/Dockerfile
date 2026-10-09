@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+RUN npm run db:generate
 RUN npm run build
 
 # stage 2: run

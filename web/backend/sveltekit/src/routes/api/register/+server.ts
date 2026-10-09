@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
-import { pool } from '$lib/server/db.js';
+import { prisma } from '$lib/server/db.js';
 import type { RequestHandler } from './$types';
 import { createSession } from '$lib/server/session.js';
 
@@ -43,20 +43,29 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     try {
         const password_hash = await hash(password);
 
-        const { rows } = await pool.query(
-            `INSERT INTO users (email, password_hash, display_name)
-             VALUES ($1, $2, $3)
-             RETURNING id, email, display_name, created_at`,
-            [cleanEmail, password_hash, cleanName]
-        );
+        const user = await prisma.user.create({
+            data: { email: cleanEmail, passwordHash: password_hash, displayName: cleanName },
+            select: { id: true, email: true, displayName: true, createdAt: true }
+        });
 
-        await createSession(rows[0].id, cookies);
-        return json({ success: true, user: rows[0] }, { status: 201 });
+        await createSession(user.id, cookies);
+        return json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                display_name: user.displayName,
+                created_at: user.createdAt
+            }
+        }, { status: 201 });
     } catch (error) {
-        const e = error as { code?: string; constraint?: string };
+        const e = error as { code?: string; meta?: { target?: unknown } };
 
-        if (e.code === '23505') { // unique_violation
-            const field = e.constraint?.includes('display_name') ? 'display name' : 'email';
+        if (e.code === 'P2002') {
+            const target = JSON.stringify(e.meta?.target ?? '').toLowerCase();
+            const field = target.includes('displayname') || target.includes('display_name')
+                ? 'display name'
+                : 'email';
             return json(
                 { success: false, error: `This ${field} is already taken` },
                 { status: 409 }

@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { hash, verify } from '@node-rs/argon2';
-import { pool } from '$lib/server/db.js';
+import { prisma } from '$lib/server/db.js';
 import { createSession } from '$lib/server/session.js';
 import type { RequestHandler } from './$types';
 
@@ -21,15 +21,17 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     }
 
     try {
-        const { rows } = await pool.query(
-            `SELECT id, email, display_name, password_hash
-             FROM users
-             WHERE email = $1 OR display_name = $1`,
-            [identifier.trim()]
-        );
-        const user = rows[0];
+        const user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: identifier.trim() },
+                    { displayName: identifier.trim() }
+                ]
+            },
+            select: { id: true, email: true, displayName: true, passwordHash: true }
+        });
 
-        const valid = await verify(user ? user.password_hash : DUMMY_HASH, password);
+        const valid = await verify(user ? user.passwordHash : DUMMY_HASH, password);
 
         if (!user || !valid) {
             return json(
@@ -42,7 +44,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
         return json({
             success: true,
-            user: { id: user.id, email: user.email, display_name: user.display_name }
+            user: { id: user.id, email: user.email, display_name: user.displayName }
         });
     } catch (error) {
         console.error('Login failed:', error);

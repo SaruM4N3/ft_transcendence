@@ -33,7 +33,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/postgres.conf:/etc/postgresql/postgresql.conf
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -46,14 +45,25 @@ services:
     restart: unless-stopped
     env_file: .env
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  migrate:
+    build:
+      context: ./backend/sveltekit
+      target: build
+    command: npm run db:migrate:deploy
+    restart: on-failure
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
 
   adminer:
     image: adminer
