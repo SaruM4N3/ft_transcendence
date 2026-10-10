@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS "users" (
     "email" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
     "display_name" TEXT NOT NULL,
+    "color" TEXT NOT NULL DEFAULT 'Black',
+    "class" TEXT NOT NULL DEFAULT 'Warrior',
     "created_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")

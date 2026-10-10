@@ -16,6 +16,10 @@
 	Game
 </button>
 
+<button onclick={() => goto('/setting')}>
+	Setting
+</button>
+
 <button onclick={() => goto('/project')}>
 	Transcendence
 </button>

@@ -12,6 +12,8 @@ model User {
   email        String    @unique
   passwordHash String    @map("password_hash")
   displayName  String    @unique @map("display_name")
+  color        String    @default("Black")
+  class        String    @default("Warrior")
   createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   sessions     Session[]
 

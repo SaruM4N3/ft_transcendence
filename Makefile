@@ -8,7 +8,6 @@ all: up
 up:
 	$(COMPOSE) up --build -d
 	@echo "TRANSCENDENCE is up: https://localhost:4443"
-	@echo "GAME is up: https://localhost:4443/game"
 	@echo "ADMINER is up: http://localhost:8180"
 
 down:

@@ -1,6 +1,5 @@
 <script>
     import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
 
     let unityCanvas;
     let loadingBar;
@@ -58,9 +57,25 @@
                     progressBar.style.width = `${progress * 100}%`;
                 }
             )
-                .then((instance) => {
+                .then(async (instance) => {
                     unityInstance = instance;
                     loadingBar.style.display = 'none';
+
+                    const res = await fetch('/api/me');
+
+                    if (!res.ok) {
+                        console.warn(`Could not load profile: ${res.status}`);
+                        return;
+                    }
+
+                    const data = await res.json();
+                    const displayName = data.user.display_name;
+
+                    unityInstance.SendMessage(
+                        'WebProfileReceiver',
+                        'SetDisplayName',
+                        displayName
+                    );
                 })
                 .catch((message) => {
                     errorMessage = message;
