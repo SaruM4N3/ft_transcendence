@@ -1,33 +1,58 @@
 using Unity.Netcode;
+using UnityEngine;
 
 public partial class Player
 {
     private readonly NetworkVariable<bool> hasChosenLevelUpBonus = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<int> chosenLevelUpBonusIndex = new NetworkVariable<int>(
-        -1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<LevelUpBonusStacks> levelUpBonusStacks = new NetworkVariable<LevelUpBonusStacks>(
+        default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     public bool HasChosenLevelUpBonus => hasChosenLevelUpBonus.Value;
-    public int ChosenLevelUpBonusIndex => chosenLevelUpBonusIndex.Value;
+
+    public float AttackSpeedMultiplier =>
+        1f + levelUpBonusStacks.Value.attackSpeed * LevelUpBonusCatalog.AttackCooldownReductionPerStack;
+    public float AttackCooldownMultiplier => 1f / AttackSpeedMultiplier;
+    public float SpecialCooldownMultiplier =>
+        1f / (1f + levelUpBonusStacks.Value.specialCooldown * LevelUpBonusCatalog.SpecialCooldownReductionPerStack);
+    public float DamageMultiplier =>
+        1f + levelUpBonusStacks.Value.damage * LevelUpBonusCatalog.DamageBonusPerStack;
+    public float LevelUpHealthBonus =>
+        levelUpBonusStacks.Value.health * LevelUpBonusCatalog.HealthBonusPerStack;
+    public float MoveSpeedBonusMultiplier =>
+        1f + levelUpBonusStacks.Value.moveSpeed * LevelUpBonusCatalog.MoveSpeedBonusPerStack;
+    public float LevelUpHealthRegenBonus =>
+        levelUpBonusStacks.Value.healthRegen * LevelUpBonusCatalog.HealthRegenBonusPerStack;
+    public float LevelUpManaBonus =>
+        levelUpBonusStacks.Value.manaMax * LevelUpBonusCatalog.ManaBonusPerStack;
+    public float LevelUpManaRegenBonus =>
+        levelUpBonusStacks.Value.manaRegen * LevelUpBonusCatalog.ManaRegenBonusPerStack;
+    public float SizeBonusMultiplier =>
+        1f + levelUpBonusStacks.Value.size * LevelUpBonusCatalog.SizeBonusPerStack;
+    public float AttackMobilityBonus =>
+        levelUpBonusStacks.Value.attackMobility * LevelUpBonusCatalog.AttackMobilityBonusPerStack;
+
+    // Raises a move-lock speed fraction toward 1 (no slowdown), never past it.
+    private float ApplyAttackMobilityBonus(float baseMultiplier) => Mathf.Min(1f, baseMultiplier + AttackMobilityBonus);
 
     // Called by this player's own level-up UI.
-    public void ChooseLevelUpBonus(int bonusIndex)
+    public void ChooseLevelUpBonus(LevelUpBonusType type)
     {
         if (!this.IsLocallyControlled())
             return;
 
-        ChooseLevelUpBonusLocal(bonusIndex);
+        ChooseLevelUpBonusLocal(type);
     }
 
     // Called by LevelUpManager (server) on a player that didn't pick before the timer ran out.
-    public void ForceLevelUpBonus(int bonusIndex)
+    public void ForceLevelUpBonus(LevelUpBonusType type)
     {
         if (!NetworkObject.IsSpawned)
         {
-            ChooseLevelUpBonusLocal(bonusIndex);
+            ChooseLevelUpBonusLocal(type);
             return;
         }
-        ForceLevelUpBonusClientRpc(bonusIndex, new ClientRpcParams
+        ForceLevelUpBonusClientRpc(type, new ClientRpcParams
         {
             Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
         });
@@ -48,9 +73,9 @@ public partial class Player
     }
 
     [ClientRpc]
-    private void ForceLevelUpBonusClientRpc(int bonusIndex, ClientRpcParams rpcParams = default)
+    private void ForceLevelUpBonusClientRpc(LevelUpBonusType type, ClientRpcParams rpcParams = default)
     {
-        ChooseLevelUpBonusLocal(bonusIndex);
+        ChooseLevelUpBonusLocal(type);
     }
 
     [ClientRpc]
@@ -59,15 +84,20 @@ public partial class Player
         ResetLevelUpChoiceLocal();
     }
 
-    private void ChooseLevelUpBonusLocal(int bonusIndex)
+    private void ChooseLevelUpBonusLocal(LevelUpBonusType type)
     {
         hasChosenLevelUpBonus.Value = true;
-        chosenLevelUpBonusIndex.Value = bonusIndex;
+        LevelUpBonusStacks stacks = levelUpBonusStacks.Value;
+        stacks.Increment(type);
+        levelUpBonusStacks.Value = stacks;
+        if (type == LevelUpBonusType.Health)
+            Heal(LevelUpBonusCatalog.HealthBonusPerStack);
+        else if (type == LevelUpBonusType.ManaMax)
+            RestoreMana(LevelUpBonusCatalog.ManaBonusPerStack);
     }
 
     private void ResetLevelUpChoiceLocal()
     {
         hasChosenLevelUpBonus.Value = false;
-        chosenLevelUpBonusIndex.Value = -1;
     }
 }

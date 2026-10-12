@@ -27,7 +27,7 @@ public class ShieldHoldFX : MonoBehaviour, IAttackFX, IHealthStats
     public float MaxHealth => owner != null ? owner.ShieldMaxHealth : 0f;
     public event System.Action<float, float> OnHealthChanged;
 
-    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability)
+    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability, float damageMultiplier)
     {
         owner = attacker.GetComponent<Player>();
         if (kit == null || kit.UltimateFollowCaster)

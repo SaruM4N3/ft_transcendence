@@ -17,9 +17,12 @@ public class LevelUpManager : NetworkBehaviour
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<float> secondsRemaining = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<OfferedBonusSet> offeredBonuses = new NetworkVariable<OfferedBonusSet>(
+        default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private bool offlineSequenceActive;
     private int offlineSequenceLevel;
+    private OfferedBonusSet offlineOfferedBonuses;
 
     private int processedLevel = 1;
     private double remainingUnscaled;
@@ -29,6 +32,9 @@ public class LevelUpManager : NetworkBehaviour
     public int SequenceLevel => IsSpawned ? sequenceLevel.Value : offlineSequenceLevel;
     public bool IsTimedSequence => IsSpawned && timedSequence.Value;
     public float SecondsRemaining => IsSpawned ? secondsRemaining.Value : 0f;
+
+    public LevelUpBonusType GetOfferedBonusType(int slot) =>
+        (IsSpawned ? offeredBonuses.Value : offlineOfferedBonuses).Get(slot);
 
     public override void OnNetworkSpawn()
     {
@@ -92,7 +98,7 @@ public class LevelUpManager : NetworkBehaviour
             {
                 foreach (Player player in ActivePlayers())
                     if (!player.HasChosenLevelUpBonus)
-                        player.ForceLevelUpBonus(Random.Range(0, BonusOptionCount));
+                        player.ForceLevelUpBonus(GetOfferedBonusType(Random.Range(0, BonusOptionCount)));
                 EndSequence();
                 return;
             }
@@ -110,12 +116,14 @@ public class LevelUpManager : NetworkBehaviour
         processedLevel = level;
         bool multi = Player.AllActiveInstances.Count > 1;
         remainingUnscaled = multiplayerChoiceSeconds;
+        OfferedBonusSet offers = PickRandomOffers();
 
         foreach (Player player in ActivePlayers())
             player.ResetLevelUpChoice();
 
         if (IsSpawned)
         {
+            offeredBonuses.Value = offers;
             timedSequence.Value = multi;
             secondsRemaining.Value = multi ? multiplayerChoiceSeconds : 0f;
             sequenceLevel.Value = level;
@@ -123,10 +131,23 @@ public class LevelUpManager : NetworkBehaviour
         }
         else
         {
+            offlineOfferedBonuses = offers;
             offlineSequenceLevel = level;
             offlineSequenceActive = true;
             Time.timeScale = 0f;
         }
+    }
+
+    // Fisher-Yates shuffles every bonus type and offers the first 3.
+    private static OfferedBonusSet PickRandomOffers()
+    {
+        LevelUpBonusType[] types = (LevelUpBonusType[])System.Enum.GetValues(typeof(LevelUpBonusType));
+        for (int i = types.Length - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (types[i], types[j]) = (types[j], types[i]);
+        }
+        return new OfferedBonusSet { first = types[0], second = types[1], third = types[2] };
     }
 
     private void EndSequence()

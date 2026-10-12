@@ -18,6 +18,7 @@ public class LevelUpUI : MonoBehaviour
     private readonly StringBuilder readyListBuilder = new StringBuilder();
 
     private LevelUpManager manager;
+    private TMP_Text[] bonusLabels;
     private bool localChosen;
     private bool shown;
 
@@ -28,9 +29,11 @@ public class LevelUpUI : MonoBehaviour
         IsShowing = false;
         panel.SetActive(false);
 
+        bonusLabels = new TMP_Text[bonusButtons.Length];
         for (int i = 0; i < bonusButtons.Length; i++)
         {
             int bonusIndex = i;
+            bonusLabels[i] = bonusButtons[i].GetComponentInChildren<TMP_Text>();
             bonusButtons[i].onClick.AddListener(() => ChooseBonus(bonusIndex));
         }
     }
@@ -82,6 +85,14 @@ public class LevelUpUI : MonoBehaviour
         levelText.text = $"Level {manager.SequenceLevel}";
         waitingText.gameObject.SetActive(false);
         SetButtonsInteractable(true);
+
+        for (int i = 0; i < bonusLabels.Length; i++)
+        {
+            if (bonusLabels[i] == null)
+                continue;
+            LevelUpBonusType type = manager.GetOfferedBonusType(i);
+            bonusLabels[i].text = $"{LevelUpBonusCatalog.GetDisplayName(type)}\n{LevelUpBonusCatalog.GetDescription(type)}";
+        }
     }
 
     private void ChooseBonus(int bonusIndex)
@@ -93,7 +104,7 @@ public class LevelUpUI : MonoBehaviour
         if (local == null)
             return;
 
-        local.ChooseLevelUpBonus(bonusIndex);
+        local.ChooseLevelUpBonus(manager.GetOfferedBonusType(bonusIndex));
         localChosen = true;
         SetButtonsInteractable(false);
     }

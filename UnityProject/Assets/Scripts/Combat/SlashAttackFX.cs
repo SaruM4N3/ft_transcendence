@@ -18,7 +18,7 @@ public class SlashAttackFX : MonoBehaviour, IAttackFX
     private float frameTimer;
 
     // Follow-caster tracks the attacker for its whole lifetime instead of staying at its world spawn position.
-    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability)
+    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability, float damageMultiplier)
     {
         owner = attacker;
         bool followCaster;
@@ -28,6 +28,7 @@ public class SlashAttackFX : MonoBehaviour, IAttackFX
             AbilityType.Ultimate => (kit.UltimateDamage, kit.UltimateFollowCaster),
             _ => (kit.AttackDamage, kit.AttackFollowCaster),
         };
+        damage *= damageMultiplier;
         if (followCaster)
             transform.SetParent(attacker.transform);
         if (!hasHitbox && hitbox != null)

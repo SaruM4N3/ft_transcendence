@@ -13,8 +13,8 @@ public partial class Player
     private readonly NetworkVariable<float> currentHealth = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
-    public float MaxHealth => maxHealth;
-    public float MaxMana => maxMana;
+    public float MaxHealth => maxHealth + LevelUpHealthBonus;
+    public float MaxMana => maxMana + LevelUpManaBonus;
     public float CurrentHealth => currentHealth.Value;
     public float CurrentMana { get; private set; }
     public bool IsDead => currentHealth.Value <= 0f;
@@ -31,14 +31,14 @@ public partial class Player
     {
         RefreshActiveKit();
         RefreshStatsFromKit();
-        CurrentMana = maxMana;
+        CurrentMana = MaxMana;
         currentHealth.OnValueChanged += (previousValue, newValue) =>
         {
             if (previousValue > 0f && newValue <= 0f)
                 OnPlayerDied?.Invoke(this);
-            OnHealthReplicated?.Invoke(newValue, maxHealth);
+            OnHealthReplicated?.Invoke(newValue, MaxHealth);
             if (this.IsLocallyControlled())
-                OnHealthChanged?.Invoke(newValue, maxHealth);
+                OnHealthChanged?.Invoke(newValue, MaxHealth);
         };
         OnClassOrColorChanged += (_, _) => HandleClassChanged();
         StartCoroutine(InitializeHealthNextFrame());
@@ -48,7 +48,7 @@ public partial class Player
     {
         yield return null;
         if (this.IsLocallyControlled())
-            currentHealth.Value = maxHealth;
+            currentHealth.Value = MaxHealth;
     }
 
     private void StartStats()
@@ -56,8 +56,8 @@ public partial class Player
         if (!this.IsLocallyControlled())
             return;
 
-        OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
-        OnManaChanged?.Invoke(CurrentMana, maxMana);
+        OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
+        OnManaChanged?.Invoke(CurrentMana, MaxMana);
     }
 
     private void SpawnStats()
@@ -82,9 +82,9 @@ public partial class Player
         if (!this.IsLocallyControlled())
             return;
 
-        currentHealth.Value = maxHealth;
-        CurrentMana = maxMana;
-        OnManaChanged?.Invoke(CurrentMana, maxMana);
+        currentHealth.Value = MaxHealth;
+        CurrentMana = MaxMana;
+        OnManaChanged?.Invoke(CurrentMana, MaxMana);
     }
 
     private void UpdateStats()
@@ -92,19 +92,19 @@ public partial class Player
         if (!this.IsLocallyControlled() || activeKit == null || IsDead)
             return;
 
-        if (CurrentHealth < maxHealth)
-            Heal(activeKit.HealthRegenPerSecond * Time.deltaTime);
-        if (CurrentMana < maxMana)
-            RestoreMana(activeKit.ManaRegenPerSecond * Time.deltaTime);
+        if (CurrentHealth < MaxHealth)
+            Heal((activeKit.HealthRegenPerSecond + LevelUpHealthRegenBonus) * Time.deltaTime);
+        if (CurrentMana < MaxMana)
+            RestoreMana((activeKit.ManaRegenPerSecond + LevelUpManaRegenBonus) * Time.deltaTime);
     }
 
     private void HandleClassChanged()
     {
         RefreshActiveKit();
         RefreshStatsFromKit();
-        CurrentMana = Mathf.Min(CurrentMana, maxMana);
+        CurrentMana = Mathf.Min(CurrentMana, MaxMana);
         if (this.IsLocallyControlled())
-            currentHealth.Value = Mathf.Min(currentHealth.Value, maxHealth);
+            currentHealth.Value = Mathf.Min(currentHealth.Value, MaxHealth);
     }
 
     private void RefreshStatsFromKit()
@@ -119,7 +119,7 @@ public partial class Player
             return;
 
         float minHealth = DeathProtected ? 1f : 0f;
-        currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, Mathf.Min(minHealth, currentHealth.Value), maxHealth);
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value - amount, Mathf.Min(minHealth, currentHealth.Value), MaxHealth);
     }
 
     public void RequestDamage(float amount)
@@ -178,7 +178,7 @@ public partial class Player
         if (!this.IsLocallyControlled())
             return;
 
-        currentHealth.Value = maxHealth;
+        currentHealth.Value = MaxHealth;
     }
 
     public void Heal(float amount)
@@ -186,7 +186,7 @@ public partial class Player
         if (!this.IsLocallyControlled())
             return;
 
-        currentHealth.Value = Mathf.Clamp(currentHealth.Value + amount, 0f, maxHealth);
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value + amount, 0f, MaxHealth);
     }
 
     public bool TrySpendMana(float amount)
@@ -196,14 +196,14 @@ public partial class Player
 
         CurrentMana -= amount;
         if (this.IsLocallyControlled())
-            OnManaChanged?.Invoke(CurrentMana, maxMana);
+            OnManaChanged?.Invoke(CurrentMana, MaxMana);
         return true;
     }
 
     public void RestoreMana(float amount)
     {
-        CurrentMana = Mathf.Clamp(CurrentMana + amount, 0f, maxMana);
+        CurrentMana = Mathf.Clamp(CurrentMana + amount, 0f, MaxMana);
         if (this.IsLocallyControlled())
-            OnManaChanged?.Invoke(CurrentMana, maxMana);
+            OnManaChanged?.Invoke(CurrentMana, MaxMana);
     }
 }

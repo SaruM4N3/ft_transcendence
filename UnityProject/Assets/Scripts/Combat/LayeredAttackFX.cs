@@ -18,7 +18,7 @@ public class LayeredAttackFX : MonoBehaviour, IAttackFX
     private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
 
     // Sandwiches the attacker between the front/back layers using its current auto Y-sort order as the anchor.
-    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability)
+    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability, float damageMultiplier)
     {
         owner = attacker;
         bool followCaster;
@@ -28,6 +28,7 @@ public class LayeredAttackFX : MonoBehaviour, IAttackFX
             AbilityType.Ultimate => (kit.UltimateDamage, kit.UltimateFollowCaster),
             _ => (kit.AttackDamage, kit.AttackFollowCaster),
         };
+        damage *= damageMultiplier;
 
         if (followCaster)
             transform.SetParent(attacker.transform);

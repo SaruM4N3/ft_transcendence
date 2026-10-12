@@ -25,8 +25,14 @@ public partial class Player
 
     private PauseManager pauseManager;
 
-    private const float FacingHysteresis = 1.15f;
+    private const float FacingSwitchDeadzoneDeg = 10f;
     private const float BackwardDotThreshold = -0.1f;
+
+    private static readonly Vector2[] FacingOctants =
+    {
+        new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-1f, 1f),
+        new Vector2(-1f, 0f), new Vector2(-1f, -1f), new Vector2(0f, -1f), new Vector2(1f, -1f),
+    };
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int MoveSpeedMultHash = Animator.StringToHash("MoveSpeedMult");
@@ -93,7 +99,7 @@ public partial class Player
 
     private bool wasBlocked;
 
-    // The Move action only calls back on a value change, so re-sample live input once after unblocking instead of running with a stale moveInput.
+    // Re-samples Move input after unblocking (it only fires on change); facing stays locked during an ability's move-lock.
     private void UpdateMovement()
     {
         FlipTowards(animator.GetFloat(LastInputXHash));
@@ -119,7 +125,10 @@ public partial class Player
 
         Vector2 aimDir = IsDead ? GetMovementFacingDirection() : GetMouseAimDirection();
         aimAngle.Value = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
-        UpdateFacing(aimDir);
+
+        if (Time.time >= moveLockEndTime)
+            UpdateFacing(aimDir);
+
         UpdateMoveSpeedMult();
 
         if (isMounted)
@@ -136,7 +145,7 @@ public partial class Player
             return;
         }
 
-        rb.linearVelocity = moveInput * (isRunning ? runSpeed : moveSpeed) * speedMult;
+        rb.linearVelocity = moveInput * (isRunning ? runSpeed : moveSpeed) * speedMult * MoveSpeedBonusMultiplier;
     }
 
     public void Move(InputAction.CallbackContext ctx)
@@ -200,17 +209,22 @@ public partial class Player
         return dir.sqrMagnitude > 0.0001f ? dir.normalized : facing;
     }
 
-    // Snaps the aim to a cardinal facing, with hysteresis so diagonals don't flicker.
+    // Snaps the aim to one of 8 directions, with an angular deadzone so adjacent directions don't flicker.
     private void UpdateFacing(Vector2 aim)
     {
-        float absX = Mathf.Abs(aim.x);
-        float absY = Mathf.Abs(aim.y);
-        Vector2 next = facing;
+        if (aim.sqrMagnitude < 0.0001f)
+            return;
 
-        if (absX > absY * FacingHysteresis)
-            next = new Vector2(Mathf.Sign(aim.x), 0f);
-        else if (absY > absX * FacingHysteresis)
-            next = new Vector2(0f, Mathf.Sign(aim.y));
+        float angle = Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg;
+        if (facingApplied)
+        {
+            float currentAngle = Mathf.Atan2(facing.y, facing.x) * Mathf.Rad2Deg;
+            if (Mathf.Abs(Mathf.DeltaAngle(angle, currentAngle)) < FacingSwitchDeadzoneDeg)
+                return;
+        }
+
+        int octant = ((Mathf.RoundToInt(angle / 45f) % 8) + 8) % 8;
+        Vector2 next = FacingOctants[octant];
 
         if (facingApplied && next == facing)
             return;
