@@ -13,8 +13,7 @@ public partial class ProceduralMapGenerator
         float[] entryOffsetY = new float[entryCount];
         for (int i = 0; i < entryCount; i++)
         {
-            // Derived from seed+index, not a sequential RNG draw, so offsets stay stable if entries are reordered.
-            System.Random entryRandom = new(seed ^ (i * -1640531527)); // 0x9E3779B9 as int32
+            System.Random entryRandom = new(seed ^ (i * -1640531527));
             entryOffsetX[i] = entryRandom.Next(-100000, 100000);
             entryOffsetY[i] = entryRandom.Next(-100000, 100000);
         }
@@ -54,8 +53,6 @@ public partial class ProceduralMapGenerator
             instance.transform.SetPositionAndRotation(position, Quaternion.identity);
             instance.SetActive(true);
 
-            // Same-row decor shares a Y-based sortingOrder and flickers on ties - nudge by X. Set, not
-            // Add, since a pooled instance may carry a stale offset.
             SortingLayer_Auto sortScript = instance.GetComponent<SortingLayer_Auto>();
             if (sortScript != null)
             {
@@ -69,8 +66,7 @@ public partial class ProceduralMapGenerator
         decorObjects[chunk] = spawned;
     }
 
-    // New instances are parented under their category folder ("Decor/Tree", ...) once at creation and
-    // keep that parent for life, even when reused by a different chunk later.
+    // Instances get their category parent once at creation and keep it.
     private GameObject RentDecorInstance(GameObject prefab)
     {
         if (decorPool.TryGetValue(prefab, out Stack<GameObject> pool) && pool.Count > 0)
@@ -79,7 +75,7 @@ public partial class ProceduralMapGenerator
         return Instantiate(prefab, GetDecorCategoryParent(prefab));
     }
 
-    // Category = prefab name with trailing variant digits stripped ("Tree1"/"Tree4" -> "Tree").
+    // Category is the prefab name minus trailing digits (Tree1 -> Tree).
     private Transform GetDecorCategoryParent(GameObject prefab)
     {
         if (decorParent == null)
@@ -101,7 +97,7 @@ public partial class ProceduralMapGenerator
         return categoryParent;
     }
 
-    // First entry (inspector order) that matches this cell's surface and noise/density roll.
+    // First entry matching the cell's surface and noise/density roll.
     private GameObject PickDecorPrefab(
         System.Random chunkRandom, int worldX, int worldY, bool isWater, float[] entryOffsetX, float[] entryOffsetY)
     {

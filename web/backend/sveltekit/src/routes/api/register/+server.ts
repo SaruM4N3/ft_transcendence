@@ -41,6 +41,26 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     }
 
     try {
+        // Check each unique field explicitly so the response can name the one
+        // that conflicts, regardless of how the database reports Prisma's target.
+        const existingUser = await prisma.user.findFirst({
+            where: { OR: [{ email: cleanEmail }, { displayName: cleanName }] },
+            select: { email: true, displayName: true }
+        });
+
+        if (existingUser?.email === cleanEmail) {
+            return json(
+                { success: false, error: 'This email is already taken' },
+                { status: 409 }
+            );
+        }
+        if (existingUser?.displayName === cleanName) {
+            return json(
+                { success: false, error: 'This display name is already taken' },
+                { status: 409 }
+            );
+        }
+
         const password_hash = await hash(password);
 
         const user = await prisma.user.create({
@@ -64,10 +84,12 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
         if (e.code === 'P2002') {
             const target = JSON.stringify(e.meta?.target ?? '').toLowerCase();
             const field = target.includes('displayname') || target.includes('display_name')
-                ? 'display name'
-                : 'email';
+                ? 'This display name is already taken'
+                : target.includes('email')
+                    ? 'This email is already taken'
+                    : 'This email or display name is already taken';
             return json(
-                { success: false, error: `This ${field} is already taken` },
+                { success: false, error: field },
                 { status: 409 }
             );
         }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Keeps the HUD bottom-left background sword in sync with the player's current color.</summary>
+// Keeps the HUD sword in sync with the player's color.
 public class BackgroundColorUI : MonoBehaviour
 {
     private Image backgroundImage;

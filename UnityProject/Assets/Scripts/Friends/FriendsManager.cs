@@ -1,0 +1,165 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Services.Authentication;
+using Unity.Services.Friends;
+using Unity.Services.Friends.Models;
+using Unity.Services.Friends.Notifications;
+using Unity.Services.Multiplayer;
+
+[Serializable]
+public class FriendInvite
+{
+    public string SessionCode;
+    public string SenderName;
+}
+
+[Serializable]
+public class PresenceActivity
+{
+    public string Status = "Lobby";
+}
+
+// Static wrapper over Unity Friends with lazy init and an OnChanged event.
+public static class FriendsManager
+{
+    public static event Action OnChanged;
+    public static event Action<FriendInvite> OnInviteReceived;
+
+    private static readonly IReadOnlyList<Relationship> Empty = new List<Relationship>();
+    private static Task initTask;
+
+    public static bool IsReady { get; private set; }
+    public static string OwnName { get; private set; } = string.Empty;
+
+    public static IReadOnlyList<Relationship> Friends => IsReady ? FriendsService.Instance.Friends : Empty;
+    public static IReadOnlyList<Relationship> Incoming => IsReady ? FriendsService.Instance.IncomingFriendRequests : Empty;
+    public static IReadOnlyList<Relationship> Outgoing => IsReady ? FriendsService.Instance.OutgoingFriendRequests : Empty;
+
+    // Safe to call repeatedly; concurrent callers share one init.
+    public static Task InitializeAsync()
+    {
+        if (IsReady)
+            return Task.CompletedTask;
+
+        if (initTask == null || initTask.IsFaulted || initTask.IsCanceled)
+            initTask = InitializeInternalAsync();
+        return initTask;
+    }
+
+    private static async Task InitializeInternalAsync()
+    {
+        await ServicesAuth.EnsureSignedInAsync();
+        await FriendsService.Instance.InitializeAsync();
+
+        OwnName = await AuthenticationService.Instance.GetPlayerNameAsync();
+
+        FriendsService.Instance.RelationshipAdded += _ => OnChanged?.Invoke();
+        FriendsService.Instance.RelationshipDeleted += _ => OnChanged?.Invoke();
+        FriendsService.Instance.PresenceUpdated += _ => OnChanged?.Invoke();
+        FriendsService.Instance.MessageReceived += HandleMessage;
+
+        await FriendsService.Instance.SetPresenceAsync(Availability.Online, new PresenceActivity());
+
+        IsReady = true;
+        OnChanged?.Invoke();
+    }
+
+    // Ignores anything that isn't a valid friend session invite.
+    private static void HandleMessage(IMessageReceivedEvent message)
+    {
+        FriendInvite invite;
+        try
+        {
+            invite = message.GetAs<FriendInvite>();
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        if (invite != null && !string.IsNullOrEmpty(invite.SessionCode))
+            OnInviteReceived?.Invoke(invite);
+    }
+
+    // Code of the live session, or null when solo; stale entries left by a deleted session are ignored.
+    public static string CurrentSessionCode
+    {
+        get
+        {
+            if (Unity.Netcode.NetworkManager.Singleton == null || !Unity.Netcode.NetworkManager.Singleton.IsListening)
+                return null;
+
+            foreach (var pair in MultiplayerService.Instance.Sessions)
+                if (pair.Value.State == SessionState.Connected && !string.IsNullOrEmpty(pair.Value.Code))
+                    return pair.Value.Code;
+            return null;
+        }
+    }
+
+    // True if that friend is already a member of the current session (so they shouldn't be re-invited).
+    public static bool IsMemberOfCurrentSession(string memberId)
+    {
+        foreach (var pair in MultiplayerService.Instance.Sessions)
+        {
+            if (pair.Value.State != SessionState.Connected)
+                continue;
+
+            foreach (var player in pair.Value.Players)
+                if (player.Id == memberId)
+                    return true;
+        }
+        return false;
+    }
+
+    // Name without the "#1234" suffix.
+    public static string ShortName(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName))
+            return string.Empty;
+
+        int hash = fullName.IndexOf('#');
+        return hash > 0 ? fullName.Substring(0, hash) : fullName;
+    }
+
+    // Sends the session code to an online friend.
+    public static Task InviteAsync(string memberId)
+    {
+        string code = CurrentSessionCode;
+        if (string.IsNullOrEmpty(code))
+            throw new InvalidOperationException("No active session to invite to.");
+
+        return FriendsService.Instance.MessageAsync(memberId, new FriendInvite { SessionCode = code, SenderName = OwnName });
+    }
+
+    // Sends a friend request, or accepts one already received.
+    public static async Task AddByNameAsync(string playerName)
+    {
+        await FriendsService.Instance.AddFriendByNameAsync(playerName);
+        OnChanged?.Invoke();
+    }
+
+    public static async Task AcceptAsync(string memberId)
+    {
+        await FriendsService.Instance.AddFriendAsync(memberId);
+        OnChanged?.Invoke();
+    }
+
+    public static async Task DeclineAsync(string memberId)
+    {
+        await FriendsService.Instance.DeleteIncomingFriendRequestAsync(memberId);
+        OnChanged?.Invoke();
+    }
+
+    public static async Task CancelRequestAsync(string memberId)
+    {
+        await FriendsService.Instance.DeleteOutgoingFriendRequestAsync(memberId);
+        OnChanged?.Invoke();
+    }
+
+    public static async Task RemoveAsync(string memberId)
+    {
+        await FriendsService.Instance.DeleteFriendAsync(memberId);
+        OnChanged?.Invoke();
+    }
+}

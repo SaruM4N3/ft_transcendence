@@ -1,24 +1,35 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// One-shot flipbook FX, spawned locally (not networked itself) on every client so an attack is
-// visible to everyone; only the attacker's own copy keeps a live hitbox (see PlayerMovement).
-public class SlashAttackFX : MonoBehaviour
+// Local one-shot slash FX; only the attacker's copy keeps a live hitbox.
+public class SlashAttackFX : MonoBehaviour, IAttackFX
 {
+    public static event System.Action<GameObject, Vector3> OnHitLanded;
+
     [SerializeField] private Sprite[] frames;
     [SerializeField] private float frameRate = 24f;
-    [SerializeField] private float damage = 15f;
 
     private SpriteRenderer spriteRenderer;
     private Collider2D hitbox;
     private GameObject owner;
+    private float damage;
     private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
     private int frameIndex;
     private float frameTimer;
 
-    public void Init(GameObject attacker, bool hasHitbox)
+    // Follow-caster tracks the attacker for its whole lifetime instead of staying at its world spawn position.
+    public void Init(GameObject attacker, bool hasHitbox, ClassKit kit, AbilityType ability)
     {
         owner = attacker;
+        bool followCaster;
+        (damage, followCaster) = ability switch
+        {
+            AbilityType.Special => (kit.SpecialDamage, kit.SpecialFollowCaster),
+            AbilityType.Ultimate => (kit.UltimateDamage, kit.UltimateFollowCaster),
+            _ => (kit.AttackDamage, kit.AttackFollowCaster),
+        };
+        if (followCaster)
+            transform.SetParent(attacker.transform);
         if (!hasHitbox && hitbox != null)
             hitbox.enabled = false;
     }
@@ -61,5 +72,6 @@ public class SlashAttackFX : MonoBehaviour
 
         hitTargets.Add(damageable);
         damageable.RequestDamage(damage);
+        OnHitLanded?.Invoke(owner, other.ClosestPoint(transform.position));
     }
 }

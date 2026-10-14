@@ -8,6 +8,9 @@ declare global {
 				id: string;
 				email: string;
 				display_name: string;
+				color: string;
+				class: string;
+				avatar_url: string | null;
 			} | null;
 		}
 		// interface PageData {}

@@ -3,7 +3,7 @@ using UnityEngine.Tilemaps;
 
 public partial class ProceduralMapGenerator
 {
-    // Lets other systems (e.g. WaveSpawner) avoid placing things on water without duplicating the noise logic.
+    // Lets other systems avoid water without duplicating the noise.
     public bool IsWaterAtWorldPosition(Vector3 worldPosition)
     {
         Vector3Int cell = landTilemap.WorldToCell(worldPosition);
@@ -48,7 +48,7 @@ public partial class ProceduralMapGenerator
         return biomeTiles[biomeIndex];
     }
 
-    // Falls back to a fresh noise sample if the cell is outside the mask's precomputed coverage.
+    // Falls back to a fresh noise sample outside the precomputed mask.
     private bool MaskIsWater(bool[,] waterMask, int maskOriginX, int maskOriginY, int worldX, int worldY)
     {
         int mx = worldX - maskOriginX;

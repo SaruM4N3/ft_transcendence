@@ -1,16 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Top-left lobby roster: one LobbyRosterEntryUI row per connected player, stacked below the personal HUD.
-// Container stays always-active - zero rows during solo play is just nothing to show, not a reason to disable.
+// Top-left roster with one row per connected player.
 public class LobbyRosterUI : MonoBehaviour
 {
     [SerializeField] private RectTransform rowTemplate;
     [SerializeField] private float rowSpacing = 60f;
 
-    private readonly List<PlayerCustomization> orderedPlayers = new List<PlayerCustomization>();
-    private readonly Dictionary<PlayerCustomization, LobbyRosterEntryUI> rows =
-        new Dictionary<PlayerCustomization, LobbyRosterEntryUI>();
+    private readonly List<Player> orderedPlayers = new List<Player>();
+    private readonly Dictionary<Player, LobbyRosterEntryUI> rows =
+        new Dictionary<Player, LobbyRosterEntryUI>();
 
     private void Awake()
     {
@@ -20,18 +19,17 @@ public class LobbyRosterUI : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerCustomization.OnPlayerRegistered += HandlePlayerRegistered;
-        PlayerCustomization.OnPlayerUnregistered += HandlePlayerUnregistered;
+        Player.OnPlayerRegistered += HandlePlayerRegistered;
+        Player.OnPlayerUnregistered += HandlePlayerUnregistered;
 
-        // Pick up players that spawned before this enabled (re-enable, or a late-joining client).
-        foreach (PlayerCustomization existing in PlayerCustomization.AllActiveInstances)
+        foreach (Player existing in Player.AllActiveInstances)
             HandlePlayerRegistered(existing);
     }
 
     private void OnDisable()
     {
-        PlayerCustomization.OnPlayerRegistered -= HandlePlayerRegistered;
-        PlayerCustomization.OnPlayerUnregistered -= HandlePlayerUnregistered;
+        Player.OnPlayerRegistered -= HandlePlayerRegistered;
+        Player.OnPlayerUnregistered -= HandlePlayerUnregistered;
 
         foreach (LobbyRosterEntryUI row in rows.Values)
             if (row != null)
@@ -40,23 +38,22 @@ public class LobbyRosterUI : MonoBehaviour
         orderedPlayers.Clear();
     }
 
-    private void HandlePlayerRegistered(PlayerCustomization player)
+    private void HandlePlayerRegistered(Player player)
     {
-        // Local player already has their own stats in the personal HUD - roster is for everyone else.
         if (rowTemplate == null || rows.ContainsKey(player) || player.IsOwner)
             return;
 
         GameObject rowObject = Instantiate(rowTemplate.gameObject, rowTemplate.parent);
         rowObject.SetActive(true);
         LobbyRosterEntryUI entry = rowObject.GetComponent<LobbyRosterEntryUI>();
-        entry.Bind(player, player.GetComponent<PlayerStats>());
+        entry.Bind(player);
 
         rows[player] = entry;
         orderedPlayers.Add(player);
         RelayoutRows();
     }
 
-    private void HandlePlayerUnregistered(PlayerCustomization player)
+    private void HandlePlayerUnregistered(Player player)
     {
         if (!rows.TryGetValue(player, out LobbyRosterEntryUI entry))
             return;
@@ -68,7 +65,7 @@ public class LobbyRosterUI : MonoBehaviour
         RelayoutRows();
     }
 
-    // Ordered by join order, not Dictionary iteration order, so the list doesn't reshuffle on join/leave.
+    // Rows keep join order so the list doesn't reshuffle.
     private void RelayoutRows()
     {
         for (int i = 0; i < orderedPlayers.Count; i++)

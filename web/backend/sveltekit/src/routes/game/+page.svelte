@@ -6,7 +6,7 @@
     let progressBar;
     let warningBanner;
     let unityInstance = null;
-    let errorMessage = '';
+    let errorMessage = $state('');
 
     function unityShowBanner(msg, type) {
         if (!warningBanner) return;
@@ -72,7 +72,7 @@
                     const displayName = data.user.display_name;
 
                     unityInstance.SendMessage(
-                        'WebProfileReceiver',
+                        'PlayerProfileStore',
                         'SetDisplayName',
                         displayName
                     );
@@ -128,21 +128,19 @@
 </div>
 
 <style>
-    :global(body) {
-        margin: 0;
-        cursor: none !important;
-
-    }
-
     .game-page {
-        width: 100vw;
-        height: 100vh;
+        position: relative;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
+        background: #080b14;
+        cursor: none !important;
     }
 
     .unity-container {
         width: 100%;
         height: 100%;
+        position: relative;
     }
 
     #unity-canvas {
@@ -182,4 +180,5 @@
     .error {
         color: red;
     }
+
 </style>

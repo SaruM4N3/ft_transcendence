@@ -9,7 +9,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
     [SerializeField] private Tilemap waterTilemap;
     [SerializeField] private Tilemap waterBackgroundTilemap;
     [SerializeField] private Tilemap coastFoamTilemap;
-    // Fallback only for offline/solo testing before a session exists - see GetTrackedPlayer().
     [SerializeField] private Transform player;
 
     [Header("Chunk Streaming")]
@@ -80,15 +79,14 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         spawnCell = new Vector2Int(cell.x, cell.y);
     }
 
-    // Client-side only: each client streams chunks around its own local character (networked or
-    // offline solo), never a server-wide view - the inspector-assigned player is just the pre-session fallback.
+    // Each client streams chunks around its own local character.
     private Transform GetTrackedPlayer()
     {
         GameObject localPlayer = LocalPlayer.Get();
         return localPlayer != null ? localPlayer.transform : player;
     }
 
-    // Chunk radius covering the camera's current view + buffer; recomputed every call to track Cinemachine zoom/lag.
+    // Chunk radius covering the camera view plus a buffer.
     private int ComputeEffectiveViewDistance()
     {
         Camera cam = Camera.main;
@@ -128,7 +126,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
             UpdateChunks(playerChunk);
         }
 
-        // First load is unthrottled (no visible world otherwise); later bursts stream over a few frames.
         ProcessPendingChunks(firstRun ? int.MaxValue : maxChunkGenerationsPerFrame);
     }
 
@@ -161,7 +158,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         });
     }
 
-    // Generates up to `budget` queued chunks; drops requests for chunks no longer in desiredChunks.
+    // Generates up to budget queued chunks, dropping ones no longer desired.
     private void ProcessPendingChunks(int budget)
     {
         while (budget > 0 && pendingChunkQueue.Count > 0)
@@ -185,8 +182,6 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         int maskOriginX = originX - 1;
         int maskOriginY = originY - 1;
 
-        // Sample water noise once per cell (with a 1-cell border for adjacency checks) instead of
-        // re-sampling it up to 8x per cell via IsAdjacentToWater below.
         int maskSize = chunkSize + 2;
         bool[,] waterMask = new bool[maskSize, maskSize];
         for (int y = 0; y < maskSize; y++)
@@ -263,7 +258,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
         }
     }
 
-    // Pooled, not destroyed - chunks reload often enough that reuse matters.
+    // Pooled rather than destroyed, since chunks reload often.
     private void ReturnDecorToPool(GameObject instance, GameObject prefab)
     {
         instance.SetActive(false);
@@ -285,7 +280,7 @@ public partial class ProceduralMapGenerator : MonoBehaviour
             Mathf.FloorToInt(cell.y / (float)chunkSize));
     }
 
-    // Seeded from chunk coords, so the same chunk always regenerates identically.
+    // Seeded from chunk coordinates so a chunk regenerates identically.
     private System.Random GetChunkRandom(Vector2Int chunk)
     {
         int hash = seed ^ (chunk.x * 73856093) ^ (chunk.y * 19349663);

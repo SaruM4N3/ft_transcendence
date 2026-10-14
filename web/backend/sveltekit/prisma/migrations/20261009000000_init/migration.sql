@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS "sessions" (
 
     CONSTRAINT "sessions_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id")
-        REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS "sessions_user_id_idx" ON "sessions"("user_id");

@@ -1,6 +1,6 @@
 using System;
 
-// Common read side for anything WorldHealthBar (or similar UI) can bind to - DummyStats, EnemyStats.
+// Read-only health view generic feedback (health bars, hit flash, damage numbers) binds to.
 public interface IHealthStats
 {
     float CurrentHealth { get; }

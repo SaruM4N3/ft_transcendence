@@ -2,50 +2,47 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>One row of the mode-select ready check (ReadyCheckUI) - avatar, name and ready/not-ready
-/// status for a single player. Same Bind/Unbind pattern as LobbyRosterEntryUI.</summary>
+// One ready-check row: avatar, name, team and ready status.
 public class ReadyCheckEntryUI : MonoBehaviour
 {
     [SerializeField] private Image avatarImage;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI readyStatusText;
-    // Optional - blank/hidden when the current mode declares no teams (ReadyCheckUI passes null names).
     [SerializeField] private TextMeshProUGUI teamText;
 
     private static readonly Color ReadyColor = new Color(0.3f, 0.85f, 0.3f);
     private static readonly Color NotReadyColor = new Color(0.85f, 0.3f, 0.3f);
 
-    private PlayerCustomization boundCustomization;
-    // Names for the pending mode's teams (index -> label), supplied by ReadyCheckUI; null/empty = no teams.
+    private Player boundPlayer;
     private string[] teamNames;
 
-    public void Bind(PlayerCustomization customization, string[] teamNames = null)
+    public void Bind(Player player, string[] teamNames = null)
     {
         Unbind();
 
         this.teamNames = teamNames;
-        boundCustomization = customization;
-        customization.OnDisplayNameChanged += SetName;
-        customization.OnClassOrColorChanged += SetAvatar;
-        customization.OnReadyChanged += SetReady;
-        customization.OnTeamChanged += SetTeam;
+        boundPlayer = player;
+        player.OnDisplayNameChanged += SetName;
+        player.OnClassOrColorChanged += SetAvatar;
+        player.OnReadyChanged += SetReady;
+        player.OnTeamChanged += SetTeam;
 
-        SetName(customization.CurrentDisplayName);
-        SetAvatar(customization.ClassIndex, customization.ColorIndex);
-        SetReady(customization.IsReady);
-        SetTeam(customization.TeamIndex);
+        SetName(player.CurrentDisplayName);
+        SetAvatar(player.ClassIndex, player.ColorIndex);
+        SetReady(player.IsReady);
+        SetTeam(player.TeamIndex);
     }
 
     public void Unbind()
     {
-        if (boundCustomization != null)
+        if (boundPlayer != null)
         {
-            boundCustomization.OnDisplayNameChanged -= SetName;
-            boundCustomization.OnClassOrColorChanged -= SetAvatar;
-            boundCustomization.OnReadyChanged -= SetReady;
-            boundCustomization.OnTeamChanged -= SetTeam;
+            boundPlayer.OnDisplayNameChanged -= SetName;
+            boundPlayer.OnClassOrColorChanged -= SetAvatar;
+            boundPlayer.OnReadyChanged -= SetReady;
+            boundPlayer.OnTeamChanged -= SetTeam;
         }
-        boundCustomization = null;
+        boundPlayer = null;
     }
 
     private void OnDestroy() => Unbind();

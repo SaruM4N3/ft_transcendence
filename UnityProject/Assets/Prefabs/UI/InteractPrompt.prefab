@@ -60,7 +60,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 271348707
-  m_SortingOrder: 101
+  m_SortingOrder: 20000
   m_TargetDisplay: 0
 --- !u!114 &4281734878290004344
 MonoBehaviour:
@@ -78,6 +78,11 @@ MonoBehaviour:
   keyLabel: {fileID: 1424089340919024968}
   actionLabel: {fileID: 4496719599031391616}
   keyGlyph: E
+  animationDuration: 0.15
+  closedScale: 0.85
+  keyCapBlinkSpeed: 3
+  keyCapBlinkMinAlpha: 0.35
+  keyCapBlinkScaleAmplitude: 0.1
 --- !u!1 &3100377244880862010
 GameObject:
   m_ObjectHideFlags: 0

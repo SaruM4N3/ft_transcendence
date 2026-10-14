@@ -3,8 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Opens ReadyCheckPanel when a mode is proposed, shows ready status, lets the local player toggle ready.
-// Lives on a separate always-active object - MenuPanel.Close() would otherwise kill its subscriptions.
+// Opens the ready-check panel on a proposal and lets the local player toggle ready.
 public class ReadyCheckUI : MonoBehaviour
 {
     [SerializeField] private MenuPanel menuPanel;
@@ -13,14 +12,11 @@ public class ReadyCheckUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI modeNameText;
     [SerializeField] private TextMeshProUGUI readyButtonLabel;
 
-    // Team picker: one instantiated teamButtonTemplate clone per team name, parented under
-    // teamButtonContainer. Hidden entirely when the pending mode declares no teams (e.g. Coop).
     [SerializeField] private RectTransform teamButtonContainer;
     [SerializeField] private RectTransform teamButtonTemplate;
     [SerializeField] private float teamButtonSpacing = 160f;
 
-    // Per-mode metadata keyed by GameModeLoader's raw scene name; falls back to the raw name if unlisted.
-    // TeamNames null/empty = no team picker shown (today's only mode, Coop). 2v2/3v1 plug in here later.
+    // Per-mode display metadata keyed by scene name; no TeamNames means no team picker.
     private readonly struct ModeInfo
     {
         public readonly string DisplayName;
@@ -40,9 +36,9 @@ public class ReadyCheckUI : MonoBehaviour
 
     private bool isOpen;
     private ModeReadyCheck subscribedInstance;
-    private readonly List<PlayerCustomization> orderedPlayers = new List<PlayerCustomization>();
-    private readonly Dictionary<PlayerCustomization, ReadyCheckEntryUI> rows =
-        new Dictionary<PlayerCustomization, ReadyCheckEntryUI>();
+    private readonly List<Player> orderedPlayers = new List<Player>();
+    private readonly Dictionary<Player, ReadyCheckEntryUI> rows =
+        new Dictionary<Player, ReadyCheckEntryUI>();
     private readonly List<RectTransform> teamButtons = new List<RectTransform>();
     private string[] currentTeamNames;
 
@@ -56,8 +52,10 @@ public class ReadyCheckUI : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerCustomization.OnPlayerRegistered += HandlePlayerRegistered;
-        PlayerCustomization.OnPlayerUnregistered += HandlePlayerUnregistered;
+        Player.OnPlayerRegistered += HandlePlayerRegistered;
+        Player.OnPlayerUnregistered += HandlePlayerUnregistered;
+        if (menuPanel != null)
+            menuPanel.OnClosed += HandlePanelClosed;
     }
 
     private void OnDisable()
@@ -65,16 +63,26 @@ public class ReadyCheckUI : MonoBehaviour
         if (subscribedInstance != null)
             subscribedInstance.OnPendingSceneChanged -= HandlePendingSceneChanged;
         subscribedInstance = null;
-        PlayerCustomization.OnPlayerRegistered -= HandlePlayerRegistered;
-        PlayerCustomization.OnPlayerUnregistered -= HandlePlayerUnregistered;
+        Player.OnPlayerRegistered -= HandlePlayerRegistered;
+        Player.OnPlayerUnregistered -= HandlePlayerUnregistered;
+        if (menuPanel != null)
+            menuPanel.OnClosed -= HandlePanelClosed;
 
         ClearRows();
         RebuildTeamButtons(null);
     }
 
-    // ModeReadyCheck is now spawned dynamically by NetworkBootstrap.HostGame() (see
-    // project_coop_scene_transition_bugs_fixed) rather than scene-placed, so its Instance is
-    // guaranteed null when this always-active object's OnEnable runs - poll until it exists instead.
+    // Tab has no Cancel button, so closing the panel early must itself clear the pending check server-side, or pendingSceneName never resets and reopening the panel silently no-ops.
+    private void HandlePanelClosed()
+    {
+        if (!isOpen)
+            return;
+
+        isOpen = false;
+        ModeReadyCheck.Instance?.RequestCancelReadyCheck();
+    }
+
+    // Polls until the dynamically spawned ModeReadyCheck exists.
     private void Update()
     {
         if (subscribedInstance == ModeReadyCheck.Instance)
@@ -136,7 +144,7 @@ public class ReadyCheckUI : MonoBehaviour
 
             Button button = buttonRect.GetComponent<Button>();
             if (button != null)
-                button.onClick.AddListener(() => LocalPlayer.GetCustomization()?.SetTeam(teamIndex));
+                button.onClick.AddListener(() => LocalPlayer.GetPlayer()?.SetTeam(teamIndex));
 
             teamButtons.Add(buttonRect);
         }
@@ -145,7 +153,7 @@ public class ReadyCheckUI : MonoBehaviour
     private void RebuildRows()
     {
         ClearRows();
-        foreach (PlayerCustomization player in PlayerCustomization.AllActiveInstances)
+        foreach (Player player in Player.AllActiveInstances)
             AddRow(player);
     }
 
@@ -158,8 +166,8 @@ public class ReadyCheckUI : MonoBehaviour
         orderedPlayers.Clear();
     }
 
-    // Handles a player joining while a check is already showing (RebuildRows covers the "check just started" case).
-    private void HandlePlayerRegistered(PlayerCustomization player)
+    // Adds a row when a player joins during a check.
+    private void HandlePlayerRegistered(Player player)
     {
         if (!isOpen || rows.ContainsKey(player))
             return;
@@ -167,7 +175,7 @@ public class ReadyCheckUI : MonoBehaviour
         AddRow(player);
     }
 
-    private void HandlePlayerUnregistered(PlayerCustomization player)
+    private void HandlePlayerUnregistered(Player player)
     {
         if (!rows.TryGetValue(player, out ReadyCheckEntryUI entry))
             return;
@@ -179,7 +187,7 @@ public class ReadyCheckUI : MonoBehaviour
         RelayoutRows();
     }
 
-    private void AddRow(PlayerCustomization player)
+    private void AddRow(Player player)
     {
         if (rowTemplate == null)
             return;
@@ -208,11 +216,11 @@ public class ReadyCheckUI : MonoBehaviour
 
     public void ToggleReady()
     {
-        PlayerCustomization customization = LocalPlayer.GetCustomization();
-        if (customization == null)
+        Player player = LocalPlayer.GetPlayer();
+        if (player == null)
             return;
 
-        customization.SetReady(!customization.IsReady);
+        player.SetReady(!player.IsReady);
         UpdateReadyButtonLabel();
     }
 
@@ -221,7 +229,7 @@ public class ReadyCheckUI : MonoBehaviour
         if (readyButtonLabel == null)
             return;
 
-        PlayerCustomization customization = LocalPlayer.GetCustomization();
-        readyButtonLabel.text = customization != null && customization.IsReady ? "Cancel" : "Ready";
+        Player player = LocalPlayer.GetPlayer();
+        readyButtonLabel.text = player != null && player.IsReady ? "Cancel" : "Ready";
     }
 }
