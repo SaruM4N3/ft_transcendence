@@ -91,7 +91,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Transports.UTP.UnityTransport
   m_ProtocolType: 0
   m_UseWebSockets: 0
-  m_UseEncryption: 0
+  m_UseEncryption: 1
   m_MaxPacketQueueSize: 128
   m_MaxPayloadSize: 6144
   m_HeartbeatTimeoutMS: 500
@@ -121,6 +121,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkBootstrap
   multiplayerPanel: {fileID: 0}
+  gameModeManagerPrefab: {fileID: 4421769525994616640, guid: aff9998613da735098ddf828e741457b, type: 3}
   ipInputField: {fileID: 0}
   spawnPoint: {fileID: 0}
   maxPlayers: 4
+  hostButton: {fileID: 0}
+  joinButton: {fileID: 0}
+  joinStatusText: {fileID: 0}
+  sessionCodeText: {fileID: 0}

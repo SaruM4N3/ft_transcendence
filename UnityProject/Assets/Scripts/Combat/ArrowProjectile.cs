@@ -24,7 +24,7 @@ public class ArrowProjectile : MonoBehaviour, IAttackFX
     private int frameIndex;
     private readonly HashSet<IDamageable> hitTargets = new HashSet<IDamageable>();
 
-    public void Init(GameObject attacker, bool hasHitboxValue, ClassKit kit, AbilityType ability)
+    public void Init(GameObject attacker, bool hasHitboxValue, ClassKit kit, AbilityType ability, float damageMultiplier)
     {
         owner = attacker;
         hasHitbox = hasHitboxValue;
@@ -33,7 +33,7 @@ public class ArrowProjectile : MonoBehaviour, IAttackFX
             AbilityType.Special => kit.SpecialDamage,
             AbilityType.Ultimate => kit.UltimateDamage,
             _ => kit.AttackDamage,
-        };
+        } * damageMultiplier;
         speed = kit.ProjectileSpeed;
         maxDistance = kit.ProjectileMaxDistance;
         pierceCount = kit.PierceCount;

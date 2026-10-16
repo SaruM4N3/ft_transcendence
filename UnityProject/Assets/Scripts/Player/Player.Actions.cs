@@ -24,7 +24,7 @@ public partial class Player
         get
         {
             if (isShieldActive.Value)
-                return activeKit != null ? activeKit.UltimateMoveSpeedMultiplier : 1f;
+                return activeKit != null ? ApplyAttackMobilityBonus(activeKit.UltimateMoveSpeedMultiplier) : 1f;
             return Time.time < moveLockEndTime ? moveLockSpeedMultiplier : 1f;
         }
     }
@@ -74,12 +74,13 @@ public partial class Player
 
     private void FireAttack()
     {
-        animator.SetFloat(AttackAnimSpeedHash, activeKit.AttackAnimSpeed);
+        float cooldown = activeKit.AttackCooldown * AttackCooldownMultiplier;
+        animator.SetFloat(AttackAnimSpeedHash, activeKit.AttackAnimSpeed * AttackSpeedMultiplier);
         animator.SetTrigger(AttackHash);
-        attackReadyTime = Time.time + activeKit.AttackCooldown;
+        attackReadyTime = Time.time + cooldown;
         moveLockEndTime = Time.time + activeKit.AttackMoveLockDuration;
-        moveLockSpeedMultiplier = activeKit.AttackMoveSpeedMultiplier;
-        OnAbilityUsed?.Invoke(AbilityType.Attack, activeKit.AttackCooldown);
+        moveLockSpeedMultiplier = ApplyAttackMobilityBonus(activeKit.AttackMoveSpeedMultiplier);
+        OnAbilityUsed?.Invoke(AbilityType.Attack, cooldown);
         SpawnAbilityFx(AbilityType.Attack);
     }
 
@@ -90,12 +91,13 @@ public partial class Player
         if (!TrySpendMana(activeKit.SpecialManaCost))
             return;
 
+        float cooldown = activeKit.SpecialCooldown * SpecialCooldownMultiplier;
         animator.SetFloat(SpecialAnimSpeedHash, activeKit.SpecialAnimSpeed);
         animator.SetTrigger(SpecialHash);
-        specialReadyTime = Time.time + activeKit.SpecialCooldown;
+        specialReadyTime = Time.time + cooldown;
         moveLockEndTime = Time.time + activeKit.SpecialMoveLockDuration;
-        moveLockSpeedMultiplier = activeKit.SpecialMoveSpeedMultiplier;
-        OnAbilityUsed?.Invoke(AbilityType.Special, activeKit.SpecialCooldown);
+        moveLockSpeedMultiplier = ApplyAttackMobilityBonus(activeKit.SpecialMoveSpeedMultiplier);
+        OnAbilityUsed?.Invoke(AbilityType.Special, cooldown);
         SpawnAbilityFx(AbilityType.Special);
     }
 
@@ -116,7 +118,7 @@ public partial class Player
         animator.SetTrigger(UltimateHash);
         ultimateReadyTime = Time.time + activeKit.UltimateCooldown;
         moveLockEndTime = Time.time + activeKit.UltimateMoveLockDuration;
-        moveLockSpeedMultiplier = activeKit.UltimateMoveSpeedMultiplier;
+        moveLockSpeedMultiplier = ApplyAttackMobilityBonus(activeKit.UltimateMoveSpeedMultiplier);
         OnAbilityUsed?.Invoke(AbilityType.Ultimate, activeKit.UltimateCooldown);
         SpawnAbilityFx(AbilityType.Ultimate);
     }
@@ -188,7 +190,7 @@ public partial class Player
         Quaternion rotation = GetIgnoreAimRotation(ability) ? Quaternion.identity : Quaternion.Euler(0f, 0f, angle);
 
         GameObject fx = Instantiate(prefab, spawnPos, rotation);
-        fx.transform.localScale *= GetSize(ability);
-        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit, ability);
+        fx.transform.localScale *= GetSize(ability) * SizeBonusMultiplier;
+        fx.GetComponent<IAttackFX>()?.Init(gameObject, hasHitbox, activeKit, ability, DamageMultiplier);
     }
 }

@@ -829,31 +829,31 @@ MonoBehaviour:
     TransitionIndex: 2
   - IsCrossFadeExit: 0
     Layer: 0
-    OriginatingState: 1314207704
-    DestinationState: -972315506
+    OriginatingState: 1488830767
+    DestinationState: 687355713
     TransitionDuration: 0.25
-    TriggerNameHash: 1218592651
-    TransitionIndex: 2
-  - IsCrossFadeExit: 0
-    Layer: 0
-    OriginatingState: 1314207704
-    DestinationState: 2135138783
-    TransitionDuration: 0.25
-    TriggerNameHash: -1715759148
+    TriggerNameHash: -961414819
     TransitionIndex: 3
   - IsCrossFadeExit: 0
     Layer: 0
-    OriginatingState: 1560324282
+    OriginatingState: 1314207704
+    DestinationState: -972315506
+    TransitionDuration: 0.25
+    TriggerNameHash: 1218592651
+    TransitionIndex: 1
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 1314207704
     DestinationState: 2135138783
     TransitionDuration: 0.25
     TriggerNameHash: -1715759148
     TransitionIndex: 2
   - IsCrossFadeExit: 0
     Layer: 0
-    OriginatingState: 1560324282
-    DestinationState: -972315506
+    OriginatingState: 1314207704
+    DestinationState: 687355713
     TransitionDuration: 0.25
-    TriggerNameHash: 1218592651
+    TriggerNameHash: -961414819
     TransitionIndex: 3
   AnimatorParameterEntries:
     ParameterEntries:
@@ -881,10 +881,6 @@ MonoBehaviour:
       NameHash: 1282839668
       Synchronize: 1
       ParameterType: 4
-    - name: IsGuarding
-      NameHash: 1314112013
-      Synchronize: 1
-      ParameterType: 4
     - name: LightAttack
       NameHash: 1218592651
       Synchronize: 1
@@ -905,6 +901,18 @@ MonoBehaviour:
       NameHash: -247277644
       Synchronize: 1
       ParameterType: 1
+    - name: Ultimate
+      NameHash: -961414819
+      Synchronize: 1
+      ParameterType: 9
+    - name: UltimateAnimSpeed
+      NameHash: 1787466435
+      Synchronize: 1
+      ParameterType: 1
+    - name: ShieldHeld
+      NameHash: -1063827444
+      Synchronize: 1
+      ParameterType: 4
   AnimatorParametersExpanded: 0
 --- !u!114 &5351956015967429100
 MonoBehaviour:
@@ -999,8 +1007,6 @@ MonoBehaviour:
   hitLandedShake: 0.12
   mountDurationSeconds: 20
   mountInteractRoot: {fileID: 6307928458064537086}
-  directionIndicatorSprite: {fileID: 4646007241080426997}
-  reviveProgressImage: {fileID: 166933192972784595}
   mountedOffset: {x: 0, y: 0.25, z: 0}
   mountedSortingOrderBump: 5
   moveSpeed: 5
@@ -1009,7 +1015,6 @@ MonoBehaviour:
   pigScale: 1.5
   transformFxPrefab: {fileID: -2253911629886400664, guid: 9ab4d137f132008c899723fb836e3080, type: 3}
   transformFxOffset: {x: 0, y: -1.1}
-  defaultStats: {fileID: 11400000, guid: b16f51070ed99a08ebeceb54cb20dca8, type: 2}
 --- !u!1 &2971884042829530053
 GameObject:
   m_ObjectHideFlags: 0
@@ -1502,7 +1507,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1047400265
   m_SortingLayer: 2
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 53aa225229285e3d2986d75460877b1b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.6666667}
