@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/db.js';
 
-const colors = new Set(['Black', 'Blue', 'Cyan', 'Green', 'Orange', 'Pink', 'Purple', 'Red', 'Yellow']);
+const colors = new Set(['Black', 'Blue', 'Purple', 'Red', 'Yellow']);
 const classes = new Set(['Warrior', 'Archer', 'Lancer', 'Monk', 'Pawn']);
 const MAX_AVATAR_LENGTH = 700_000;
 

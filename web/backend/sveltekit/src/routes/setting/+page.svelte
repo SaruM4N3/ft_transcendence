@@ -1,12 +1,22 @@
 <script lang="ts">
     let { data } = $props();
-    let displayName = $state(data.user?.display_name ?? '');
-    let color = $state(data.user?.color ?? 'Black');
-    let playerClass = $state(data.user?.class ?? 'Warrior');
-    let avatarUrl = $state<string | null>(data.user?.avatar_url ?? null);
+    let displayName = $state('');
+    let color = $state('Black');
+    let playerClass = $state('Warrior');
+    let avatarUrl = $state<string | null>(null);
     let error = $state('');
     let notice = $state('');
     let saving = $state(false);
+
+    $effect(() => {
+        const user = data.user;
+        if (!user) return;
+
+        displayName = user.display_name ?? '';
+        color = user.color ?? 'Black';
+        playerClass = user.class ?? 'Warrior';
+        avatarUrl = user.avatar_url ?? null;
+    });
 
     const colors = [
         { name: 'Blue', value: '#3985f6' },
@@ -84,7 +94,7 @@
                     <div class="section-heading"><span class="step">01</span><div><h2>Profile details</h2><p>Choose how other players see you.</p></div></div>
                     <label class="field-label" for="display-name">PLAYER NAME</label>
                     <input id="display-name" class="text-input" bind:value={displayName} minlength="2" maxlength="24" autocomplete="nickname" required />
-                    <small>2–24 characters. Letters, numbers, spaces, _ and -.</small>
+                    <small>2-24 characters. Letters, numbers, spaces, _ and -.</small>
                 </section>
 
                 <section class="form-section">

@@ -31,7 +31,7 @@
                 return;
             }
 
-            await goto('/game', { invalidateAll: true });
+            await goto('/', { invalidateAll: true });
         } catch {
             error = 'Could not reach the server, please try again.';
         } finally {

@@ -30,6 +30,14 @@
     }
 
     onMount(() => {
+        let disposed = false;
+        let unityStartup = null;
+        let unityQuit = null;
+        const profileRequest = new AbortController();
+        const stopUnity = (instance) => {
+            if (!unityQuit) unityQuit = Promise.resolve(instance.Quit());
+            return unityQuit;
+        };
         const buildUrl = '/public/game/Build';
 
         const config = {
@@ -50,18 +58,29 @@
         script.src = `${buildUrl}/game.loader.js`;
 
         script.onload = () => {
-            createUnityInstance(
+            if (disposed) return;
+
+            unityStartup = createUnityInstance(
                 unityCanvas,
                 config,
                 (progress) => {
-                    progressBar.style.width = `${progress * 100}%`;
+                    if (!disposed) progressBar.style.width = `${progress * 100}%`;
                 }
             )
                 .then(async (instance) => {
+                    if (disposed) {
+                        await stopUnity(instance);
+                        return;
+                    }
+
                     unityInstance = instance;
                     loadingBar.style.display = 'none';
 
-                    const res = await fetch('/api/me');
+                    const res = await fetch('/api/me', {
+                        signal: profileRequest.signal
+                    });
+
+                    if (disposed) return;
 
                     if (!res.ok) {
                         console.warn(`Could not load profile: ${res.status}`);
@@ -69,15 +88,23 @@
                     }
 
                     const data = await res.json();
-                    const displayName = data.user.display_name;
+                    if (disposed) return;
+                    // const displayName = data.user.display_name;
+
+                    const profile = JSON.stringify({
+                        displayName: data.user.display_name,
+                        playerClass: data.user.class,
+                        color: data.user.color
+                    });
 
                     unityInstance.SendMessage(
-                        'PlayerProfileStore',
-                        'SetDisplayName',
-                        displayName
+                        'WebProfileBridge',
+                        'SetProfile',
+                        profile
                     );
                 })
                 .catch((message) => {
+                    if (disposed) return;
                     errorMessage = message;
                     loadingBar.style.display = 'none';
                     unityShowBanner(message, 'error');
@@ -85,6 +112,7 @@
         };
 
         script.onerror = () => {
+            if (disposed) return;
             errorMessage = 'Failed to load Unity WebGL loader.';
             loadingBar.style.display = 'none';
         };
@@ -92,12 +120,25 @@
         document.body.appendChild(script);
 
         return () => {
-            if (unityInstance) {
-                unityInstance.Quit();
-                unityInstance = null;
-            }
-
+            disposed = true;
+            profileRequest.abort();
+            script.onload = null;
+            script.onerror = null;
             script.remove();
+
+            const instance = unityInstance;
+            unityInstance = null;
+
+            // Unity's startup promise can resolve after navigation. Quit that
+            // late instance too, otherwise its WebGL loop keeps running off-page.
+            void (async () => {
+                try {
+                    if (instance) await stopUnity(instance);
+                    else if (unityStartup) await unityStartup.then(stopUnity);
+                } catch (error) {
+                    console.warn('Could not stop the Unity game cleanly:', error);
+                }
+            })();
         };
     });
 </script>
