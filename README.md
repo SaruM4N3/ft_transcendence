@@ -68,7 +68,7 @@ Other shortcuts from the `Makefile` (repository root):
 
 | Command      | Effect                                              |
 | ------------ | ---------------------------------------------------- |
-| `make setup` | Init the vault submodule (latest main) if missing   |
+| `make setup` | Put the vault submodule on its latest `main`        |
 | `make up`    | Build and start the stack in the background          |
 | `make down`  | Stop the stack                                        |
 | `make build` | Rebuild images without starting                        |

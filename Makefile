@@ -5,9 +5,13 @@ COMPOSE := docker compose -f $(WEB_DIR)/compose.yaml --project-directory $(WEB_D
 
 all: up
 
-# Fetch the vault's latest main if not yet initialized, never resets an existing checkout
+VAULT := Transcendence_obsidian
+
+# Put the vault on its latest main if missing or detached, fast-forward main, leave other branches alone
 setup:
-	@[ -e Transcendence_obsidian/.git ] || { git submodule update --init --remote && git -C Transcendence_obsidian switch -q main; }
+	[ -e $(VAULT)/.git ] || git submodule update --init --remote
+	git -C $(VAULT) symbolic-ref -q HEAD >/dev/null || git -C $(VAULT) switch -q main
+	[ "$$(git -C $(VAULT) branch --show-current)" != main ] || git -C $(VAULT) pull -q --ff-only || echo "warning: could not update $(VAULT)"
 
 up: setup
 	$(COMPOSE) up --build -d
