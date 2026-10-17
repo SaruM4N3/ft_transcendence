@@ -1,11 +1,15 @@
 WEB_DIR := web
 COMPOSE := docker compose -f $(WEB_DIR)/compose.yaml --project-directory $(WEB_DIR)
 
-.PHONY: all up down build logs ps re clean fclean
+.PHONY: all setup up down build logs ps re clean fclean
 
 all: up
 
-up:
+# Fetch submodules only if not yet initialized, never resets an existing checkout
+setup:
+	@[ -e Transcendence_obsidian/.git ] || git submodule update --init
+
+up: setup
 	$(COMPOSE) up --build -d
 	@echo "Transcendence is up: https://localhost:4443"
 

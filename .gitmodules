@@ -1,3 +1,4 @@
 [submodule "Transcendence_obsidian"]
 	path = Transcendence_obsidian
-	url = git@github.com:SaruM4N3/Transcendence_obsidian.git
+	url = git@github.com:Transcendence-wejdz/Transcendence_obsidian.git
+	branch = main
