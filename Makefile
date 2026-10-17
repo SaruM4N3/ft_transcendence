@@ -5,9 +5,9 @@ COMPOSE := docker compose -f $(WEB_DIR)/compose.yaml --project-directory $(WEB_D
 
 all: up
 
-# Fetch submodules only if not yet initialized, never resets an existing checkout
+# Fetch the vault's latest main if not yet initialized, never resets an existing checkout
 setup:
-	@[ -e Transcendence_obsidian/.git ] || git submodule update --init
+	@[ -e Transcendence_obsidian/.git ] || { git submodule update --init --remote && git -C Transcendence_obsidian switch -q main; }
 
 up: setup
 	$(COMPOSE) up --build -d

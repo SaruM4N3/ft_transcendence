@@ -42,11 +42,12 @@ wired in yet. See [Features List](#features-list) below for exactly what exists 
 The Obsidian vault (`Transcendence_obsidian/`) is a git submodule, so clone with:
 
 ```sh
-git clone --recurse-submodules git@github.com:Transcendence-wejdz/ft_transcendence.git
+git clone --recurse-submodules --remote-submodules git@github.com:Transcendence-wejdz/ft_transcendence.git
 ```
 
-Already cloned without it? Run `make setup` (or `git submodule update --init`); `make up` also does
-it automatically. Optionally run `git config --global submodule.recurse true` so `git pull` keeps the
+`--remote-submodules` fetches the vault's latest `main` instead of the commit pinned in this repo.
+Already cloned without it? Run `make setup` (or `git submodule update --init --remote`); `make up`
+also does it automatically. Optionally run `git config --global submodule.recurse true` so `git pull` keeps the
 submodule in sync.
 
 ### Running the web app
@@ -67,7 +68,7 @@ Other shortcuts from the `Makefile` (repository root):
 
 | Command      | Effect                                              |
 | ------------ | ---------------------------------------------------- |
-| `make setup` | Init the vault submodule if missing                 |
+| `make setup` | Init the vault submodule (latest main) if missing   |
 | `make up`    | Build and start the stack in the background          |
 | `make down`  | Stop the stack                                        |
 | `make build` | Rebuild images without starting                        |
