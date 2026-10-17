@@ -42,7 +42,7 @@ wired in yet. See [Features List](#features-list) below for exactly what exists 
 The Obsidian vault (`Transcendence_obsidian/`) is a git submodule, so clone with:
 
 ```sh
-git clone --recurse-submodules git@github.com:SaruM4N3/ft_transcendence.git
+git clone --recurse-submodules git@github.com:Transcendence-wejdz/ft_transcendence.git
 ```
 
 Already cloned without it? Run `make setup` (or `git submodule update --init`); `make up` also does
