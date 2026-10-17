@@ -7,10 +7,11 @@ all: up
 
 VAULT := Transcendence_obsidian
 
-# Put the vault on its latest main if missing or detached, leaves an existing branch untouched
+# Put the vault on its latest main if missing or detached, fast-forward main, leave other branches alone
 setup:
-	@[ -e $(VAULT)/.git ] || git submodule update --init --remote
-	@git -C $(VAULT) symbolic-ref -q HEAD >/dev/null || { git -C $(VAULT) switch -q main && git -C $(VAULT) pull -q --ff-only; }
+	[ -e $(VAULT)/.git ] || git submodule update --init --remote
+	git -C $(VAULT) symbolic-ref -q HEAD >/dev/null || git -C $(VAULT) switch -q main
+	[ "$$(git -C $(VAULT) branch --show-current)" != main ] || git -C $(VAULT) pull -q --ff-only || echo "warning: could not update $(VAULT)"
 
 up: setup
 	$(COMPOSE) up --build -d
